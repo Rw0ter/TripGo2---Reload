@@ -2,12 +2,14 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { AppController } from './app.controller';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
-    // 业务模块在此注册：AuthModule, TripsModule, OrdersModule, ...
+    AuthModule,
+    // 业务模块在此注册：TripsModule, OrdersModule, ...
   ],
   controllers: [AppController],
 })
