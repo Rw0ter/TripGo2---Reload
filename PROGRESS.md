@@ -7,7 +7,7 @@
 
 ## 当前阶段
 
-W0 — 项目初始化。后端骨架已搭好，尚未 `npm install`。
+W1 进行中 — 后端地基。auth 模块已完成、子代理 review 并修复，CI 流水线已建；在 PR `feat/auth-module` 待合并。
 
 ## 已完成
 
@@ -17,6 +17,11 @@ W0 — 项目初始化。后端骨架已搭好，尚未 `npm install`。
 - `.gitignore`（已排除 Legacy 文件夹、node_modules、.env、*.db）
 - 文档体系：`PROGRESS.md` / `README.md` / `docs/page-registry.md`
 - 页面盘点：67 页全部分析完毕 → 62 屏需重写（主线 26 / 长尾 36）+ 5 废弃草稿，详见 `docs/page-registry.md`
+- 后端依赖安装完成（NestJS 11 / Prisma 6，432 包）
+- Prisma 迁移完成：`dev.db` + 首个 migration `init`
+- auth 模块完成并验证：`register` / `login` / `me` + `JwtAuthGuard` + `@CurrentUser`
+- auth 模块经子代理 code review 并修复（3 阻断 + 6 建议项）：鉴权基础设施抽到 `common/`、JwtModule 全局化、注册改用 P2002 兜底防竞态、对外字段用白名单 select
+- GitHub Actions CI 流水线（`.github/workflows/ci.yml`）：后端构建门禁
 
 ## 进行中
 
@@ -26,16 +31,17 @@ W0 — 项目初始化。后端骨架已搭好，尚未 `npm install`。
 
 ## 下一步（按优先级）
 
-1. backend：`npm install` + `npx prisma migrate dev --name init`，跑通 `/docs`
-2. backend：auth 模块做透（register / login / JWT / JwtAuthGuard / `@CurrentUser`）—— 作为后续所有模块的模板
-3. 风险 spike：sqlite-vec 扩展加载验证（独立 better-sqlite3 连接）
-4. frontend：Expo 工程初始化 + Expo Router 路由表 + 5 tab 导航 + 共享组件（StaticPage / 列表 / 详情 / Form）
+1. PR `feat/auth-module` 合并（CI 绿后）
+2. 风险 spike：sqlite-vec 扩展加载验证（独立 better-sqlite3 连接）
+3. frontend：Expo 工程初始化 + Expo Router 路由表 + 5 tab 导航 + 共享组件（StaticPage / 列表 / 详情 / Form）
+4. backend：按 auth 模板推进 destinations / trips / orders 等模块
 
 ## 已知问题 / 坑
 
 - Prisma 的 SQLite 引擎无法加载扩展，sqlite-vec 必须走独立 `better-sqlite3` 连接（CLAUDE.md 第 7 节）。
 - `VR Map` / `map` / `zhifu` / `offline-ai` 计划用 WebView 套旧版页面兜底，方案尚未验证。
 - 旧版 11 屏未接后端、用假数据，重写需新增接口：消息 / 收藏 / 钱包 / 线路 / 景点 / 酒店 / 翻译+TTS（见 `docs/page-registry.md`）。
+- `npm install` 报告 2 个 high severity 漏洞，位于 bcrypt 的旧 node-pre-gyp 依赖链；暂不阻塞，后续可评估改用纯 JS 的 bcryptjs。
 
 ## 关键决策记录
 
@@ -49,3 +55,5 @@ W0 — 项目初始化。后端骨架已搭好，尚未 `npm install`。
 - **2026-05-20** VR / 地图 / 支付等硬骨头屏：用 `react-native-webview` 套旧版 HTML 兜底，保计数、不沉成本。
 - **2026-05-20** 团队 4 人、无专职后端、全栈、AI 24h：W1 由组长搭后端地基，之后按"垂直切片"（一个功能的前后端由同一人一起做）推进。
 - **2026-05-20** 5 个废弃草稿/测试页（index / itinerary2 / mine / top / wzfdemo）确认不重写：前三者是被 index1/itinerary/mine1 取代的设计草稿，后两者是 CSS 演示页和空白测试页，均非功能。重写范围锁定 62 屏。
+- **2026-05-20** 确立模块合并流程：feat 分支 → 子代理 code review → PR → CI 门禁 → 合并（见 CLAUDE.md 第 13 节），每个模块/页面都重复。
+- **2026-05-20** 鉴权基础设施（JwtAuthGuard / @CurrentUser）放 `common/`、JwtModule 全局化：让后续模块零 import 即可 `@UseGuards(JwtAuthGuard)`，避免被复制十几次时产生跨模块耦合。

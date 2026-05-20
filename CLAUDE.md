@@ -158,3 +158,20 @@ Service / Controller 里**只 return 业务数据本身**，不要自己包这�
 
 ### 保持精简
 `CLAUDE.md` 每个会话都加载，写进来的每行都有上下文成本——只放**长期有效的规则**，一次性状态放 `PROGRESS.md`。`PROGRESS.md` 的进度三段要定期剪枝，已完成的老条目合并成一句话即可。
+
+## 13. 模块开发与合并流程（每个新模块 / 功能都重复这套）
+
+不直接推 master。每完成一个后端模块、前端屏或共享组件，按以下流程合并：
+
+1. **开分支**：从 master 切 `feat/<名字>`（如 `feat/auth-module`、`feat/screen-login`）。
+2. **开发 + 自测**：本地 `npm run build` 通过，关键接口 / 页面手测通过。
+3. **子代理 review**：用一个子代理对改动做 code review，对照本文件约定 + 安全性 + 正确性出意见；**阻断项必须修复**后才能进入下一步。
+4. **提交 + 推分支**：按第 10 节提交规范，一个提交做一件事。
+5. **开 PR**：目标分支 master；PR 描述写清改了什么、自测结果、子代理 review 结论。
+6. **CI 门禁**：GitHub Actions（`.github/workflows/ci.yml`）自动跑后端构建，**必须绿**。
+7. **合并**：CI 绿 + review 通过后合并到 master，删除分支。
+8. **收尾**：更新 `PROGRESS.md`（模块挪入"已完成"），并在 `docs/page-registry.md` 更新对应屏状态。
+
+> CI 当前只做后端构建门禁（`npm ci` + `prisma generate` + `build`）；后续有测试 / lint 再加进 `ci.yml`。
+> 项目无线上部署目标，暂不做 CD。
+> 本机未安装 `gh` CLI，开 PR 用 `git push` 后访问 GitHub compare 链接创建；装了 `gh` 后可改为 `gh pr create` 全自动。
