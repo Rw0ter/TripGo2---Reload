@@ -103,8 +103,8 @@ Service / Controller 里**只 return 业务数据本身**，不要自己包这�
 ## 6. 数据库 / Prisma 约定
 - 数据源唯一：`backend/prisma/schema.prisma`，`provider = "sqlite"`。
 - 改表结构 = 改 `schema.prisma` → 跑 `npx prisma migrate dev --name <说明>`。
-- 查询一律走注入的 `PrismaService`，不要在别处 new `PrismaClient`。
-- 演示数据用 seed 脚本（`prisma/seed.ts`，待建），不把 `dev.db` 提交进 git。
+- 查询一律走注入的 `PrismaService`，不要在别处 new `PrismaClient`（`prisma/seed.ts` 等 Nest 容器外的脚本除外）。
+- 演示数据用 seed 脚本（`prisma/seed.ts`），不把 `dev.db` 提交进 git；`npx prisma db seed` 运行。
 
 ## 7. sqlite-vec / RAG 约定（重要，最容易踩坑）
 - **Prisma 的 SQLite 引擎无法加载 SQLite 扩展**，所以向量检索**不能走 Prisma**。
