@@ -7,7 +7,7 @@
 
 ## 当前阶段
 
-W1 进行中 — 后端地基。auth 模块已完成、子代理 review 并修复，CI 流水线已建；在 PR `feat/auth-module` 待合并。
+W1 进行中 — 后端地基。auth 模块已合并入 master（PR #1，子代理 review + CI 通过）。
 
 ## 已完成
 
@@ -31,10 +31,9 @@ W1 进行中 — 后端地基。auth 模块已完成、子代理 review 并修�
 
 ## 下一步（按优先级）
 
-1. PR `feat/auth-module` 合并（CI 绿后）
-2. 风险 spike：sqlite-vec 扩展加载验证（独立 better-sqlite3 连接）
-3. frontend：Expo 工程初始化 + Expo Router 路由表 + 5 tab 导航 + 共享组件（StaticPage / 列表 / 详情 / Form）
-4. backend：按 auth 模板推进 destinations / trips / orders 等模块
+1. 风险 spike：sqlite-vec 扩展加载验证（独立 better-sqlite3 连接）
+2. frontend：Expo 工程初始化 + Expo Router 路由表 + 5 tab 导航 + 共享组件（StaticPage / 列表 / 详情 / Form）
+3. backend：按 auth 模板推进 destinations / trips / orders 等模块
 
 ## 已知问题 / 坑
 

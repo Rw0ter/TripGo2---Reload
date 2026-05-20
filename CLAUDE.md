@@ -174,4 +174,4 @@ Service / Controller 里**只 return 业务数据本身**，不要自己包这�
 
 > CI 当前只做后端构建门禁（`npm ci` + `prisma generate` + `build`）；后续有测试 / lint 再加进 `ci.yml`。
 > 项目无线上部署目标，暂不做 CD。
-> 本机未安装 `gh` CLI，开 PR 用 `git push` 后访问 GitHub compare 链接创建；装了 `gh` 后可改为 `gh pr create` 全自动。
+> 已装 `gh` CLI：开 PR / 合并用 `gh pr create`、`gh pr merge`。gh 未做持久登录，靠本机 git 已存的凭据认证——`git credential fill` 取 token 设为 `GH_TOKEN` 环境变量后再调 gh。
