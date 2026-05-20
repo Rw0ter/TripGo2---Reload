@@ -7,7 +7,7 @@
 
 ## 当前阶段
 
-W1 进行中 — 后端地基。auth 模块已合并入 master（PR #1，子代理 review + CI 通过）。
+W1 进行中。auth 模块已合并（PR #1）；Expo 前端工程初始化完成，在 PR `feat/expo-init` 待合并。
 
 ## 已完成
 
@@ -22,6 +22,7 @@ W1 进行中 — 后端地基。auth 模块已合并入 master（PR #1，子代�
 - auth 模块完成并验证：`register` / `login` / `me` + `JwtAuthGuard` + `@CurrentUser`
 - auth 模块经子代理 code review 并修复（3 阻断 + 6 建议项）：鉴权基础设施抽到 `common/`、JwtModule 全局化、注册改用 P2002 兜底防竞态、对外字段用白名单 select
 - GitHub Actions CI 流水线（`.github/workflows/ci.yml`）：后端构建门禁
+- Expo 前端工程初始化：create-expo-app 脚手架 + NativeWind v4 + Zustand + 5-tab 底部导航 + 4 个共享组件骨架（StaticPage / List / Detail / Form）
 
 ## 进行中
 
@@ -32,8 +33,8 @@ W1 进行中 — 后端地基。auth 模块已合并入 master（PR #1，子代�
 ## 下一步（按优先级）
 
 1. 风险 spike：sqlite-vec 扩展加载验证（独立 better-sqlite3 连接）
-2. frontend：Expo 工程初始化 + Expo Router 路由表 + 5 tab 导航 + 共享组件（StaticPage / 列表 / 详情 / Form）
-3. backend：按 auth 模板推进 destinations / trips / orders 等模块
+2. backend：按 auth 模板推进 destinations / trips / orders 等模块
+3. frontend：按 4 个共享组件铺 62 屏
 
 ## 已知问题 / 坑
 
@@ -56,3 +57,5 @@ W1 进行中 — 后端地基。auth 模块已合并入 master（PR #1，子代�
 - **2026-05-20** 5 个废弃草稿/测试页（index / itinerary2 / mine / top / wzfdemo）确认不重写：前三者是被 index1/itinerary/mine1 取代的设计草稿，后两者是 CSS 演示页和空白测试页，均非功能。重写范围锁定 62 屏。
 - **2026-05-20** 确立模块合并流程：feat 分支 → 子代理 code review → PR → CI 门禁 → 合并（见 CLAUDE.md 第 13 节），每个模块/页面都重复。
 - **2026-05-20** 鉴权基础设施（JwtAuthGuard / @CurrentUser）放 `common/`、JwtModule 全局化：让后续模块零 import 即可 `@UseGuards(JwtAuthGuard)`，避免被复制十几次时产生跨模块耦合。
+- **2026-05-20** 前端工程放 `frontend/`（非 `app/`）：避免与 Expo Router 自身的 `app/` 路由目录嵌成 `app/app/`。
+- **2026-05-20** auth store 暂不做持久化（token 内存态）：待登录屏接入时用 `expo-secure-store` 加，属简单优先的有意推迟，非未完成。

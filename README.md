@@ -16,9 +16,9 @@ TripGo2 - Reload/
 ├── CLAUDE.md                  开发约定（所有人 + AI 必读）
 ├── PROGRESS.md                当前进度与关键决策记录
 ├── README.md                  本文件
-├── docs/page-registry.md      67 页清单与状态（待生成）
+├── docs/page-registry.md      67 页清单与状态
 ├── backend/                   NestJS 后端
-└── app/                       Expo 前端（待创建）
+└── frontend/                  Expo 前端（Expo Router）
 ```
 
 ## 后端：安装与运行

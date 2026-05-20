@@ -35,7 +35,7 @@ TripGo2 - Reload/
 │       ├── prisma/            ← PrismaModule / PrismaService（全局）
 │       ├── common/            ← 过滤器、拦截器、装饰器、公共 DTO
 │       └── modules/           ← 业务模块（每个功能一个文件夹）
-├── app/                       ← Expo 前端（后续创建）
+├── frontend/                  ← Expo 前端（Expo Router，路由在 frontend/app/）
 └── Legacy TripGo ReadOnly!!!/ ← 旧项目，只读参考
 ```
 
@@ -120,10 +120,13 @@ Service / Controller 里**只 return 业务数据本身**，不要自己包这�
 - 流式输出用 SSE：AI 接口直接操作 response 流，**不经过 `TransformInterceptor`**。
 - DeepSeek 模型标识以官方文档为准，默认 `deepseek-chat`。
 
-## 9. 前端约定（Expo，待 app/ 创建后细化）
-- 路由用 Expo Router（文件式路由）。
-- 样式用 NativeWind（Tailwind 写法）。
-- 全局状态（Token、AI 会话）用 Zustand。
+## 9. 前端约定（Expo）
+- 路由用 Expo Router（文件式路由），路由文件在 `frontend/app/`。
+- 样式用 NativeWind（Tailwind 写法）；品牌主色用 `primary`（`text-primary` / `bg-primary`），定义在 `tailwind.config.js`，不要散写 `#386641`。
+- 全局状态（Token、AI 会话）用 Zustand，store 放 `frontend/stores/`。
+- 图标统一用 `@expo/vector-icons` 的 `Ionicons`。
+- 屏级复用组件放 `frontend/components/shared/`（StaticPage / List / Detail / Form 四种模板）。
+- 文件命名：组件 / 模块文件用 kebab-case（与脚手架一致，如 `list-screen.tsx`）；Expo Router 路由文件名即路由名。
 - 后端地址走环境变量 / 配置，**不硬编码 IP**（旧版 `api.js` 写死 IP 是反面教材）。
 
 ## 10. Git 约定
