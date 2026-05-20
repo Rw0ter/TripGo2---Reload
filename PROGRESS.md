@@ -7,7 +7,7 @@
 
 ## 当前阶段
 
-W1 进行中。auth 模块已合并（PR #1）；Expo 前端工程初始化完成，在 PR `feat/expo-init` 待合并。
+W1 进行中。auth、Expo 工程、「添加」tab 动作菜单 三个 PR 均已合并；sqlite-vec 风险 spike 已验证通过。
 
 ## 已完成
 
@@ -23,6 +23,8 @@ W1 进行中。auth 模块已合并（PR #1）；Expo 前端工程初始化完�
 - auth 模块经子代理 code review 并修复（3 阻断 + 6 建议项）：鉴权基础设施抽到 `common/`、JwtModule 全局化、注册改用 P2002 兜底防竞态、对外字段用白名单 select
 - GitHub Actions CI 流水线（`.github/workflows/ci.yml`）：后端构建门禁
 - Expo 前端工程初始化：create-expo-app 脚手架 + NativeWind v4 + Zustand + 5-tab 底部导航 + 4 个共享组件骨架（StaticPage / List / Detail / Form）
+- 方案 A：「添加」tab 改为创建动作菜单（PR #3，子代理 review + CI 通过）
+- sqlite-vec 风险 spike 通过：扩展加载 + vec0 写入 + top-k 检索全部正常（better-sqlite3 12 + sqlite-vec 0.1.9）
 
 ## 进行中
 
@@ -32,9 +34,9 @@ W1 进行中。auth 模块已合并（PR #1）；Expo 前端工程初始化完�
 
 ## 下一步（按优先级）
 
-1. 风险 spike：sqlite-vec 扩展加载验证（独立 better-sqlite3 连接）
-2. backend：按 auth 模板推进 destinations / trips / orders 等模块
-3. frontend：按 4 个共享组件铺 62 屏
+1. backend：按 auth 模板推进 destinations / trips / orders 等模块
+2. frontend：按 4 个共享组件铺 62 屏
+3. RAG 模块：基于已验证的 sqlite-vec 方案搭建（后续）
 
 ## 已知问题 / 坑
 
@@ -42,6 +44,7 @@ W1 进行中。auth 模块已合并（PR #1）；Expo 前端工程初始化完�
 - `VR Map` / `map` / `zhifu` / `offline-ai` 计划用 WebView 套旧版页面兜底，方案尚未验证。
 - 旧版 11 屏未接后端、用假数据，重写需新增接口：消息 / 收藏 / 钱包 / 线路 / 景点 / 酒店 / 翻译+TTS（见 `docs/page-registry.md`）。
 - `npm install` 报告 2 个 high severity 漏洞，位于 bcrypt 的旧 node-pre-gyp 依赖链；暂不阻塞，后续可评估改用纯 JS 的 bcryptjs。
+- sqlite-vec 写 vec0 表时 rowid 必须用 `BigInt` 传入：better-sqlite3 会把普通 JS number 绑成浮点，sqlite-vec 拒绝非整数主键（spike 已踩，参考 `backend/scripts/sqlite-vec-spike.js`）。
 
 ## 关键决策记录
 
@@ -59,3 +62,4 @@ W1 进行中。auth 模块已合并（PR #1）；Expo 前端工程初始化完�
 - **2026-05-20** 鉴权基础设施（JwtAuthGuard / @CurrentUser）放 `common/`、JwtModule 全局化：让后续模块零 import 即可 `@UseGuards(JwtAuthGuard)`，避免被复制十几次时产生跨模块耦合。
 - **2026-05-20** 前端工程放 `frontend/`（非 `app/`）：避免与 Expo Router 自身的 `app/` 路由目录嵌成 `app/app/`。
 - **2026-05-20** auth store 暂不做持久化（token 内存态）：待登录屏接入时用 `expo-secure-store` 加，属简单优先的有意推迟，非未完成。
+- **2026-05-20** sqlite-vec spike 通过：扩展加载 / vec0 写入 / top-k 检索均 OK，RAG 技术路线确认可行，最大风险点解除。
