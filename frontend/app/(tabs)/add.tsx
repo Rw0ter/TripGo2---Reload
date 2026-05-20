@@ -1,13 +1,7 @@
-import { Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Redirect } from 'expo-router';
 
-export default function AddScreen() {
-  return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-1 items-center justify-center">
-        <Text className="text-2xl font-bold text-primary">添加</Text>
-        <Text className="mt-2 text-sm text-gray-500">待实现</Text>
-      </View>
-    </SafeAreaView>
-  );
+// 「添加」是动作入口（点击弹出创建菜单，见 (tabs)/_layout.tsx），不是真实页面。
+// 本文件仅为占住底部 tab 槽位；若被深链接直达则重定向回首页。
+export default function AddRoute() {
+  return <Redirect href="/" />;
 }
