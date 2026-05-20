@@ -1,0 +1,39 @@
+# 旧项目（只读参考，不纳入新仓库）
+/Legacy TripGo ReadOnly!!!/
+
+# 依赖
+node_modules/
+**/node_modules/
+
+# 构建产物
+dist/
+build/
+**/dist/
+*.tsbuildinfo
+
+# 环境变量（.env.example 入库，.env 不入库）
+.env
+.env.local
+**/.env
+
+# SQLite 本地库不入库（演示数据用 seed 脚本生成）
+*.db
+*.db-journal
+*.sqlite
+
+# 运行期生成的上传文件
+backend/uploads/
+
+# 日志
+*.log
+npm-debug.log*
+
+# 编辑器 / 系统
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/settings.json
+
+# Expo（前端，后续）
+.expo/
+web-build/

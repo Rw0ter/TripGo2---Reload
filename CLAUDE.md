@@ -1,0 +1,138 @@
+# CLAUDE.md — TripGo（文脉粤游）2026 重写版
+
+本文件是项目的**唯一约定来源**。所有人（包括 AI 代码助手）在写代码前必须遵守。
+
+## 1. 项目简介
+
+TripGo（文脉粤游）是一款以**广东 / 岭南文化旅游**为主题的移动应用，这是 2026 重写版。
+功能范围：用户体系、AI 行程规划、地图导航、VR 全景、文创商城、订单、社区故事。
+
+旧版（DCloud MUI + 脚本式 Express）保留在 `Legacy TripGo ReadOnly!!!/`，**只读，仅作参考**——不要修改它，也不要在新代码中引用它的文件。
+
+## 2. 技术栈
+
+| 层 | 技术 |
+|----|------|
+| 前端 | Expo (React Native) + Expo Router |
+| 前端 UI / 状态 | NativeWind + Zustand |
+| 后端 | NestJS (TypeScript) |
+| API 文档 | @nestjs/swagger（运行后访问 `/docs`） |
+| 数据库 | SQLite 单文件 |
+| ORM | Prisma |
+| AI | DeepSeek（后端代理 + SSE 流式）；RAG 用 sqlite-vec |
+
+## 3. 仓库结构
+
+```
+TripGo2 - Reload/
+├── CLAUDE.md                  ← 本文件
+├── .gitignore
+├── backend/                   ← NestJS 后端
+│   ├── prisma/schema.prisma
+│   └── src/
+│       ├── main.ts
+│       ├── app.module.ts
+│       ├── prisma/            ← PrismaModule / PrismaService（全局）
+│       ├── common/            ← 过滤器、拦截器、装饰器、公共 DTO
+│       └── modules/           ← 业务模块（每个功能一个文件夹）
+├── app/                       ← Expo 前端（后续创建）
+└── Legacy TripGo ReadOnly!!!/ ← 旧项目，只读参考
+```
+
+## 4. 通用工作原则
+
+- **先想后写**：把假设说清楚；有多种理解先列出来再确认；有更简单的做法就提出来；不清楚就停下来问。
+- **简单优先**：只写需求要的代码，不做没要求的抽象、配置项、防御性分支。
+- **外科手术式改动**：只动该动的；不顺手"优化"无关代码；匹配现有风格。
+- **目标驱动**：每个任务先定一条可验证的完成标准，再写代码。
+
+## 5. 后端约定（NestJS）
+
+### 5.1 模块结构
+每个业务功能 = `src/modules/<name>/` 下一个模块，标准文件：
+```
+modules/trips/
+├── trips.module.ts
+├── trips.controller.ts
+├── trips.service.ts
+└── dto/
+    ├── create-trip.dto.ts
+    └── update-trip.dto.ts
+```
+- Controller 只负责 HTTP 入参 / 出参，业务逻辑全部放 Service。
+- Service 通过注入的 `PrismaService` 访问数据库。
+- 新模块必须在 `app.module.ts` 的 `imports` 里注册。
+
+### 5.2 命名
+- 文件 kebab-case：`create-trip.dto.ts`
+- 类 PascalCase：`CreateTripDto`、`TripsService`
+- 路由前缀用复数：`@Controller('trips')`
+
+### 5.3 统一返回格式
+所有正常响应由全局 `TransformInterceptor` 自动包成：
+```json
+{ "code": 0, "message": "ok", "data": <你的返回值> }
+```
+Service / Controller 里**只 return 业务数据本身**，不要自己包这层 envelope。
+错误由全局 `AllExceptionsFilter` 包成 `{ "code": <HTTP状态码>, "message": "...", "data": null }`。
+
+### 5.4 错误处理
+- 业务错误用 Nest 内置异常：`throw new NotFoundException('行程不存在')`、`BadRequestException` 等。
+- 不要 try/catch 之后自己 `res.status().json()`。
+
+### 5.5 入参校验
+- 所有请求体用 DTO 类 + `class-validator` 装饰器（`@IsString()`、`@IsNotEmpty()` 等）。
+- 全局 `ValidationPipe`（`whitelist + transform`）已开启，DTO 未声明的字段会被自动剥离。
+
+### 5.6 Swagger
+- 每个 Controller 加 `@ApiTags('xxx')`。
+- 每个接口加 `@ApiOperation({ summary: '...' })`。
+- DTO 每个字段加 `@ApiProperty()`。
+- 需要登录的接口加 `@ApiBearerAuth()`。
+
+### 5.7 鉴权
+- JWT，用 `@nestjs/jwt`。
+- `auth` 模块提供 `JwtAuthGuard` 和 `@CurrentUser()` 装饰器，其他模块复用。
+- 密钥从 `ConfigService` 读 `JWT_SECRET`，**绝不写进代码**。
+
+### 5.8 配置 / 密钥
+- 所有密钥、端口、外部地址走 `.env` + `@nestjs/config`。
+- `.env` 不入库；`.env.example` 入库作为模板。
+- 代码里禁止出现明文密钥 / API Key / 地图 Key（旧版的反面教材）。
+
+## 6. 数据库 / Prisma 约定
+- 数据源唯一：`backend/prisma/schema.prisma`，`provider = "sqlite"`。
+- 改表结构 = 改 `schema.prisma` → 跑 `npx prisma migrate dev --name <说明>`。
+- 查询一律走注入的 `PrismaService`，不要在别处 new `PrismaClient`。
+- 演示数据用 seed 脚本（`prisma/seed.ts`，待建），不把 `dev.db` 提交进 git。
+
+## 7. sqlite-vec / RAG 约定（重要，最容易踩坑）
+- **Prisma 的 SQLite 引擎无法加载 SQLite 扩展**，所以向量检索**不能走 Prisma**。
+- 方案：RAG 模块单独建一个 `better-sqlite3` 连接，加载 `sqlite-vec` 扩展，与 Prisma **共用同一个 `.db` 文件**。
+  - 关系数据 → Prisma
+  - 向量写入 / 相似度检索 → better-sqlite3 + sqlite-vec 原生 SQL
+- 向量虚拟表（`vec0`）用原生 SQL 建，**不要写进 schema.prisma**（Prisma 不认虚拟表）。
+- **动手做 RAG 前先做最小验证 spike**：能加载扩展 → 能写入一条向量 → 能查 top-k。跑通了再往上盖功能。
+
+## 8. AI 接入约定
+- DeepSeek 调用**只在后端 `ai` 模块**，密钥从 `.env` 读。
+- 前端**永远不接触** DeepSeek 密钥（旧版前端明文直连是必须消除的隐患）。
+- 流式输出用 SSE：AI 接口直接操作 response 流，**不经过 `TransformInterceptor`**。
+- DeepSeek 模型标识以官方文档为准，默认 `deepseek-chat`。
+
+## 9. 前端约定（Expo，待 app/ 创建后细化）
+- 路由用 Expo Router（文件式路由）。
+- 样式用 NativeWind（Tailwind 写法）。
+- 全局状态（Token、AI 会话）用 Zustand。
+- 后端地址走环境变量 / 配置，**不硬编码 IP**（旧版 `api.js` 写死 IP 是反面教材）。
+
+## 10. Git 约定
+- 不提交：`node_modules/`、`dist/`、`.env`、`*.db`、`uploads/`。
+- commit message 用 `<类型>: <说明>`，类型为 `feat / fix / refactor / docs / chore`。
+- 一个提交只做一件事。
+
+## 11. 开发流程铁律
+1. **先做透一个纵向切片**：第一个完整模块做 `auth`（register / login / JWT），打通 Controller → Service → Prisma → DTO → Swagger 全链路。
+2. 人工 review 把 `auth` 定型，作为后续所有模块的模板。
+3. 之后每个模块照 `auth` 的结构复制，保持风格一致。
+4. 每个模块开工前先写一句可验证的完成标准（例如"能 POST /trips 创建并能 GET 查回"）。

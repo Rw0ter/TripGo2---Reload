@@ -1,0 +1,116 @@
+// TripGo（文脉粤游）数据模型 —— SQLite 单文件库
+// 改表结构后执行：npx prisma migrate dev --name <说明>
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  username  String    @unique
+  email     String    @unique
+  password  String
+  avatar    String?
+  points    Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  addresses Address[]
+  trips     Trip[]
+  orders    Order[]
+  stories   Story[]
+  comments  Comment[]
+  likes     Like[]
+}
+
+model Address {
+  id        String  @id @default(uuid())
+  label     String
+  detail    String
+  phone     String  @default("")
+  isDefault Boolean @default(false)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+}
+
+model Trip {
+  id        String   @id @default(uuid())
+  name      String
+  days      Json
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Order {
+  id           Int      @id @default(autoincrement())
+  type         String // 普通订单 / 活动预订 / 行程订单
+  title        String
+  img          String?
+  price        Float
+  oriPrice     Float
+  pointsUsed   Int      @default(0)
+  pointsDeduct Int      @default(0)
+  finalPrice   Float
+  status       String   @default("待支付")
+  meta         Json? // 各类订单的附加字段：date / participants / routeName / startDate / endDate / travelers
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  createdAt    DateTime @default(now())
+}
+
+model Story {
+  id        Int       @id @default(autoincrement())
+  title     String
+  content   String
+  images    Json // string[]
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String
+  comments  Comment[]
+  likes     Like[]
+  createdAt DateTime  @default(now())
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  text      String
+  story     Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  storyId   Int
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String
+  createdAt DateTime @default(now())
+}
+
+model Like {
+  story     Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  storyId   Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@id([storyId, userId])
+}
+
+model Destination {
+  id     Int    @id @default(autoincrement())
+  title  String
+  image  String
+  money  String
+  number String
+  type   Int
+}
+
+// RAG 文化知识库的文本块。
+// 注意：向量本身不存在这张表。向量虚拟表（sqlite-vec 的 vec0）由 RAG 模块用
+// 原生 SQL 创建，通过 rowid 与本表关联 —— 见 CLAUDE.md 第 7 节。
+model KnowledgeChunk {
+  id        Int      @id @default(autoincrement())
+  source    String // 来源文档标识
+  content   String // 文本块内容
+  createdAt DateTime @default(now())
+}
