@@ -3,7 +3,7 @@
 > 项目的"活文档"。每个 AI 会话**开始时读它、结束时更新它**（用法见 CLAUDE.md 第 12 节）。
 > "已完成 / 进行中 / 下一步"三段要定期剪枝，别让文档越长越没人读。
 
-**最后更新：2026-05-21**
+**最后更新：2026-05-22**
 
 ## 当前阶段
 
@@ -41,12 +41,13 @@ W2。底部 5 个 Tab 中 home / itinerary / mine 三屏已复刻、接真后端
 - 三个核心 Tab 接真后端（PR #18/#19/#20）：新增后端只读模块 `banners` / `scenic` / `quiz`；schema 加 `Banner.title/subtitle`、`Scenic.section`、`User.balance/couponCount`；`prisma/seed.ts` 灌入轮播 / 景点 / 知识课堂演示数据；前端 home / itinerary / mine 三屏改为 `apiRequest` 拉真实数据，图片字段存"本地资源 key"由 `lib/legacy-images.ts` 解析。PR #20 顺带修复 web 登录崩溃 —— 新增 `lib/persist-storage.ts` 跨端存储（web=localStorage / 原生=SecureStore），`auth` store 切到此存储
 - 首页改版（PR #21）：绿渐变头部 + 高清广东城市轮播（4 图，4s 自动轮播 + 翻页 + 动画圆点）+ 卡片化入口宫格 + 知识小课堂 / 热门景点横滑 + 高低落差双列瀑布流（按较矮列优先分配 `MASONRY_HEIGHTS`）；精简 `lib/legacy-images.ts` 注册表至在用 key
 - 个人中心改版（PR #22）：渐变 hero 头部（右上角图标换 `Ionicons` 的 `notifications-outline` / `settings-outline`）+ 等级徽章 + 成长值进度条 + 钱包 / 券 / 积分资产卡（上浮压渐变）+ 卡片化「我的订单」「更多服务」+ 退出登录按钮
+- 旅行地图屏（`feat/travel-map`，对应 Legacy `map.html`）：路由 `/map`，itinerary 的「旅游地图」「开始规划」入口接入。**在线**用腾讯地图 JavaScript API GL 封装成跨端 React 组件（`components/map/`，web=iframe srcDoc / 原生=react-native-webview，共用一份内嵌 HTML + postMessage 桥）——定位 / 搜索 / 路线规划全部走 GL SDK 的 `service` 库在客户端直接完成，**彻底去掉旧版后端 WebService 代理**。**离线**用 `components/map/offline-map.tsx`：随 App 内置广东 16 景点 POI（`lib/guangdong-poi.ts`），静态可缩放 / 可平移画布 + 重点景点离线路线规划（haversine 直线距离 + 出行方式时长估算，`lib/geo.ts`）。在线地图加载失败 / 超时 15s 自动切离线，顶栏可手动切换。新增依赖 `react-native-webview@13.15.0`
 
 ## 进行中
 
 > 格式：`[负责人] 模块/任务 — 起始时间`。开工前在此登记，防止多人多会话撞车。
 
-- 暂无
+- [队友] community 社区 tab（后端 stories 只读模块 + seed 示例数据 + 前端动态流）— 2026-05-22
 
 ## 下一步（按优先级）
 
@@ -58,7 +59,8 @@ W2。底部 5 个 Tab 中 home / itinerary / mine 三屏已复刻、接真后端
 ## 已知问题 / 坑
 
 - Prisma 的 SQLite 引擎无法加载扩展，sqlite-vec 必须走独立 `better-sqlite3` 连接（CLAUDE.md 第 7 节）。
-- `VR Map` / `map` / `zhifu` / `offline-ai` 计划用 WebView 套旧版页面兜底，方案尚未验证。
+- `VR Map` / `zhifu` / `offline-ai` 计划用 WebView 套旧版页面兜底，方案尚未验证。（`map` 已不走此方案——见下条与「关键决策」）
+- 旅行地图的腾讯 Key：GL JS Key 必然随客户端下发（非机密），走 `EXPO_PUBLIC_TENCENT_MAP_KEY`，缺省回退到 Legacy 演示 Key。该演示 Key 为公开共享 Key，**QPS 配额常被打满**——浏览器实测时地图瓦片正常渲染，但 `service` 库搜索 / 路线会收到腾讯返回的「此key每秒请求量已达到上限」。正式演示需在 lbs.qq.com 申请自己的 Key 并配域名白名单。离线地图不依赖网络与 Key，是稳定可演示的兜底。
 - 旧版 11 屏未接后端、用假数据，重写需新增接口：消息 / 收藏 / 钱包 / 线路 / 景点 / 酒店 / 翻译+TTS（见 `docs/page-registry.md`）。
 - `npm install` 报告 2 个 high severity 漏洞，位于 bcrypt 的旧 node-pre-gyp 依赖链；暂不阻塞，后续可评估改用纯 JS 的 bcryptjs。
 - sqlite-vec 写 vec0 表时 rowid 必须用 `BigInt` 传入：better-sqlite3 会把普通 JS number 绑成浮点，sqlite-vec 拒绝非整数主键（spike 已踩，参考 `backend/scripts/sqlite-vec-spike.js`）。
@@ -98,3 +100,4 @@ W2。底部 5 个 Tab 中 home / itinerary / mine 三屏已复刻、接真后端
 - **2026-05-21** `auth` store 切到跨端存储：兑现上一条"后续切跨端"的推迟项——`expo-secure-store` 在 web 直接崩溃（`setValueWithKeyAsync is not a function`），把跨端逻辑统一抽到 `lib/persist-storage.ts`，`auth` 与 `onboarding` 两个 store 共用，web 端登录态自此持久化。
 - **2026-05-21** 三个核心 Tab 接真后端：home / itinerary / mine 全部改为拉后端数据（PR #18-20），后端新增 `banners` / `scenic` / `quiz` 三个只读模块，演示数据走 `prisma/seed.ts`。前端图片字段存"本地资源 key"，由 `lib/legacy-images.ts` 的 `resolveLegacyImage` 解析为打包资源——图片不走网络，避免后端托管大量图。
 - **2026-05-21** 首页 / 个人中心在像素级复刻基础上做改版升级（PR #21/#22）：质量基线"只能比去年更好"，故在 Legacy 结构上重做配色分层、高清城市轮播、高低落差瀑布流、渐变 hero 等——属允许范围内的 RN 增强，不算偏离复刻。
+- **2026-05-22** 旅行地图（`map.html`）放弃"WebView 套旧版 HTML"兜底方案，改为重写成真正的 React 屏：① 旧版地图是 GL JS（渲染）+ 后端 Express 代理腾讯 WebService（搜索 / 路线 / IP 定位）两套；新版用腾讯 GL JS 的 `service` 附加库（`TMap.service.Search/Driving/Walking/Bicycling/Geocoder`）在客户端直接完成搜索与路线规划，**去掉后端代理**——这就是需求里"web service api 改成 React 原生 API"的落点。② 跨端方案：腾讯无 Expo 兼容的原生 RN 地图 SDK，且项目硬约束"web 预览必须可用"，故把 GL JS 文档封装成一份内嵌 HTML，web 用 `<iframe srcDoc>`、原生用 `react-native-webview`，经 postMessage 桥与 React 层通信（`tencent-map.web.tsx` / `tencent-map.tsx` 按平台后缀解析）。③ 离线方案：随 App 内置广东 POI 数据，自绘可缩放 / 可平移的示意地图 + 本地 haversine 路线估算，作为断网兜底；在线地图 fatal / 超时即自动切入。
