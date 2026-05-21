@@ -46,11 +46,46 @@ const destinations = [
   { title: '梅州客家梅菜干', image: '/resources/img/wccpImg/mzkjcmg.png', money: '12.80', number: '544', type: 6 },
 ];
 
+// 首页轮播图。image 为前端本地资源 key（assets/legacy/img 下相对路径）。
+const banners = [
+  { image: 'top_AD.png', sort: 0 },
+  { image: 'top_AD2.png', sort: 1 },
+  { image: 'top_AD3.png', sort: 2 },
+];
+
+// 景点。hot=true 进首页人气榜大横卡；hot=false 进首页瀑布流。
+const scenics = [
+  { name: '广州塔', image: 'jd/gz.jpg', city: '广州', summary: '', tag: '', note: '', hot: true, sort: 0 },
+  { name: '欢乐谷', image: 'jd/gzcl.png', city: '广州', summary: '', tag: '', note: '', hot: true, sort: 1 },
+  { name: '长隆海洋王国', image: 'changlong.png', city: '珠海', summary: '', tag: '', note: '', hot: true, sort: 2 },
+  { name: '鼎湖山', image: 'dxs.jpg', city: '肇庆', summary: '', tag: '', note: '', hot: true, sort: 3 },
+  { name: '岭南非遗殿堂', image: 'jd/gdsfwzwhycg.png', city: '潮州', summary: '岭南非遗殿堂，一馆尽览千年匠心与风华', tag: '', note: '', hot: false, sort: 0 },
+  { name: '丹霞山', image: 'jd/dxs.png', city: '丹霞山', summary: '来丹霞山，观“色如渥丹”的赤壁，览“灿若明霞”的奇景', tag: '', note: '', hot: false, sort: 1 },
+  { name: '南粤乡村', image: 'jd/nsthg.png', city: '广州', summary: '着重助力乡村振兴 汇聚岭南文化特色', tag: '', note: '', hot: false, sort: 2 },
+  { name: '岭南印象园', image: 'jd/lnyxy.png', city: '广州', summary: '访岭南印象园，赏古建、品非遗、尝粤味', tag: '', note: '', hot: false, sort: 3 },
+];
+
+// 首页知识小课堂答题卡。
+const quizzes = [
+  { tag: '积分翻倍场', title: '非遗文化挑战', desc: '限时答题赢最高 88 积分，适合新手快速上分', btn: '立即开始挑战', sort: 0 },
+  { tag: '经典问答', title: '粤剧知识问答', desc: '边看边答，解锁戏台幕后冷知识，累计非遗积分', btn: '进入答题房间', sort: 1 },
+  { tag: '进阶挑战', title: '广绣工艺挑战', desc: '模拟绣线步骤答题，通关可解锁专属勋章与好礼', btn: '去闯关赢好礼', sort: 2 },
+  { tag: '人气专场', title: '岭南美食问答', desc: '一边馋一边答，解锁早茶、煲汤与街头小吃冷知识', btn: '马上去答题', sort: 3 },
+];
+
 async function main() {
   // 幂等：清空后重插，便于反复跑
   await prisma.destination.deleteMany();
   await prisma.destination.createMany({ data: destinations });
-  console.log(`已 seed ${destinations.length} 条文创产品`);
+  await prisma.banner.deleteMany();
+  await prisma.banner.createMany({ data: banners });
+  await prisma.scenic.deleteMany();
+  await prisma.scenic.createMany({ data: scenics });
+  await prisma.quiz.deleteMany();
+  await prisma.quiz.createMany({ data: quizzes });
+  console.log(
+    `已 seed：文创 ${destinations.length} / 轮播 ${banners.length} / 景点 ${scenics.length} / 课堂 ${quizzes.length}`,
+  );
 }
 
 main()

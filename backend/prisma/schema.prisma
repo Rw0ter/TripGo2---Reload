@@ -105,6 +105,36 @@ model Destination {
   type   Int
 }
 
+// 首页轮播图（对应 Legacy index1.html .top_AD）。
+model Banner {
+  id    Int    @id @default(autoincrement())
+  image String // 图片 key，前端按 key 解析本地资源
+  sort  Int    @default(0)
+}
+
+// 景点（首页人气榜大卡 + 首页瀑布流 + 行程城市 POI 共用）。
+model Scenic {
+  id      Int     @id @default(autoincrement())
+  name    String
+  image   String // 图片 key
+  city    String  @default("")
+  summary String  @default("") // 一句话简介 / 长描述
+  tag     String  @default("") // 角标，如「文史口碑馆」
+  note    String  @default("") // 附注，如「16 个上榜项」
+  hot     Boolean @default(false) // true=人气榜（首页大横卡）
+  sort    Int     @default(0)
+}
+
+// 首页知识小课堂答题卡（对应 Legacy index1.html .list_4）。
+model Quiz {
+  id    Int    @id @default(autoincrement())
+  tag   String
+  title String
+  desc  String
+  btn   String
+  sort  Int    @default(0)
+}
+
 // RAG 文化知识库的文本块。
 // 注意：向量本身不存在这张表。向量虚拟表（sqlite-vec 的 vec0）由 RAG 模块用
 // 原生 SQL 创建，通过 rowid 与本表关联 —— 见 CLAUDE.md 第 7 节。
