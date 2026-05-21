@@ -126,7 +126,7 @@ Service / Controller 里**只 return 业务数据本身**，不要自己包这�
 - `<Image>` 的宽 / 高走 `style` prop，**不要用 className**：react-native-web 会用图片原始尺寸的内联 style 覆盖 className，导致 web 端图片尺寸失控。
 - 需要 className 的动画组件从 `@/components/ui/animated` 取 `Animated`（已做 cssInterop），**不要**直接用 `react-native-reanimated` 的 `Animated.View`——否则 web 端 className 被静默丢弃。动画工具（`FadeInDown` 等）仍从 `react-native-reanimated` 取。
 - 全局状态（Token、AI 会话）用 Zustand，store 放 `frontend/stores/`。
-- 图标统一用 `@expo/vector-icons` 的 `Ionicons`。
+- 图标统一用 `@expo/vector-icons` 的 `Ionicons`（底部导航栏例外：按要求 100% 复刻 Legacy，用 `assets/legacy/img/nav/` 的 PNG 图标，组件见 `components/legacy-tab-bar.tsx`）。
 - 屏级复用组件放 `frontend/components/shared/`（StaticPage / List / Detail / Form 四种模板）。
 - 文件命名：组件 / 模块文件用 kebab-case（与脚手架一致，如 `list-screen.tsx`）；Expo Router 路由文件名即路由名。
 - 后端地址走环境变量 / 配置，**不硬编码 IP**（旧版 `api.js` 写死 IP 是反面教材）。
