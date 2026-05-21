@@ -1,10 +1,16 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, Text } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { FormField } from '@/components/shared/form-field';
-import { FormScreen } from '@/components/shared/form-screen';
+import { AuthButton } from '@/components/auth/auth-button';
+import { AuthInput } from '@/components/auth/auth-input';
+import { AuthScreenLayout } from '@/components/auth/auth-screen-layout';
 import { apiRequest } from '@/lib/api';
+
+const userIcon = require('../../assets/legacy/img/user-3-line.png');
+const emailIcon = require('../../assets/legacy/img/yanzheng.png');
+const passwordIcon = require('../../assets/legacy/img/password.png');
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
@@ -19,7 +25,7 @@ export default function RegisterScreen() {
     const name = username.trim();
     const mail = email.trim();
     if (!name || !mail || !password) {
-      Alert.alert('提示', '请填写完整信息');
+      Alert.alert('提示', '用户名、邮箱和密码都不能为空');
       return;
     }
     if (name.length < 2 || name.length > 20) {
@@ -51,37 +57,70 @@ export default function RegisterScreen() {
   }
 
   return (
-    <FormScreen
-      title="注册"
-      submitLabel={loading ? '注册中…' : '注册'}
-      loading={loading}
-      onSubmit={handleRegister}>
-      <FormField
-        label="用户名"
-        value={username}
-        onChangeText={setUsername}
-        placeholder="2-20 位"
-      />
-      <FormField
-        label="邮箱"
-        value={email}
-        onChangeText={setEmail}
-        placeholder="请输入邮箱"
-        keyboardType="email-address"
-      />
-      <FormField
-        label="密码"
-        value={password}
-        onChangeText={setPassword}
-        placeholder="6-72 位"
-        secureTextEntry
-      />
-      <View className="mt-4 flex-row justify-center">
-        <Text className="text-sm text-gray-500">已有账号？</Text>
-        <Pressable onPress={() => router.push('/login')}>
-          <Text className="text-sm font-medium text-primary">去登录</Text>
+    <AuthScreenLayout>
+      <Animated.View entering={FadeInDown.delay(200).duration(500)}>
+        <AuthInput
+          icon={userIcon}
+          value={username}
+          onChangeText={setUsername}
+          placeholder="用户名"
+          accessibilityLabel="用户名"
+          autoComplete="username"
+          textContentType="username"
+        />
+      </Animated.View>
+
+      <Animated.View
+        entering={FadeInDown.delay(280).duration(500)}
+        className="mt-[18px]">
+        <AuthInput
+          icon={emailIcon}
+          value={email}
+          onChangeText={setEmail}
+          placeholder="邮箱"
+          keyboardType="email-address"
+          accessibilityLabel="邮箱"
+          autoComplete="email"
+          textContentType="emailAddress"
+        />
+      </Animated.View>
+
+      <Animated.View
+        entering={FadeInDown.delay(360).duration(500)}
+        className="mt-[18px]">
+        <AuthInput
+          icon={passwordIcon}
+          value={password}
+          onChangeText={setPassword}
+          placeholder="密码（6-72 位）"
+          secureTextEntry
+          accessibilityLabel="密码"
+          autoComplete="password"
+          textContentType="newPassword"
+        />
+      </Animated.View>
+
+      <Animated.View
+        entering={FadeInDown.delay(460).duration(500)}
+        className="mt-6">
+        <AuthButton
+          label={loading ? '注册中…' : '注册'}
+          loading={loading}
+          onPress={handleRegister}
+        />
+      </Animated.View>
+
+      <Animated.View
+        entering={FadeInDown.delay(540).duration(500)}
+        className="mt-5 items-center">
+        <Pressable
+          onPress={() => router.replace('/login')}
+          accessibilityRole="button">
+          <Text className="text-sm font-semibold text-white">
+            已有账号？去登录
+          </Text>
         </Pressable>
-      </View>
-    </FormScreen>
+      </Animated.View>
+    </AuthScreenLayout>
   );
 }
