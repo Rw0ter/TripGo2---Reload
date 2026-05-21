@@ -45,3 +45,15 @@ export interface Story {
   likeCount: number;
   commentCount: number;
 }
+
+export interface Comment {
+  id: number;
+  text: string;
+  createdAt: string; // ISO 时间串
+  author: StoryAuthor;
+}
+
+// 动态详情：在列表字段基础上附评论列表，对应 GET /stories/:id。
+export interface StoryDetail extends Story {
+  comments: Comment[];
+}
