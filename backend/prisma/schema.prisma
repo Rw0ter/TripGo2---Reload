@@ -109,9 +109,11 @@ model Destination {
 
 // 首页轮播图（对应 Legacy index1.html .top_AD）。
 model Banner {
-  id    Int    @id @default(autoincrement())
-  image String // 图片 key，前端按 key 解析本地资源
-  sort  Int    @default(0)
+  id       Int    @id @default(autoincrement())
+  image    String // 图片 key，前端按 key 解析本地资源
+  title    String @default("") // 浮层主标题（城市 / 景点名）
+  subtitle String @default("") // 浮层副标题（一句话标语）
+  sort     Int    @default(0)
 }
 
 // 景点（首页人气榜大卡 + 首页瀑布流 + 行程城市 POI 共用）。

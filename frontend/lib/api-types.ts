@@ -3,6 +3,8 @@
 export interface Banner {
   id: number;
   image: string; // 本地资源 key，见 lib/legacy-images.ts
+  title: string; // 浮层主标题
+  subtitle: string; // 浮层副标题
   sort: number;
 }
 

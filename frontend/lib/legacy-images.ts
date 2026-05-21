@@ -4,23 +4,30 @@ import type { ImageSourcePropType } from 'react-native';
 // 屏幕拿到后端数据后，用 key 在此表解析出本地资源。
 // 新数据用到的图片，在此登记 key -> require。
 export const legacyImages: Record<string, ImageSourcePropType> = {
-  // 首页轮播
+  // 兜底占位图（见 resolveLegacyImage）
   'top_AD.png': require('../assets/legacy/img/top_AD.png'),
-  'top_AD2.png': require('../assets/legacy/img/top_AD2.png'),
-  'top_AD3.png': require('../assets/legacy/img/top_AD3.png'),
-  // 景点（首页人气榜 + 瀑布流）
+  // 热门景点（首页大横卡）
   'jd/gz.jpg': require('../assets/legacy/img/jd/gz.jpg'),
+  'jd/dxs.png': require('../assets/legacy/img/jd/dxs.png'),
   'jd/gzcl.png': require('../assets/legacy/img/jd/gzcl.png'),
   'changlong.png': require('../assets/legacy/img/changlong.png'),
-  'dxs.jpg': require('../assets/legacy/img/dxs.jpg'),
-  'jd/gdsfwzwhycg.png': require('../assets/legacy/img/jd/gdsfwzwhycg.png'),
-  'jd/dxs.png': require('../assets/legacy/img/jd/dxs.png'),
-  'jd/nsthg.png': require('../assets/legacy/img/jd/nsthg.png'),
-  'jd/lnyxy.png': require('../assets/legacy/img/jd/lnyxy.png'),
   // 行程城市精选 POI
   'dghmdq.jpg': require('../assets/legacy/img/dghmdq.jpg'),
   'dgypzzbwg.png': require('../assets/legacy/img/dgypzzbwg.png'),
   'gysgjslgy.png': require('../assets/legacy/img/gysgjslgy.png'),
+  // 广东城市大图（首页轮播 + 城市精选瀑布流）
+  'xc/xc_guangzhou.jpg': require('../assets/legacy/img/xc/xc_guangzhou.jpg'),
+  'xc/xc_shenzhen.jpg': require('../assets/legacy/img/xc/xc_shenzhen.jpg'),
+  'xc/xc_zhuhai.jpg': require('../assets/legacy/img/xc/xc_zhuhai.jpg'),
+  'xc/xc_chaozhou.jpeg': require('../assets/legacy/img/xc/xc_chaozhou.jpeg'),
+  'xc/xc_dongguan.jpg': require('../assets/legacy/img/xc/xc_dongguan.jpg'),
+  'xc/xc_huizhou.jpg': require('../assets/legacy/img/xc/xc_huizhou.jpg'),
+  'xc/xc_jiangmen.jpg': require('../assets/legacy/img/xc/xc_jiangmen.jpg'),
+  'xc/xc_heyuan.png': require('../assets/legacy/img/xc/xc_heyuan.png'),
+  'xc/xc_qingyuan.jpg': require('../assets/legacy/img/xc/xc_qingyuan.jpg'),
+  'xc/xc_zhaoqing.jpg': require('../assets/legacy/img/xc/xc_zhaoqing.jpg'),
+  'xc/xc_jieyang.jpeg': require('../assets/legacy/img/xc/xc_jieyang.jpeg'),
+  'xc/xc_meizhou.jpg': require('../assets/legacy/img/xc/xc_meizhou.jpg'),
 };
 
 // 按 key 取本地图；key 未登记时返回占位图并告警，
