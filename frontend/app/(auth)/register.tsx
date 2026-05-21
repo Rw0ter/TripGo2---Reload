@@ -1,11 +1,12 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, Text } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { FadeInDown } from 'react-native-reanimated';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { AuthInput } from '@/components/auth/auth-input';
 import { AuthScreenLayout } from '@/components/auth/auth-screen-layout';
+import { Animated } from '@/components/ui/animated';
 import { apiRequest } from '@/lib/api';
 
 const userIcon = require('../../assets/legacy/img/user-3-line.png');
