@@ -7,7 +7,7 @@
 
 ## 当前阶段
 
-W1 进行中。后端 auth / destinations 模块、Expo 工程、前端 API 层、登录/注册/hello 三屏（Legacy 像素级复刻）、Legacy 图片资源迁移、启动路由、web 预览修复 —— PR #1–#11 均已合并。下一步：按 Legacy 复刻其余主线屏。
+W1 进行中。后端 auth / destinations 模块、Expo 工程、前端 API 层、登录/注册/hello 三屏（Legacy 像素级复刻 + web 布局修复并实测通过）、Legacy 图片资源迁移、启动路由、web 预览修复 —— PR #1–#12 均已合并。下一步：按 Legacy 复刻其余主线屏。
 
 ## 已完成
 
@@ -33,6 +33,7 @@ W1 进行中。后端 auth / destinations 模块、Expo 工程、前端 API 层�
 - Legacy 图片资源迁移到 `frontend/assets/legacy/img/`（~460 文件，全打包进 App）；非遗视频改由后端静态服务（`backend/static/`，`/static/` 前缀）
 - 启动路由：`/` 重定向到 hello 引导页（PR #10）；首页 tab 路由从 `index` 改名 `home`
 - web 预览修复（PR #11）：`babel-preset-expo` 加 `unstable_transformImportMeta`，转译 Expo SDK 54 web 产物里的 `import.meta`，消除浏览器白屏
+- auth 三屏 web 布局修复（PR #12）：NativeWind 不给非核心组件启用 className —— 新增 `components/ui/animated.ts`（cssInterop 包装 reanimated 的 Animated.*），屏幕改从此处取 `Animated`；`<Image>` 尺寸改走 `style` prop；修正被错误迁移覆盖的 `beijing.png`/`dingwei.png`。三屏已在浏览器实测渲染正确
 
 ## 进行中
 
@@ -55,6 +56,9 @@ W1 进行中。后端 auth / destinations 模块、Expo 工程、前端 API 层�
 - `npm install` 报告 2 个 high severity 漏洞，位于 bcrypt 的旧 node-pre-gyp 依赖链；暂不阻塞，后续可评估改用纯 JS 的 bcryptjs。
 - sqlite-vec 写 vec0 表时 rowid 必须用 `BigInt` 传入：better-sqlite3 会把普通 JS number 绑成浮点，sqlite-vec 拒绝非整数主键（spike 已踩，参考 `backend/scripts/sqlite-vec-spike.js`）。
 - web 端 `import.meta` 报错（已修，PR #11）：Expo SDK 54 web 产物多处用 `import.meta`，浏览器 classic script 不支持 → 整页白屏。修法是 `babel.config.js` 给 `babel-preset-expo` 加 `unstable_transformImportMeta: true`。注意项目 `babel.config.js` 的 `plugins` 不作用于 node_modules，所以 `babel-plugin-transform-import-meta` 那条路走不通。
+- NativeWind 只给 RN 核心组件启用 className（已修，PR #12）：`Animated.View`（reanimated）/`SafeAreaView` 等第三方组件的 className 被静默丢弃。约定见 CLAUDE.md §9——动画组件从 `@/components/ui/animated` 取。`cssInterop` 全局副作用注册**不能**让内联 `<Animated.View>` 生效，必须用 `cssInterop` 的**返回值**组件。
+- `<Image>` 用 className 设宽高在 web 失效（已修，PR #12）：react-native-web 用图片原始尺寸的内联 style 覆盖 className。宽高一律走 `style` prop（CLAUDE.md §9）。
+- Legacy 图片迁移曾有错配（已修，PR #12）：迁移时 `tripgo-backend/resources/img/` 覆盖了 `public/img/`，`beijing.png`/`dingwei.png` 被换错。`public/img/` 才是前端图片的唯一来源，已重新同步并核对一致。
 
 ## 关键决策记录
 
@@ -77,3 +81,5 @@ W1 进行中。后端 auth / destinations 模块、Expo 工程、前端 API 层�
 - **2026-05-21** Legacy 资源迁移：图片全打包进 App（`frontend/assets/legacy/img/`），视频体积大改由后端静态服务。
 - **2026-05-21** 开发与非正规演示均走 web，运行优先级：虚拟机（Android 模拟器）第一、web 第二；项目不会在真机或评委机上跑。故 web 预览必须可用，不能用 Expo Go 兜底。
 - **2026-05-21** auth store 启用持久化：用 `expo-secure-store` 落地 token（兑现 2026-05-20"待登录屏接入时再加"的推迟项）。
+- **2026-05-21** 第三方组件用 className 统一走 `cssInterop` 返回值：reanimated `Animated.*` 等不在 NativeWind 白名单内，全局副作用注册无效，必须导出包装后的组件（`@/components/ui/animated`）。后续 60 屏都走这个 `Animated`，避免每屏踩坑。
+- **2026-05-21** 前端用浏览器实测验收，不只 `tsc`/`expo export`：本次布局错乱 tsc 与 export 全过，问题只在运行时可见。屏级改动应起 dev server 截图核对。
