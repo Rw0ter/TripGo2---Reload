@@ -37,6 +37,7 @@ W1 收尾 / W2 起步。后端 auth / destinations 模块、Expo 工程、前端
 - 首启引导流程（PR #13）：① 登录页问候语柔光 + 去输入框聚焦描边；② hello 隐私协议页卡片式重构 + 滚动到底才可同意；③ 新增 `app/login1.tsx` 复刻 Legacy 启动动画；④ 新增 `stores/onboarding.ts` 跨端持久化引导标记，`/` 引导感知路由 —— 首启 hello→login1→login，完成后直达 login，hello/login1 仅首启各展示一次。全流程浏览器实测通过
 - index1 首页复刻（PR #14）：`app/(tabs)/home.tsx` 按 Legacy 还原——分段控件 + 搜索 + 轮播 + 四宫格/五入口 + 知识小课堂答题卡 + 景点大横卡 + 景点瀑布流，区块带进场动画。入口目标页未建，先「敬请期待」占位
 - login1 裁剪溢出修复（PR #15）；底部导航栏复刻（PR #16）：新增 `components/legacy-tab-bar.tsx` 自定义 tabBar 100% 复刻 Legacy `.mui-bar-tab`（白底 + PNG 图标 + 激活态 _ac 图/绿字/呼吸），`animation:'shift'` 实现 tab 切换横向过渡
+- mine1 我的 + itinerary 行程 两个核心 Tab 复刻（PR #17）：`(tabs)/mine.tsx`（资料卡接 useAuthStore + 钱包券包 + 订单 + 更多服务）、`(tabs)/itinerary.tsx`（智能行程入口 + 线路规划地图 + 城市精选 POI）。新增 `lib/coming-soon.ts` 统一占位提示
 
 ## 进行中
 
@@ -46,7 +47,7 @@ W1 收尾 / W2 起步。后端 auth / destinations 模块、Expo 工程、前端
 
 ## 下一步（按优先级）
 
-1. frontend：按 Legacy 像素级复刻主线屏 —— index1 首页、mine1 我的、itinerary 行程 三个核心 Tab 优先
+1. frontend：核心 Tab 还剩 community 社区 + add 发布；itinerary 的「添加行程」日历子页待补；之后继续主线详情/列表屏
 2. backend：按 auth 模板推进 trips / orders / stories 等模块（配合前端垂直切片）
 3. frontend：协议 / 隐私 / 非遗介绍等长尾屏套共享组件批量铺
 4. RAG 模块：基于已验证的 sqlite-vec 方案搭建（后续）
