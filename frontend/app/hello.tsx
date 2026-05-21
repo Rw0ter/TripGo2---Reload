@@ -3,16 +3,18 @@ import { useRouter } from 'expo-router';
 import {
   Alert,
   BackHandler,
-  ImageBackground,
+  Image,
   Platform,
   Pressable,
   ScrollView,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Animated } from '@/components/ui/animated';
 import { HELLO_AGREE_GRADIENT } from '@/constants/colors';
 
 const bg = require('../assets/legacy/img/beijing.png');
@@ -20,6 +22,7 @@ const bg = require('../assets/legacy/img/beijing.png');
 // 隐私协议确认屏（对应 Legacy hello.html）。
 export default function HelloScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
 
   function agree() {
     router.replace('/login');
@@ -41,8 +44,13 @@ export default function HelloScreen() {
   }
 
   return (
-    <ImageBackground source={bg} resizeMode="cover" className="flex-1">
-      <SafeAreaView className="flex-1">
+    <View className="flex-1">
+      <Image
+        source={bg}
+        resizeMode="cover"
+        style={{ position: 'absolute', top: 0, left: 0, width, height }}
+      />
+      <SafeAreaView style={{ flex: 1 }}>
         <ScrollView contentContainerClassName="flex-grow items-center justify-center px-5 py-8">
           <Animated.View
             entering={FadeInDown.duration(500)}
@@ -108,6 +116,6 @@ export default function HelloScreen() {
           </Animated.View>
         </ScrollView>
       </SafeAreaView>
-    </ImageBackground>
+    </View>
   );
 }

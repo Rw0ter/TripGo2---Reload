@@ -34,6 +34,9 @@ npm-debug.log*
 .vscode/*
 !.vscode/settings.json
 
+# Claude Code 本地预览配置（含本机端口 / 命令，不入库）
+/.claude/
+
 # Expo（前端，后续）
 .expo/
 web-build/

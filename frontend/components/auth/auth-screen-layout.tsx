@@ -1,14 +1,17 @@
 import type { ReactNode } from 'react';
 import {
-  ImageBackground,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { Animated } from '@/components/ui/animated';
 
 const bg = require('../../assets/legacy/img/beijing.png');
 
@@ -16,11 +19,17 @@ interface AuthScreenLayoutProps {
   children: ReactNode;
 }
 
-// 登录 / 注册共用外壳（对应 Legacy login.css）：beijing 背景 + 问候语 + 键盘避让滚动区。
+// 登录 / 注册共用外壳（对应 Legacy login.html）：beijing 岭南山水背景铺满屏幕 + 问候语 + 键盘避让滚动区。
 export function AuthScreenLayout({ children }: AuthScreenLayoutProps) {
+  const { width, height } = useWindowDimensions();
   return (
-    <ImageBackground source={bg} resizeMode="cover" className="flex-1">
-      <SafeAreaView className="flex-1">
+    <View className="flex-1 bg-white">
+      <Image
+        source={bg}
+        resizeMode="cover"
+        style={{ position: 'absolute', top: 0, left: 0, width, height }}
+      />
+      <SafeAreaView style={{ flex: 1 }}>
         <KeyboardAvoidingView
           className="flex-1"
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -37,6 +46,6 @@ export function AuthScreenLayout({ children }: AuthScreenLayoutProps) {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </ImageBackground>
+    </View>
   );
 }

@@ -35,7 +35,7 @@ export function AuthInput({
       <Image
         source={icon}
         resizeMode="contain"
-        className="mr-3 h-5 w-5 opacity-70"
+        style={{ width: 20, height: 20, marginRight: 12, opacity: 0.7 }}
       />
       <TextInput
         className="h-full flex-1 text-base text-[#333]"

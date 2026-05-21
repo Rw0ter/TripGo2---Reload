@@ -123,6 +123,8 @@ Service / Controller 里**只 return 业务数据本身**，不要自己包这�
 ## 9. 前端约定（Expo）
 - 路由用 Expo Router（文件式路由），路由文件在 `frontend/app/`。
 - 样式用 NativeWind（Tailwind 写法）；品牌主色用 `primary`（`text-primary` / `bg-primary`），定义在 `tailwind.config.js`，不要散写 `#386641`。
+- `<Image>` 的宽 / 高走 `style` prop，**不要用 className**：react-native-web 会用图片原始尺寸的内联 style 覆盖 className，导致 web 端图片尺寸失控。
+- 需要 className 的动画组件从 `@/components/ui/animated` 取 `Animated`（已做 cssInterop），**不要**直接用 `react-native-reanimated` 的 `Animated.View`——否则 web 端 className 被静默丢弃。动画工具（`FadeInDown` 等）仍从 `react-native-reanimated` 取。
 - 全局状态（Token、AI 会话）用 Zustand，store 放 `frontend/stores/`。
 - 图标统一用 `@expo/vector-icons` 的 `Ionicons`。
 - 屏级复用组件放 `frontend/components/shared/`（StaticPage / List / Detail / Form 四种模板）。
