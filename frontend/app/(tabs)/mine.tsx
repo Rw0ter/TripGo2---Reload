@@ -96,7 +96,7 @@ export default function MineScreen() {
           </Pressable>
         </Animated.View>
 
-        {/* 钱包 / 券包 —— 金额为静态占位，待钱包/券包接口接入后改为实时数据 */}
+        {/* 钱包 / 券包 —— 余额与券数取自后端用户档案（auth /me） */}
         <Animated.View
           entering={FadeInDown.delay(140).duration(420)}
           className="mx-4 mb-4 flex-row gap-3">
@@ -108,7 +108,7 @@ export default function MineScreen() {
             <View>
               <Text className="text-[13px] text-[#7B6F55]">钱包</Text>
               <Text className="mt-0.5 text-base font-bold text-[#2e2e2e]">
-                ￥200.00
+                ￥{(user?.balance ?? 0).toFixed(2)}
               </Text>
             </View>
             <Image source={iconWallet} resizeMode="contain" style={{ width: 32, height: 32 }} />
@@ -121,7 +121,7 @@ export default function MineScreen() {
             <View>
               <Text className="text-[13px] text-[#7B6F55]">券包</Text>
               <Text className="mt-0.5 text-base font-bold text-[#2e2e2e]">
-                2 张可用
+                {user?.couponCount ?? 0} 张可用
               </Text>
             </View>
             <Image source={iconCoupon} resizeMode="contain" style={{ width: 32, height: 32 }} />

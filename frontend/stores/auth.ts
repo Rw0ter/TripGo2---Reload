@@ -1,6 +1,7 @@
-import * as SecureStore from 'expo-secure-store';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+
+import { persistStorage } from '@/lib/persist-storage';
 
 export interface AuthUser {
   id: string;
@@ -8,6 +9,8 @@ export interface AuthUser {
   email: string;
   avatar: string | null;
   points: number;
+  balance: number;
+  couponCount: number;
 }
 
 interface AuthState {
@@ -17,14 +20,8 @@ interface AuthState {
   clearAuth: () => void;
 }
 
-// 用 expo-secure-store 持久化登录态，App 重启不丢登录。
-const secureStorage = {
-  getItem: (name: string) => SecureStore.getItemAsync(name),
-  setItem: (name: string, value: string) =>
-    SecureStore.setItemAsync(name, value),
-  removeItem: (name: string) => SecureStore.deleteItemAsync(name),
-};
-
+// 持久化登录态，App 重启 / 刷新不丢登录。
+// 跨端存储：web=localStorage、原生=SecureStore（见 lib/persist-storage）。
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
@@ -35,7 +32,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'tripgo-auth',
-      storage: createJSONStorage(() => secureStorage),
+      storage: createJSONStorage(() => persistStorage),
     },
   ),
 );

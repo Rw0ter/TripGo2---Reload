@@ -11,14 +11,16 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(uuid())
-  username  String    @unique
-  email     String    @unique
-  password  String
-  avatar    String?
-  points    Int       @default(0)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id          String   @id @default(uuid())
+  username    String   @unique
+  email       String   @unique
+  password    String
+  avatar      String?
+  points      Int      @default(0)
+  balance     Float    @default(200) // 钱包余额（新用户礼包）
+  couponCount Int      @default(2) // 可用券数（新用户礼包）
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   addresses Address[]
   trips     Trip[]
   orders    Order[]

@@ -18,6 +18,8 @@ const userSelect = {
   email: true,
   avatar: true,
   points: true,
+  balance: true,
+  couponCount: true,
   createdAt: true,
 } satisfies Prisma.UserSelect;
 
