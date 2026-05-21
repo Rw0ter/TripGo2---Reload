@@ -1,14 +1,10 @@
-import { Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Animated } from '@/components/ui/animated';
+import { comingSoon } from '@/lib/coming-soon';
 import { useAuthStore } from '@/stores/auth';
-
-// 我的（对应 Legacy mine1.html）。目标页面尚未建好，入口先用占位提示。
-function comingSoon(name: string) {
-  Alert.alert('敬请期待', `「${name}」功能正在开发中`);
-}
 
 const avatarPlaceholder = require('../../assets/legacy/img/wccpImg/fslncmssh.png');
 const iconMsg = require('../../assets/legacy/img/mine/xx.png');
@@ -100,7 +96,7 @@ export default function MineScreen() {
           </Pressable>
         </Animated.View>
 
-        {/* 钱包 / 券包 */}
+        {/* 钱包 / 券包 —— 金额为静态占位，待钱包/券包接口接入后改为实时数据 */}
         <Animated.View
           entering={FadeInDown.delay(140).duration(420)}
           className="mx-4 mb-4 flex-row gap-3">

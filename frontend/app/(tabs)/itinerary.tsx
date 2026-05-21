@@ -1,6 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  Alert,
   Image,
   Pressable,
   ScrollView,
@@ -12,18 +11,17 @@ import { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Animated } from '@/components/ui/animated';
-
-// 行程（对应 Legacy itinerary.html 的首页视图）。目标页未建，入口先占位提示。
-function comingSoon(name: string) {
-  Alert.alert('敬请期待', `「${name}」功能正在开发中`);
-}
+import { comingSoon } from '@/lib/coming-soon';
 
 const addIcon = require('../../assets/legacy/img/add_xc.png');
 const mapBg = require('../../assets/legacy/img/ditu2.png');
 const mapIcon = require('../../assets/legacy/img/dw.png');
 
 // 线路规划地图上的地点气泡。
-const BUBBLES: { text: string; pos: Record<string, number> }[] = [
+const BUBBLES: {
+  text: string;
+  pos: Partial<Record<'left' | 'right' | 'top' | 'bottom', number>>;
+}[] = [
   { text: '人民公园', pos: { left: 14, top: 16 } },
   { text: '东莞博物馆', pos: { left: 116, top: 30 } },
   { text: '环城绿道', pos: { right: 14, top: 18 } },
@@ -58,7 +56,7 @@ export default function ItineraryScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
 
-  const mapW = width - 48; // 卡片 mx-3.5(14) + p-2.5(10) 两侧
+  const mapW = width - 48; // 卡片两侧留白：(mx-3.5 14 + p-2.5 10) × 2
   const poiW = Math.round(width * 0.4);
 
   return (
