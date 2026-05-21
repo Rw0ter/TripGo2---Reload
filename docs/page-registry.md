@@ -47,10 +47,10 @@
 | register.html | 账号注册 | 认证 | 单独实现 | auth | 完成 | Legacy 像素级复刻 |
 | forget_sendEmail.html | 找回密码（邮箱+图形验证码） | 认证 | Form组件 | auth | 待开始 | |
 | hello.html | 欢迎页 / 隐私协议确认 | 静态文本 | 单独实现 | 无 | 完成 | 卡片式重构 + 滚动到底才可同意；仅首启展示一次 |
-| index1.html | 首页（正式版） | 核心Tab | 单独实现 | 多模块 | 完成 | 底部导航主屏；入口目标页未建，先占位提示 |
+| index1.html | 首页（正式版） | 核心Tab | 单独实现 | banners/scenic/quiz | 完成 | 底部导航主屏；已接后端 + 改版升级（高清城市轮播 + 高低落差瀑布流）；入口目标页未建先占位 |
 | fywh.html | 首页·非遗文化 Tab | 核心Tab | 单独实现 | search 等 | 待开始 | 与 index1 首页关系待理清 |
-| itinerary.html | 行程 Tab | 核心Tab | 单独实现 | trips | 完成 | 首页视图已复刻；「添加行程」日历/时间轴子页待后续单独做 |
-| mine1.html | 我的 Tab（正式版） | 核心Tab | 单独实现 | auth | 完成 | 底部导航；接 useAuthStore，入口目标页未建先占位 |
+| itinerary.html | 行程 Tab | 核心Tab | 单独实现 | scenic | 完成 | 已复刻 + 接后端（城市精选 POI）；「添加行程」日历/时间轴子页待后续单独做 |
+| mine1.html | 我的 Tab（正式版） | 核心Tab | 单独实现 | auth | 完成 | 底部导航；接 useAuthStore（含钱包/券包）+ 改版升级（渐变 hero + 资产卡）；入口目标页未建先占位 |
 | bianji.html | 编辑个人信息 | 表单 | Form组件 | auth | 待开始 | 头像走 /auth/avatar |
 | search.html | 智能搜索 | 列表 | 列表组件 | search | 待开始 | 结果跳 trip_moreinfo |
 | activity.html | 搜索结果列表 | 列表 | 列表组件 | search | 待开始 | 旧版硬编码，须接 search |

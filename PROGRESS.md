@@ -7,7 +7,7 @@
 
 ## 当前阶段
 
-W1 收尾 / W2 起步。后端 auth / destinations 模块、Expo 工程、前端 API 层、首启引导流程（hello + login1 + 登录页）、index1 首页（核心 Tab）—— PR #1–#14 均已合并，均浏览器实测通过。下一步：按 Legacy 复刻其余核心 Tab（mine1 我的、itinerary 行程）。
+W2。底部 5 个 Tab 中 home / itinerary / mine 三屏已复刻、接真后端，home 与个人中心并做了改版升级 —— PR #1–#22 均已合并、均浏览器实测通过。下一步：复刻剩余核心 Tab（community 社区、add 发布），并按 auth 模板补对应后端模块。
 
 ## 已完成
 
@@ -38,6 +38,9 @@ W1 收尾 / W2 起步。后端 auth / destinations 模块、Expo 工程、前端
 - index1 首页复刻（PR #14）：`app/(tabs)/home.tsx` 按 Legacy 还原——分段控件 + 搜索 + 轮播 + 四宫格/五入口 + 知识小课堂答题卡 + 景点大横卡 + 景点瀑布流，区块带进场动画。入口目标页未建，先「敬请期待」占位
 - login1 裁剪溢出修复（PR #15）；底部导航栏复刻（PR #16）：新增 `components/legacy-tab-bar.tsx` 自定义 tabBar 100% 复刻 Legacy `.mui-bar-tab`（白底 + PNG 图标 + 激活态 _ac 图/绿字/呼吸），`animation:'shift'` 实现 tab 切换横向过渡
 - mine1 我的 + itinerary 行程 两个核心 Tab 复刻（PR #17）：`(tabs)/mine.tsx`（资料卡接 useAuthStore + 钱包券包 + 订单 + 更多服务）、`(tabs)/itinerary.tsx`（智能行程入口 + 线路规划地图 + 城市精选 POI）。新增 `lib/coming-soon.ts` 统一占位提示
+- 三个核心 Tab 接真后端（PR #18/#19/#20）：新增后端只读模块 `banners` / `scenic` / `quiz`；schema 加 `Banner.title/subtitle`、`Scenic.section`、`User.balance/couponCount`；`prisma/seed.ts` 灌入轮播 / 景点 / 知识课堂演示数据；前端 home / itinerary / mine 三屏改为 `apiRequest` 拉真实数据，图片字段存"本地资源 key"由 `lib/legacy-images.ts` 解析。PR #20 顺带修复 web 登录崩溃 —— 新增 `lib/persist-storage.ts` 跨端存储（web=localStorage / 原生=SecureStore），`auth` store 切到此存储
+- 首页改版（PR #21）：绿渐变头部 + 高清广东城市轮播（4 图，4s 自动轮播 + 翻页 + 动画圆点）+ 卡片化入口宫格 + 知识小课堂 / 热门景点横滑 + 高低落差双列瀑布流（按较矮列优先分配 `MASONRY_HEIGHTS`）；精简 `lib/legacy-images.ts` 注册表至在用 key
+- 个人中心改版（PR #22）：渐变 hero 头部（右上角图标换 `Ionicons` 的 `notifications-outline` / `settings-outline`）+ 等级徽章 + 成长值进度条 + 钱包 / 券 / 积分资产卡（上浮压渐变）+ 卡片化「我的订单」「更多服务」+ 退出登录按钮
 
 ## 进行中
 
@@ -63,6 +66,8 @@ W1 收尾 / W2 起步。后端 auth / destinations 模块、Expo 工程、前端
 - NativeWind 只给 RN 核心组件启用 className（已修，PR #12）：`Animated.View`（reanimated）/`SafeAreaView` 等第三方组件的 className 被静默丢弃。约定见 CLAUDE.md §9——动画组件从 `@/components/ui/animated` 取。`cssInterop` 全局副作用注册**不能**让内联 `<Animated.View>` 生效，必须用 `cssInterop` 的**返回值**组件。
 - `<Image>` 用 className 设宽高在 web 失效（已修，PR #12）：react-native-web 用图片原始尺寸的内联 style 覆盖 className。宽高一律走 `style` prop（CLAUDE.md §9）。
 - Legacy 图片迁移曾有错配（已修，PR #12）：迁移时 `tripgo-backend/resources/img/` 覆盖了 `public/img/`，`beijing.png`/`dingwei.png` 被换错。`public/img/` 才是前端图片的唯一来源，已重新同步并核对一致。
+- web 登录崩溃 `setValueWithKeyAsync is not a function`（已修，PR #20）：`auth` store 直接用 `expo-secure-store`，该库不支持 web。修法是新增 `lib/persist-storage.ts` 跨端存储（web=localStorage / 原生=SecureStore）。
+- `/itinerary` 等非首个 tab 的深链接会被拦截跳登录（未修，待跟进）：深链接非首 tab 时，`index.tsx` 的 `<Redirect href="/login">` 作为 Stack 锚点挂载。临时绕过：用底部 tab 栏导航而非深链接。`/home`（首个 tab）深链接正常。
 
 ## 关键决策记录
 
@@ -89,3 +94,6 @@ W1 收尾 / W2 起步。后端 auth / destinations 模块、Expo 工程、前端
 - **2026-05-21** 前端用浏览器实测验收，不只 `tsc`/`expo export`：本次布局错乱 tsc 与 export 全过，问题只在运行时可见。屏级改动应起 dev server 截图核对。
 - **2026-05-21** 启动流程定为 `/` → 首启 hello → login1 → login、完成后 `/` 直达 login：hello（隐私协议）与 login1（启动动画）仅首启各展示一次，用 `stores/onboarding.ts` 的 `done` 标记控制，在 hello 点「同意」时落库。
 - **2026-05-21** 引导标记用跨端存储（web=localStorage，原生=SecureStore）：`expo-secure-store` 不支持 web，而本项目开发/演示走 web，必须保证 web 端也能持久化。注：现有 `auth.ts` 仍纯用 SecureStore，web 端登录态不持久化——后续可同样切到跨端存储。
+- **2026-05-21** `auth` store 切到跨端存储：兑现上一条"后续切跨端"的推迟项——`expo-secure-store` 在 web 直接崩溃（`setValueWithKeyAsync is not a function`），把跨端逻辑统一抽到 `lib/persist-storage.ts`，`auth` 与 `onboarding` 两个 store 共用，web 端登录态自此持久化。
+- **2026-05-21** 三个核心 Tab 接真后端：home / itinerary / mine 全部改为拉后端数据（PR #18-20），后端新增 `banners` / `scenic` / `quiz` 三个只读模块，演示数据走 `prisma/seed.ts`。前端图片字段存"本地资源 key"，由 `lib/legacy-images.ts` 的 `resolveLegacyImage` 解析为打包资源——图片不走网络，避免后端托管大量图。
+- **2026-05-21** 首页 / 个人中心在像素级复刻基础上做改版升级（PR #21/#22）：质量基线"只能比去年更好"，故在 Legacy 结构上重做配色分层、高清城市轮播、高低落差瀑布流、渐变 hero 等——属允许范围内的 RN 增强，不算偏离复刻。

@@ -28,8 +28,20 @@ cd backend
 npm install
 cp .env.example .env          # 填好 JWT_SECRET、DEEPSEEK_API_KEY
 npx prisma migrate dev --name init
+npx prisma db seed            # 灌入演示数据（轮播 / 景点 / 知识课堂 / 文创）
 npm run start:dev             # API http://localhost:3000  文档 /docs
 ```
+
+## 前端：安装与运行
+
+```
+cd frontend
+npm install
+npx expo start                # 按 w 开 web，或在 Android 模拟器运行
+```
+
+> 后端地址走配置（不硬编码 IP），默认指向本机 `:3000`，需先启动后端。
+> 开发 / 演示以 web 与 Android 模拟器为准。
 
 ## 文档体系
 
