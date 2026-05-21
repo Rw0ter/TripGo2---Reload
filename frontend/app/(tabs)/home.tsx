@@ -171,6 +171,7 @@ function QuizCard({
     <Pressable
       onPress={() => comingSoon('知识小课堂')}
       accessibilityRole="button"
+      accessibilityLabel={item.title}
       style={{ width, boxShadow: '0px 4px 12px rgba(148,116,52,0.18)' }}
       className="mr-3 rounded-2xl bg-white p-3.5">
       <View className="flex-row items-center justify-between">
@@ -226,6 +227,7 @@ function BigCard({
     <Pressable
       onPress={() => comingSoon('景点详情')}
       accessibilityRole="button"
+      accessibilityLabel={item.name}
       style={{ width, height: 112 }}
       className="mr-2.5 overflow-hidden rounded-2xl">
       <Image
@@ -260,6 +262,7 @@ function WaterfallCard({
     <Pressable
       onPress={() => comingSoon('景点详情')}
       accessibilityRole="button"
+      accessibilityLabel={item.city}
       style={{ width, boxShadow: '0px 4px 12px rgba(0,0,0,0.12)' }}
       className="mb-4 overflow-hidden rounded-2xl bg-white">
       <View>
