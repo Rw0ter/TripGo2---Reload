@@ -29,3 +29,19 @@ export interface Quiz {
   btn: string;
   sort: number;
 }
+
+export interface StoryAuthor {
+  username: string;
+  avatar: string | null;
+}
+
+export interface Story {
+  id: number;
+  title: string;
+  content: string;
+  images: string[]; // 本地资源 key，见 lib/legacy-images.ts
+  createdAt: string; // ISO 时间串
+  author: StoryAuthor;
+  likeCount: number;
+  commentCount: number;
+}
