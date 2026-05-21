@@ -12,6 +12,7 @@ interface FormScreenProps {
   title: string;
   submitLabel?: string;
   onSubmit: () => void;
+  loading?: boolean;
   children: ReactNode;
 }
 
@@ -20,6 +21,7 @@ export function FormScreen({
   title,
   submitLabel = '提交',
   onSubmit,
+  loading = false,
   children,
 }: FormScreenProps) {
   return (
@@ -34,7 +36,10 @@ export function FormScreen({
           {children}
           <TouchableOpacity
             onPress={onSubmit}
-            className="mt-6 items-center rounded-xl bg-primary py-3.5">
+            disabled={loading}
+            className={`mt-6 items-center rounded-xl bg-primary py-3.5 ${
+              loading ? 'opacity-50' : ''
+            }`}>
             <Text className="text-base font-semibold text-white">
               {submitLabel}
             </Text>
