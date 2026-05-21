@@ -3,11 +3,11 @@
 > 项目的"活文档"。每个 AI 会话**开始时读它、结束时更新它**（用法见 CLAUDE.md 第 12 节）。
 > "已完成 / 进行中 / 下一步"三段要定期剪枝，别让文档越长越没人读。
 
-**最后更新：2026-05-20**
+**最后更新：2026-05-21**
 
 ## 当前阶段
 
-W1 进行中。auth、Expo 工程、「添加」tab 动作菜单 三个 PR 均已合并；sqlite-vec 风险 spike 已验证通过。
+W1 进行中。后端 auth / destinations 模块、Expo 工程、前端 API 层、登录/注册/hello 三屏（Legacy 像素级复刻）、Legacy 图片资源迁移、启动路由、web 预览修复 —— PR #1–#11 均已合并。下一步：按 Legacy 复刻其余主线屏。
 
 ## 已完成
 
@@ -25,6 +25,14 @@ W1 进行中。auth、Expo 工程、「添加」tab 动作菜单 三个 PR 均�
 - Expo 前端工程初始化：create-expo-app 脚手架 + NativeWind v4 + Zustand + 5-tab 底部导航 + 4 个共享组件骨架（StaticPage / List / Detail / Form）
 - 方案 A：「添加」tab 改为创建动作菜单（PR #3，子代理 review + CI 通过）
 - sqlite-vec 风险 spike 通过：扩展加载 + vec0 写入 + top-k 检索全部正常（better-sqlite3 12 + sqlite-vec 0.1.9）
+- 后端 destinations 文创产品模块（PR #5）+ `prisma/seed.ts` 迁移 Legacy 文创数据
+- 前端 API 层（`frontend/api/`，后端地址走配置不硬编码）
+- auth store 接入持久化：Zustand `persist` + `expo-secure-store`（token 落地）
+- 登录 / 注册 / hello 三屏：先功能版（PR #6/#7）后按 Legacy 像素级复刻（PR #9）—— beijing 背景、渐变胶囊按钮、白色圆角输入框、对应图标
+- 复用组件 `components/auth/`：auth-screen-layout / auth-input / auth-button；颜色单一来源 `constants/colors.ts`
+- Legacy 图片资源迁移到 `frontend/assets/legacy/img/`（~460 文件，全打包进 App）；非遗视频改由后端静态服务（`backend/static/`，`/static/` 前缀）
+- 启动路由：`/` 重定向到 hello 引导页（PR #10）；首页 tab 路由从 `index` 改名 `home`
+- web 预览修复（PR #11）：`babel-preset-expo` 加 `unstable_transformImportMeta`，转译 Expo SDK 54 web 产物里的 `import.meta`，消除浏览器白屏
 
 ## 进行中
 
@@ -34,9 +42,10 @@ W1 进行中。auth、Expo 工程、「添加」tab 动作菜单 三个 PR 均�
 
 ## 下一步（按优先级）
 
-1. backend：按 auth 模板推进 destinations / trips / orders 等模块
-2. frontend：按 4 个共享组件铺 62 屏
-3. RAG 模块：基于已验证的 sqlite-vec 方案搭建（后续）
+1. frontend：按 Legacy 像素级复刻主线屏 —— index1 首页、mine1 我的、itinerary 行程 三个核心 Tab 优先
+2. backend：按 auth 模板推进 trips / orders / stories 等模块（配合前端垂直切片）
+3. frontend：协议 / 隐私 / 非遗介绍等长尾屏套共享组件批量铺
+4. RAG 模块：基于已验证的 sqlite-vec 方案搭建（后续）
 
 ## 已知问题 / 坑
 
@@ -45,6 +54,7 @@ W1 进行中。auth、Expo 工程、「添加」tab 动作菜单 三个 PR 均�
 - 旧版 11 屏未接后端、用假数据，重写需新增接口：消息 / 收藏 / 钱包 / 线路 / 景点 / 酒店 / 翻译+TTS（见 `docs/page-registry.md`）。
 - `npm install` 报告 2 个 high severity 漏洞，位于 bcrypt 的旧 node-pre-gyp 依赖链；暂不阻塞，后续可评估改用纯 JS 的 bcryptjs。
 - sqlite-vec 写 vec0 表时 rowid 必须用 `BigInt` 传入：better-sqlite3 会把普通 JS number 绑成浮点，sqlite-vec 拒绝非整数主键（spike 已踩，参考 `backend/scripts/sqlite-vec-spike.js`）。
+- web 端 `import.meta` 报错（已修，PR #11）：Expo SDK 54 web 产物多处用 `import.meta`，浏览器 classic script 不支持 → 整页白屏。修法是 `babel.config.js` 给 `babel-preset-expo` 加 `unstable_transformImportMeta: true`。注意项目 `babel.config.js` 的 `plugins` 不作用于 node_modules，所以 `babel-plugin-transform-import-meta` 那条路走不通。
 
 ## 关键决策记录
 
@@ -63,3 +73,7 @@ W1 进行中。auth、Expo 工程、「添加」tab 动作菜单 三个 PR 均�
 - **2026-05-20** 前端工程放 `frontend/`（非 `app/`）：避免与 Expo Router 自身的 `app/` 路由目录嵌成 `app/app/`。
 - **2026-05-20** auth store 暂不做持久化（token 内存态）：待登录屏接入时用 `expo-secure-store` 加，属简单优先的有意推迟，非未完成。
 - **2026-05-20** sqlite-vec spike 通过：扩展加载 / vec0 写入 / top-k 检索均 OK，RAG 技术路线确认可行，最大风险点解除。
+- **2026-05-21** 前端页面"全部像素级复刻 Legacy"：62 屏的布局 / 样式 / 图标照 Legacy 还原，允许用 React/RN 特性做动画 / 性能 / 响应式优化。质量基线"只能比去年更好不能更差"。
+- **2026-05-21** Legacy 资源迁移：图片全打包进 App（`frontend/assets/legacy/img/`），视频体积大改由后端静态服务。
+- **2026-05-21** 开发与非正规演示均走 web，运行优先级：虚拟机（Android 模拟器）第一、web 第二；项目不会在真机或评委机上跑。故 web 预览必须可用，不能用 Expo Go 兜底。
+- **2026-05-21** auth store 启用持久化：用 `expo-secure-store` 落地 token（兑现 2026-05-20"待登录屏接入时再加"的推迟项）。
