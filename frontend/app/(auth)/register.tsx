@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, Text } from 'react-native';
+import { Pressable, Text } from 'react-native';
 import { FadeInDown } from 'react-native-reanimated';
 
 import { AuthButton } from '@/components/auth/auth-button';
@@ -21,24 +21,27 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  // 行内错误提示——Alert 在 react-native-web 上不渲染，不能用它做反馈。
+  const [error, setError] = useState('');
 
   async function handleRegister() {
     const name = username.trim();
     const mail = email.trim();
+    setError('');
     if (!name || !mail || !password) {
-      Alert.alert('提示', '用户名、邮箱和密码都不能为空');
+      setError('用户名、邮箱和密码都不能为空');
       return;
     }
     if (name.length < 2 || name.length > 20) {
-      Alert.alert('提示', '用户名需 2-20 位');
+      setError('用户名需 2-20 位');
       return;
     }
     if (password.length < 6 || password.length > 72) {
-      Alert.alert('提示', '密码需 6-72 位');
+      setError('密码需 6-72 位');
       return;
     }
     if (!EMAIL_RE.test(mail)) {
-      Alert.alert('提示', '邮箱格式不正确');
+      setError('邮箱格式不正确');
       return;
     }
     setLoading(true);
@@ -47,11 +50,9 @@ export default function RegisterScreen() {
         method: 'POST',
         body: { username: name, email: mail, password },
       });
-      Alert.alert('注册成功', '请用新账号登录', [
-        { text: '去登录', onPress: () => router.replace('/login') },
-      ]);
+      router.replace('/login');
     } catch (e) {
-      Alert.alert('注册失败', e instanceof Error ? e.message : '请重试');
+      setError(e instanceof Error ? e.message : '注册失败，请重试');
     } finally {
       setLoading(false);
     }
@@ -100,6 +101,14 @@ export default function RegisterScreen() {
           textContentType="newPassword"
         />
       </Animated.View>
+
+      {error ? (
+        <Animated.View
+          entering={FadeInDown.duration(300)}
+          className="mt-4 rounded-xl bg-[#C0584B] px-3 py-2">
+          <Text className="text-center text-[13px] text-white">{error}</Text>
+        </Animated.View>
+      ) : null}
 
       <Animated.View
         entering={FadeInDown.delay(460).duration(500)}

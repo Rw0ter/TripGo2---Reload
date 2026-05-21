@@ -67,7 +67,8 @@ W2。底部 5 个 Tab 中 home / itinerary / mine 三屏已复刻、接真后端
 - `<Image>` 用 className 设宽高在 web 失效（已修，PR #12）：react-native-web 用图片原始尺寸的内联 style 覆盖 className。宽高一律走 `style` prop（CLAUDE.md §9）。
 - Legacy 图片迁移曾有错配（已修，PR #12）：迁移时 `tripgo-backend/resources/img/` 覆盖了 `public/img/`，`beijing.png`/`dingwei.png` 被换错。`public/img/` 才是前端图片的唯一来源，已重新同步并核对一致。
 - web 登录崩溃 `setValueWithKeyAsync is not a function`（已修，PR #20）：`auth` store 直接用 `expo-secure-store`，该库不支持 web。修法是新增 `lib/persist-storage.ts` 跨端存储（web=localStorage / 原生=SecureStore）。
-- `/itinerary` 等非首个 tab 的深链接会被拦截跳登录（未修，待跟进）：深链接非首 tab 时，`index.tsx` 的 `<Redirect href="/login">` 作为 Stack 锚点挂载。临时绕过：用底部 tab 栏导航而非深链接。`/home`（首个 tab）深链接正常。
+- 非首个 tab 的深链接会被拦截跳登录（已修，PR #25）：深链接非首 tab 时，`index.tsx` 作为根 Stack 锚点被挂载，其 `<Redirect>` 在 mount 时即触发跳转。修法是改用 `useFocusEffect`——只在 `index` 自身被聚焦时才跳转。
+- `Alert.alert` 在 react-native-web 上不渲染（已修，PR #25）：注册成功后的跳转写在 `Alert` 按钮的 `onPress` 里，web 端 Alert 是 no-op → 注册"走不通"。约定：auth 等关键反馈不能依赖 `Alert`，用行内错误/直接跳转。`comingSoon` 仍用 Alert，web 端同样静默——后续可统一换成跨端轻提示。
 
 ## 关键决策记录
 
