@@ -7,7 +7,7 @@
 
 ## 当前阶段
 
-W2。底部 5 个 Tab 全部复刻并接真后端；社区已打通完整闭环（动态流 + 详情 + 点赞 + 评论 + 发布），home / 个人中心做了改版升级 —— PR #1–#28 均已合并、均浏览器实测通过。下一步：`trip/create` 新建行程表单 + itinerary「添加行程」子页 + 行程后端，之后铺主线详情 / 列表屏。
+W2。底部 5 个 Tab 全部复刻并接真后端；社区已打通完整闭环（动态流 + 详情 + 点赞 + 评论 + 发布），旅行地图屏（在线腾讯 GL JS + 离线兜底）已重写完成，home / 个人中心做了改版升级 —— PR #1–#29 均已合并、均浏览器实测通过。下一步：`trip/create` 新建行程表单 + itinerary「添加行程」子页 + 行程后端，之后铺主线详情 / 列表屏。
 
 ## 已完成
 
@@ -44,6 +44,7 @@ W2。底部 5 个 Tab 全部复刻并接真后端；社区已打通完整闭环�
 - 图标与路由收尾（PR #23/#24/#25）：首页入口图标 + 个人中心更多服务图标做透明底处理（边界 flood-fill 抠图）、智能助手换矢量机器人、个人中心加「我的发布」分区；修复非首 tab 深链接误跳登录（`index.tsx` 改用 `useFocusEffect`）、注册在 web 走不通（`Alert` 在 web 不渲染 → 改行内错误 + 直接跳转）
 - 社区动态流（PR #26）：后端新增 `stories` 只读模块（`GET /stories`，按时间倒序含作者与点赞/评论数）；`seed.ts` 灌入 8 位社区作者（upsert）+ 8 条岭南旅途动态 + 错开的点赞/评论/时间；前端 `community.tsx` 从占位页改为真实动态流——渐变头 + 动态卡（字母头像 / 配图 / 点赞本地乐观切换）
 - 社区功能完整打通（PR #27/#28）：后端 `stories` 模块补全 `GET /stories/:id` 详情、`POST /stories` 发布、`POST /stories/:id/like` 点赞切换、`POST /stories/:id/comments` 评论（写接口走 `JwtAuthGuard`），`seed.ts` 改写为非遗文化传承主题（粤剧/广绣/醒狮/工夫茶/龙舟等）；前端 `community.tsx` 改固定绿色头 + 两栏高低落差瀑布流 + 非遗文案，新增 `app/story/[id].tsx` 故事详情（点赞 / 评论接真）与 `app/post/story.tsx` 发布表单（标题 + 正文 + 精选配图），底部「+」→ 发布故事流程贯通；新增共享 `lib/story-format.ts`
+- 旅行地图屏（PR #29，对应 Legacy `map.html`）：路由 `/map`，itinerary 的「旅游地图」「开始规划」入口接入。**在线**用腾讯地图 JavaScript API GL 封装成跨端 React 组件（`components/map/`，web=iframe srcDoc / 原生=react-native-webview，共用一份内嵌 HTML + postMessage 桥）——定位 / 搜索 / 路线规划全部走 GL SDK 的 `service` 库在客户端直接完成，**彻底去掉旧版后端 WebService 代理**。**离线**用 `components/map/offline-map.tsx`：随 App 内置广东 16 景点 POI（`lib/guangdong-poi.ts`），静态可缩放 / 可平移画布 + 重点景点离线路线规划（haversine 直线距离 + 出行方式时长估算，`lib/geo.ts`）。在线地图加载失败 / 超时 15s 自动切离线，顶栏可手动切换。新增依赖 `react-native-webview@13.15.0`
 
 ## 进行中
 
@@ -61,7 +62,8 @@ W2。底部 5 个 Tab 全部复刻并接真后端；社区已打通完整闭环�
 ## 已知问题 / 坑
 
 - Prisma 的 SQLite 引擎无法加载扩展，sqlite-vec 必须走独立 `better-sqlite3` 连接（CLAUDE.md 第 7 节）。
-- `VR Map` / `map` / `zhifu` / `offline-ai` 计划用 WebView 套旧版页面兜底，方案尚未验证。
+- `VR Map` / `zhifu` / `offline-ai` 计划用 WebView 套旧版页面兜底，方案尚未验证。（`map` 已不走此方案——见下条与「关键决策」）
+- 旅行地图的腾讯 Key：GL JS Key 必然随客户端下发（非机密），走 `EXPO_PUBLIC_TENCENT_MAP_KEY`，缺省回退到 Legacy 演示 Key。该演示 Key 为公开共享 Key，**QPS 配额常被打满**——浏览器实测时地图瓦片正常渲染，但 `service` 库搜索 / 路线会收到腾讯返回的「此key每秒请求量已达到上限」。正式演示需在 lbs.qq.com 申请自己的 Key 并配域名白名单。离线地图不依赖网络与 Key，是稳定可演示的兜底。
 - 旧版 11 屏未接后端、用假数据，重写需新增接口：消息 / 收藏 / 钱包 / 线路 / 景点 / 酒店 / 翻译+TTS（见 `docs/page-registry.md`）。
 - `npm install` 报告 2 个 high severity 漏洞，位于 bcrypt 的旧 node-pre-gyp 依赖链；暂不阻塞，后续可评估改用纯 JS 的 bcryptjs。
 - sqlite-vec 写 vec0 表时 rowid 必须用 `BigInt` 传入：better-sqlite3 会把普通 JS number 绑成浮点，sqlite-vec 拒绝非整数主键（spike 已踩，参考 `backend/scripts/sqlite-vec-spike.js`）。
@@ -103,3 +105,4 @@ W2。底部 5 个 Tab 全部复刻并接真后端；社区已打通完整闭环�
 - **2026-05-21** 首页 / 个人中心在像素级复刻基础上做改版升级（PR #21/#22）：质量基线"只能比去年更好"，故在 Legacy 结构上重做配色分层、高清城市轮播、高低落差瀑布流、渐变 hero 等——属允许范围内的 RN 增强，不算偏离复刻。
 - **2026-05-22** 社区在初版只读流上打通完整闭环（PR #27/#28）：`stories` 补发布 / 详情 / 点赞 / 评论接口，社区列表改两栏瀑布流、绿色头固定、文案统一为非遗文化传承主题。点赞态**不做**服务端按用户回填——`GET /stories` 与 `/stories/:id` 保持公开、不加可选鉴权，详情页 `liked` 初始 false 按切换处理，属简单优先的有意取舍；代价是已点赞动态重进详情时红心不回填，可接受。
 - **2026-05-22** 发布配图用「精选本地素材多选」而非真图上传：项目无图片上传/存储后端，`Story.images` 存本地资源 key，发布表单从一组岭南/非遗素材里多选——保持「图片随 App 打包、不走网络」的既定方案一致。
+- **2026-05-22** 旅行地图（`map.html`）放弃"WebView 套旧版 HTML"兜底方案，改为重写成真正的 React 屏：① 旧版地图是 GL JS（渲染）+ 后端 Express 代理腾讯 WebService（搜索 / 路线 / IP 定位）两套；新版用腾讯 GL JS 的 `service` 附加库（`TMap.service.Search/Driving/Walking/Bicycling/Geocoder`）在客户端直接完成搜索与路线规划，**去掉后端代理**——这就是需求里"web service api 改成 React 原生 API"的落点。② 跨端方案：腾讯无 Expo 兼容的原生 RN 地图 SDK，且项目硬约束"web 预览必须可用"，故把 GL JS 文档封装成一份内嵌 HTML，web 用 `<iframe srcDoc>`、原生用 `react-native-webview`，经 postMessage 桥与 React 层通信（`tencent-map.web.tsx` / `tencent-map.tsx` 按平台后缀解析）。③ 离线方案：随 App 内置广东 POI 数据，自绘可缩放 / 可平移的示意地图 + 本地 haversine 路线估算，作为断网兜底；在线地图 fatal / 超时即自动切入。

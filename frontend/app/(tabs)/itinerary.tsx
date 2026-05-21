@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -146,7 +147,7 @@ export default function ItineraryScreen() {
             ))}
             <View className="absolute bottom-3 left-0 right-0 items-center">
               <Pressable
-                onPress={() => comingSoon('线路规划')}
+                onPress={() => router.push('/map')}
                 accessibilityRole="button"
                 accessibilityLabel="开始规划线路"
                 style={{ boxShadow: '0px 6px 14px rgba(30,190,121,0.35)' }}>
@@ -178,7 +179,7 @@ export default function ItineraryScreen() {
           style={{ boxShadow: '0px 0px 8px rgba(0,0,0,0.08)' }}
           className="mx-3.5 mt-2.5 rounded-2xl border border-[#EEE7D4] bg-white">
           <Pressable
-            onPress={() => comingSoon('旅游地图')}
+            onPress={() => router.push('/map')}
             accessibilityRole="button"
             accessibilityLabel="旅游地图"
             className="flex-row items-center justify-between rounded-2xl bg-white px-3 py-2.5">

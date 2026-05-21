@@ -33,7 +33,7 @@
 ## 高风险屏（W1 必须 spike）
 
 - `VR Map.html` — VR 全景，WebView 套旧版页面。
-- `map.html` — 腾讯地图，WebView 套旧版页面。
+- `map.html` — 腾讯地图，已重写为 React 屏（腾讯 GL JS + service 库 + 离线兜底地图），未走 WebView 套旧版。
 - `zhifu.html` — 支付为前端模拟，无真实网关，保持 mock。
 - `MCP / offline-ai / help` — AI 必须收口到后端代理 + SSE，密钥不上前端。
 
@@ -60,7 +60,7 @@
 | hotTrip.html | 热门景点详情列表 | 详情 | 详情组件 | 新增:景点 | 待开始 | 旧版硬编码 |
 | MCP.html | AI 智能行程规划 | AI | 单独实现 | ai | 待开始 | 须改后端代理 + SSE |
 | offline-ai.html | AI 研学对话 | AI | 单独实现 | ai | 待开始 | 须改后端代理 + SSE |
-| map.html | 腾讯地图 / POI / 路线 | 地图VR | WebView套旧版 | mapsearch | 待开始 | W1 spike |
+| map.html | 旅行地图（定位/搜索/路线/离线） | 地图VR | 单独实现 | 腾讯GL SDK | 完成 | 重写为 React 屏，路由 `/map`；在线腾讯 GL JS + service 库（无后端代理）、离线内置兜底地图 |
 | ksgh.html | 线路规划表单 | 表单 | Form组件 | 无 | 待开始 | 提交跳 xlgh |
 | xlgh.html | 线路规划结果列表 | 列表 | 列表组件 | 新增:线路 | 待开始 | 旧版硬编码 routes |
 | xlgh-xq.html | 线路详情 | 详情 | 详情组件 | 新增:线路 | 待开始 | 旧版数据来自 URL query |
