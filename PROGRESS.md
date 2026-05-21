@@ -3,11 +3,11 @@
 > 项目的"活文档"。每个 AI 会话**开始时读它、结束时更新它**（用法见 CLAUDE.md 第 12 节）。
 > "已完成 / 进行中 / 下一步"三段要定期剪枝，别让文档越长越没人读。
 
-**最后更新：2026-05-21**
+**最后更新：2026-05-22**
 
 ## 当前阶段
 
-W2。底部 5 个 Tab 中 home / itinerary / mine / community 四屏已复刻并接真后端，home 与个人中心做了改版升级 —— PR #1–#26 均已合并、均浏览器实测通过。下一步：`add` 发布流程 + itinerary「添加行程」子页，并按 auth 模板补对应后端模块。
+W2。底部 5 个 Tab 全部复刻并接真后端；社区已打通完整闭环（动态流 + 详情 + 点赞 + 评论 + 发布），home / 个人中心做了改版升级 —— PR #1–#28 均已合并、均浏览器实测通过。下一步：`trip/create` 新建行程表单 + itinerary「添加行程」子页 + 行程后端，之后铺主线详情 / 列表屏。
 
 ## 已完成
 
@@ -43,6 +43,7 @@ W2。底部 5 个 Tab 中 home / itinerary / mine / community 四屏已复刻并
 - 个人中心改版（PR #22）：渐变 hero 头部（右上角图标换 `Ionicons` 的 `notifications-outline` / `settings-outline`）+ 等级徽章 + 成长值进度条 + 钱包 / 券 / 积分资产卡（上浮压渐变）+ 卡片化「我的订单」「更多服务」+ 退出登录按钮
 - 图标与路由收尾（PR #23/#24/#25）：首页入口图标 + 个人中心更多服务图标做透明底处理（边界 flood-fill 抠图）、智能助手换矢量机器人、个人中心加「我的发布」分区；修复非首 tab 深链接误跳登录（`index.tsx` 改用 `useFocusEffect`）、注册在 web 走不通（`Alert` 在 web 不渲染 → 改行内错误 + 直接跳转）
 - 社区动态流（PR #26）：后端新增 `stories` 只读模块（`GET /stories`，按时间倒序含作者与点赞/评论数）；`seed.ts` 灌入 8 位社区作者（upsert）+ 8 条岭南旅途动态 + 错开的点赞/评论/时间；前端 `community.tsx` 从占位页改为真实动态流——渐变头 + 动态卡（字母头像 / 配图 / 点赞本地乐观切换）
+- 社区功能完整打通（PR #27/#28）：后端 `stories` 模块补全 `GET /stories/:id` 详情、`POST /stories` 发布、`POST /stories/:id/like` 点赞切换、`POST /stories/:id/comments` 评论（写接口走 `JwtAuthGuard`），`seed.ts` 改写为非遗文化传承主题（粤剧/广绣/醒狮/工夫茶/龙舟等）；前端 `community.tsx` 改固定绿色头 + 两栏高低落差瀑布流 + 非遗文案，新增 `app/story/[id].tsx` 故事详情（点赞 / 评论接真）与 `app/post/story.tsx` 发布表单（标题 + 正文 + 精选配图），底部「+」→ 发布故事流程贯通；新增共享 `lib/story-format.ts`
 
 ## 进行中
 
@@ -52,8 +53,8 @@ W2。底部 5 个 Tab 中 home / itinerary / mine / community 四屏已复刻并
 
 ## 下一步（按优先级）
 
-1. frontend：核心 Tab 还剩 `add` 发布流程（发故事 / 建行程）；itinerary 的「添加行程」日历子页待补；之后继续主线详情/列表屏
-2. backend：按 auth 模板推进 trips / orders 等模块（配合前端垂直切片）；stories 后续可补「发布动态 / 点赞」写接口
+1. frontend：`trip/create` 新建行程表单（「+」动作菜单的另一半，目前仍是占位）；itinerary 的「添加行程」日历子页
+2. backend：按 auth 模板推进 trips / orders 等模块（配合前端垂直切片）
 3. frontend：协议 / 隐私 / 非遗介绍等长尾屏套共享组件批量铺
 4. RAG 模块：基于已验证的 sqlite-vec 方案搭建（后续）
 
@@ -100,3 +101,5 @@ W2。底部 5 个 Tab 中 home / itinerary / mine / community 四屏已复刻并
 - **2026-05-21** `auth` store 切到跨端存储：兑现上一条"后续切跨端"的推迟项——`expo-secure-store` 在 web 直接崩溃（`setValueWithKeyAsync is not a function`），把跨端逻辑统一抽到 `lib/persist-storage.ts`，`auth` 与 `onboarding` 两个 store 共用，web 端登录态自此持久化。
 - **2026-05-21** 三个核心 Tab 接真后端：home / itinerary / mine 全部改为拉后端数据（PR #18-20），后端新增 `banners` / `scenic` / `quiz` 三个只读模块，演示数据走 `prisma/seed.ts`。前端图片字段存"本地资源 key"，由 `lib/legacy-images.ts` 的 `resolveLegacyImage` 解析为打包资源——图片不走网络，避免后端托管大量图。
 - **2026-05-21** 首页 / 个人中心在像素级复刻基础上做改版升级（PR #21/#22）：质量基线"只能比去年更好"，故在 Legacy 结构上重做配色分层、高清城市轮播、高低落差瀑布流、渐变 hero 等——属允许范围内的 RN 增强，不算偏离复刻。
+- **2026-05-22** 社区在初版只读流上打通完整闭环（PR #27/#28）：`stories` 补发布 / 详情 / 点赞 / 评论接口，社区列表改两栏瀑布流、绿色头固定、文案统一为非遗文化传承主题。点赞态**不做**服务端按用户回填——`GET /stories` 与 `/stories/:id` 保持公开、不加可选鉴权，详情页 `liked` 初始 false 按切换处理，属简单优先的有意取舍；代价是已点赞动态重进详情时红心不回填，可接受。
+- **2026-05-22** 发布配图用「精选本地素材多选」而非真图上传：项目无图片上传/存储后端，`Story.images` 存本地资源 key，发布表单从一组岭南/非遗素材里多选——保持「图片随 App 打包、不走网络」的既定方案一致。

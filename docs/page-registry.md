@@ -3,7 +3,7 @@
 > 这是前端重写的总调度表。用法见 CLAUDE.md 第 12 节。
 > 开工某页前，把"状态"列改成 `进行中(负责人名)`；完成后改 `完成`。
 >
-> **最后更新：2026-05-21**
+> **最后更新：2026-05-22**
 
 ## 汇总
 
@@ -93,9 +93,9 @@
 | zhenjiu.html | 岭南针灸非遗详情 | 静态文本 | StaticPage组件 | 无 | 待开始 | 与 yueju 结构一致 |
 | study.html | 学习非遗聚合页 | 列表 | 列表组件 | 无 | 待开始 | 全静态导航入口 |
 | fyxq.html | 非遗研学工坊详情 | 详情 | 详情组件 | 无 | 待开始 | |
-| community.html | 社区动态流 | 复杂屏 | 单独实现 | stories | 完成 | 动态流已接 `GET /stories`；点赞本地乐观切换，详情/评论/发布待后续 |
-| Trip_Story.html | 社区故事详情 | 详情 | 详情组件 | stories, auth | 待开始 | |
-| add.html | 发布社区动态 | 表单 | Form组件 | stories, auth | 待开始 | 多图上传 |
+| community.html | 社区动态流 | 复杂屏 | 单独实现 | stories | 完成 | 固定绿色头 + 两栏高低落差瀑布流，非遗主题；接 `GET /stories`，点卡进详情 |
+| Trip_Story.html | 社区故事详情 | 详情 | 单独实现 | stories, auth | 完成 | `app/story/[id].tsx`：正文 + 配图 + 点赞 + 评论列表 + 发表评论 |
+| add.html | 发布社区动态 | 表单 | 单独实现 | stories, auth | 完成 | `app/post/story.tsx`：标题 + 正文 + 精选配图多选，提交 `POST /stories` |
 | message.html | 消息中心 | 列表 | 列表组件 | 新增:消息 | 待开始 | |
 | my_star.html | 收藏列表 | 列表 | 列表组件 | 新增:收藏 | 待开始 | |
 | history.html | 研学答题系统 | 复杂屏 | 单独实现 | auth(积分) | 待开始 | 答对加积分 |
