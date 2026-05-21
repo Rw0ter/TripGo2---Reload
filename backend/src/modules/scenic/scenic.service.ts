@@ -5,11 +5,12 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class ScenicService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll(params: { city?: string; hot?: boolean }) {
+  findAll(params: { city?: string; hot?: boolean; section?: string }) {
     return this.prisma.scenic.findMany({
       where: {
         ...(params.city ? { city: params.city } : {}),
         ...(params.hot === undefined ? {} : { hot: params.hot }),
+        ...(params.section ? { section: params.section } : {}),
       },
       orderBy: { sort: 'asc' },
     });

@@ -121,7 +121,8 @@ model Scenic {
   summary String  @default("") // 一句话简介 / 长描述
   tag     String  @default("") // 角标，如「文史口碑馆」
   note    String  @default("") // 附注，如「16 个上榜项」
-  hot     Boolean @default(false) // true=人气榜（首页大横卡）
+  hot     Boolean @default(false) // true=人气榜（首页大横卡），仅 section=home 用
+  section String  @default("home") // home=首页景点 / poi=行程城市精选
   sort    Int     @default(0)
 }
 

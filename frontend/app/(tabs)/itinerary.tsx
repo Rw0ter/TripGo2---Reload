@@ -1,5 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { useCallback, useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   Pressable,
   ScrollView,
@@ -11,7 +13,10 @@ import { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Animated } from '@/components/ui/animated';
+import { apiRequest } from '@/lib/api';
+import type { Scenic } from '@/lib/api-types';
 import { comingSoon } from '@/lib/coming-soon';
+import { resolveLegacyImage } from '@/lib/legacy-images';
 
 const addIcon = require('../../assets/legacy/img/add_xc.png');
 const mapBg = require('../../assets/legacy/img/ditu2.png');
@@ -29,35 +34,60 @@ const BUBBLES: {
   { text: '酒店', pos: { right: 20, bottom: 62 } },
 ];
 
-const POI = [
-  {
-    img: require('../../assets/legacy/img/dghmdq.jpg'),
-    tag: '文史口碑馆',
-    count: '📷 16 个上榜项',
-    title: '东莞虎门大桥！极具艺术性，创造历史…',
-  },
-  {
-    img: require('../../assets/legacy/img/dgypzzbwg.png'),
-    tag: '文史口碑馆',
-    count: '📷 16 个上榜项',
-    title: '东莞照片战争博物馆，观展珍贵文献文物…',
-  },
-  {
-    img: require('../../assets/legacy/img/gysgjslgy.png'),
-    tag: '文史口碑馆',
-    count: '📷 12 个上榜项',
-    title: '隐秘山谷里的古村落，周末走走…',
-  },
-];
+// 城市精选 POI 卡（对应 Legacy .poi-card）。
+function PoiCard({ item, width }: { item: Scenic; width: number }) {
+  return (
+    <Pressable
+      onPress={() => comingSoon('景点详情')}
+      accessibilityRole="button"
+      accessibilityLabel={item.name}
+      style={{ width }}
+      className="mr-3 overflow-hidden rounded-xl bg-white">
+      <View>
+        <Image
+          source={resolveLegacyImage(item.image)}
+          resizeMode="cover"
+          style={{ width, height: 104 }}
+        />
+        <View className="absolute left-0 top-0 rounded-br-xl bg-black/65 px-2 py-1">
+          <Text className="text-[11px] text-white">{item.tag}</Text>
+        </View>
+      </View>
+      <View className="px-2.5 pb-3 pt-2">
+        <Text className="mb-1.5 text-[11px] text-[#6E746F]">{item.note}</Text>
+        <Text
+          numberOfLines={2}
+          className="text-[12px] leading-5 text-[#2A2A2A]">
+          {item.summary}
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
 
 // 行程首页（对应 Legacy itinerary.html）：智能行程入口 + 线路规划地图 +
-// 旅游地图入口 + 城市精选 POI 横滑。
+// 旅游地图入口 + 城市精选 POI（走后端）。
 export default function ItineraryScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const [poi, setPoi] = useState<Scenic[] | null>(null);
+  const [error, setError] = useState(false);
 
   const mapW = width - 48; // 卡片两侧留白：(mx-3.5 14 + p-2.5 10) × 2
   const poiW = Math.round(width * 0.4);
+
+  const load = useCallback(async () => {
+    setError(false);
+    try {
+      setPoi(await apiRequest<Scenic[]>('/scenic?section=poi'));
+    } catch {
+      setError(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   return (
     <View className="flex-1 bg-[#F8F5E6]">
@@ -96,9 +126,7 @@ export default function ItineraryScreen() {
               <Text className="text-[12px] text-[#9B9F9A]">我的线路 &gt;</Text>
             </Pressable>
           </View>
-          <View
-            style={{ height: 170 }}
-            className="overflow-hidden rounded-xl">
+          <View style={{ height: 170 }} className="overflow-hidden rounded-xl">
             <Image
               source={mapBg}
               resizeMode="cover"
@@ -186,38 +214,26 @@ export default function ItineraryScreen() {
                 <Text className="text-[12px] text-[#000000]">攻略 &gt;</Text>
               </Pressable>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {POI.map((p) => (
-                <Pressable
-                  key={p.title}
-                  onPress={() => comingSoon('景点详情')}
-                  accessibilityRole="button"
-                  accessibilityLabel={p.title}
-                  style={{ width: poiW }}
-                  className="mr-3 overflow-hidden rounded-xl bg-white">
-                  <View>
-                    <Image
-                      source={p.img}
-                      resizeMode="cover"
-                      style={{ width: poiW, height: 104 }}
-                    />
-                    <View className="absolute left-0 top-0 rounded-br-xl bg-black/65 px-2 py-1">
-                      <Text className="text-[11px] text-white">{p.tag}</Text>
-                    </View>
-                  </View>
-                  <View className="px-2.5 pb-3 pt-2">
-                    <Text className="mb-1.5 text-[11px] text-[#6E746F]">
-                      {p.count}
-                    </Text>
-                    <Text
-                      numberOfLines={2}
-                      className="text-[12px] leading-5 text-[#2A2A2A]">
-                      {p.title}
-                    </Text>
-                  </View>
-                </Pressable>
-              ))}
-            </ScrollView>
+            {error ? (
+              <Pressable
+                onPress={() => void load()}
+                accessibilityRole="button"
+                className="items-center py-8">
+                <Text className="text-[12px] text-[#9AA09A]">
+                  加载失败，点此重试
+                </Text>
+              </Pressable>
+            ) : !poi ? (
+              <View className="items-center py-10">
+                <ActivityIndicator color="#12D29F" />
+              </View>
+            ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {poi.map((p) => (
+                  <PoiCard key={p.id} item={p} width={poiW} />
+                ))}
+              </ScrollView>
+            )}
           </LinearGradient>
         </Animated.View>
       </ScrollView>

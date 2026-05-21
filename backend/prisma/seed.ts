@@ -53,16 +53,20 @@ const banners = [
   { image: 'top_AD3.png', sort: 2 },
 ];
 
-// 景点。hot=true 进首页人气榜大横卡；hot=false 进首页瀑布流。
+// 景点。section=home：hot=true 进首页人气榜大横卡，hot=false 进首页瀑布流；
+// section=poi：进行程页的城市精选。
 const scenics = [
-  { name: '广州塔', image: 'jd/gz.jpg', city: '广州', summary: '', tag: '', note: '', hot: true, sort: 0 },
-  { name: '欢乐谷', image: 'jd/gzcl.png', city: '广州', summary: '', tag: '', note: '', hot: true, sort: 1 },
-  { name: '长隆海洋王国', image: 'changlong.png', city: '珠海', summary: '', tag: '', note: '', hot: true, sort: 2 },
-  { name: '鼎湖山', image: 'dxs.jpg', city: '肇庆', summary: '', tag: '', note: '', hot: true, sort: 3 },
-  { name: '岭南非遗殿堂', image: 'jd/gdsfwzwhycg.png', city: '潮州', summary: '岭南非遗殿堂，一馆尽览千年匠心与风华', tag: '', note: '', hot: false, sort: 0 },
-  { name: '丹霞山', image: 'jd/dxs.png', city: '丹霞山', summary: '来丹霞山，观“色如渥丹”的赤壁，览“灿若明霞”的奇景', tag: '', note: '', hot: false, sort: 1 },
-  { name: '南粤乡村', image: 'jd/nsthg.png', city: '广州', summary: '着重助力乡村振兴 汇聚岭南文化特色', tag: '', note: '', hot: false, sort: 2 },
-  { name: '岭南印象园', image: 'jd/lnyxy.png', city: '广州', summary: '访岭南印象园，赏古建、品非遗、尝粤味', tag: '', note: '', hot: false, sort: 3 },
+  { name: '广州塔', image: 'jd/gz.jpg', city: '广州', summary: '', tag: '', note: '', hot: true, section: 'home', sort: 0 },
+  { name: '欢乐谷', image: 'jd/gzcl.png', city: '广州', summary: '', tag: '', note: '', hot: true, section: 'home', sort: 1 },
+  { name: '长隆海洋王国', image: 'changlong.png', city: '珠海', summary: '', tag: '', note: '', hot: true, section: 'home', sort: 2 },
+  { name: '鼎湖山', image: 'dxs.jpg', city: '肇庆', summary: '', tag: '', note: '', hot: true, section: 'home', sort: 3 },
+  { name: '岭南非遗殿堂', image: 'jd/gdsfwzwhycg.png', city: '潮州', summary: '岭南非遗殿堂，一馆尽览千年匠心与风华', tag: '', note: '', hot: false, section: 'home', sort: 0 },
+  { name: '丹霞山', image: 'jd/dxs.png', city: '丹霞山', summary: '来丹霞山，观“色如渥丹”的赤壁，览“灿若明霞”的奇景', tag: '', note: '', hot: false, section: 'home', sort: 1 },
+  { name: '南粤乡村', image: 'jd/nsthg.png', city: '广州', summary: '着重助力乡村振兴 汇聚岭南文化特色', tag: '', note: '', hot: false, section: 'home', sort: 2 },
+  { name: '岭南印象园', image: 'jd/lnyxy.png', city: '广州', summary: '访岭南印象园，赏古建、品非遗、尝粤味', tag: '', note: '', hot: false, section: 'home', sort: 3 },
+  { name: '东莞虎门大桥', image: 'dghmdq.jpg', city: '东莞', summary: '东莞虎门大桥！极具艺术性，创造历史…', tag: '文史口碑馆', note: '📷 16 个上榜项', hot: false, section: 'poi', sort: 0 },
+  { name: '东莞战争博物馆', image: 'dgypzzbwg.png', city: '东莞', summary: '东莞照片战争博物馆，观展珍贵文献文物…', tag: '文史口碑馆', note: '📷 16 个上榜项', hot: false, section: 'poi', sort: 1 },
+  { name: '山谷古村落', image: 'gysgjslgy.png', city: '东莞', summary: '隐秘山谷里的古村落，周末走走…', tag: '文史口碑馆', note: '📷 12 个上榜项', hot: false, section: 'poi', sort: 2 },
 ];
 
 // 首页知识小课堂答题卡。

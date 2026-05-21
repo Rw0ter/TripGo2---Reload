@@ -13,4 +13,9 @@ export class QueryScenicDto {
   @Transform(({ value }) => value === 'true')
   @IsBoolean()
   hot?: boolean;
+
+  @ApiPropertyOptional({ description: '板块：home 首页景点 / poi 行程城市精选' })
+  @IsOptional()
+  @IsString()
+  section?: string;
 }
