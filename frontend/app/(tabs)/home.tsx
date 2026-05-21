@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
-  Alert,
   Image,
   type ImageSourcePropType,
   type NativeScrollEvent,
@@ -18,11 +17,9 @@ import { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Animated } from '@/components/ui/animated';
+import { comingSoon } from '@/lib/coming-soon';
 
 // 首页（对应 Legacy index1.html）。目标页面尚未建好，入口先用占位提示。
-function comingSoon(name: string) {
-  Alert.alert('敬请期待', `「${name}」功能正在开发中`);
-}
 
 const AD_IMAGES = [
   require('../../assets/legacy/img/top_AD.png'),
