@@ -60,14 +60,17 @@ function SectionTitle({
       <View className="flex-row items-center">
         <View
           style={{ width: 4, height: 16, borderRadius: 2 }}
-          className="bg-[#386641]"
+          className="bg-primary"
         />
         <Text className="ml-2 text-[15px] font-bold text-[#3a372f]">
           {title}
         </Text>
       </View>
       {onMore ? (
-        <Pressable onPress={onMore}>
+        <Pressable
+          onPress={onMore}
+          accessibilityRole="button"
+          accessibilityLabel={`查看全部${title}`}>
           <Text className="text-[12px] text-[#9C8E7A]">查看全部 ›</Text>
         </Pressable>
       ) : null}
@@ -102,7 +105,7 @@ export default function MineScreen() {
   }
 
   const stats = [
-    { icon: 'wallet-outline' as const, value: `￥${user?.balance ?? 0}`, label: '钱包', color: '#386641' },
+    { icon: 'wallet-outline' as const, value: `￥${(user?.balance ?? 0).toFixed(2)}`, label: '钱包', color: '#386641' },
     { icon: 'pricetags-outline' as const, value: `${user?.couponCount ?? 0}`, label: '优惠券', color: '#E0892F' },
     { icon: 'star-outline' as const, value: `${points}`, label: '积分', color: '#C9A24B' },
   ];
