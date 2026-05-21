@@ -33,7 +33,7 @@ const GRID4 = [
 const ENTRY5 = [
   { icon: require('../../assets/legacy/img/pipa1.png'), label: '文创产品' },
   { icon: require('../../assets/legacy/img/lxdt3.png'), label: '旅行地图' },
-  { icon: require('../../assets/legacy/img/book1.png'), label: '智能助手' },
+  { icon: require('../../assets/legacy/img/zhushou.png'), label: '智能助手' },
   { icon: require('../../assets/legacy/img/people_dance.png'), label: '学习小课堂' },
   { icon: require('../../assets/legacy/img/tieding1.png'), label: '粤语课堂' },
 ];
