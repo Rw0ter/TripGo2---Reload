@@ -263,7 +263,7 @@ export default function HomeScreen() {
     try {
       const [banners, scenic, quizzes] = await Promise.all([
         apiRequest<Banner[]>('/banners'),
-        apiRequest<Scenic[]>('/scenic'),
+        apiRequest<Scenic[]>('/scenic?section=home'),
         apiRequest<Quiz[]>('/quiz'),
       ]);
       setData({

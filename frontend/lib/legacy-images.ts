@@ -17,6 +17,10 @@ export const legacyImages: Record<string, ImageSourcePropType> = {
   'jd/dxs.png': require('../assets/legacy/img/jd/dxs.png'),
   'jd/nsthg.png': require('../assets/legacy/img/jd/nsthg.png'),
   'jd/lnyxy.png': require('../assets/legacy/img/jd/lnyxy.png'),
+  // 行程城市精选 POI
+  'dghmdq.jpg': require('../assets/legacy/img/dghmdq.jpg'),
+  'dgypzzbwg.png': require('../assets/legacy/img/dgypzzbwg.png'),
+  'gysgjslgy.png': require('../assets/legacy/img/gysgjslgy.png'),
 };
 
 // 按 key 取本地图；key 未登记时返回占位图并告警，

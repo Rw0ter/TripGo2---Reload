@@ -15,6 +15,7 @@ export interface Scenic {
   tag: string;
   note: string;
   hot: boolean;
+  section: string; // home 首页景点 / poi 行程城市精选
   sort: number;
 }
 
