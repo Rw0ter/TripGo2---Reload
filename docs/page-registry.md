@@ -93,7 +93,7 @@
 | zhenjiu.html | 岭南针灸非遗详情 | 静态文本 | StaticPage组件 | 无 | 待开始 | 与 yueju 结构一致 |
 | study.html | 学习非遗聚合页 | 列表 | 列表组件 | 无 | 待开始 | 全静态导航入口 |
 | fyxq.html | 非遗研学工坊详情 | 详情 | 详情组件 | 无 | 待开始 | |
-| community.html | 社区动态流 | 复杂屏 | 列表组件 | stories, auth | 待开始 | 列表+点赞+评论 |
+| community.html | 社区动态流 | 复杂屏 | 单独实现 | stories | 完成 | 动态流已接 `GET /stories`；点赞本地乐观切换，详情/评论/发布待后续 |
 | Trip_Story.html | 社区故事详情 | 详情 | 详情组件 | stories, auth | 待开始 | |
 | add.html | 发布社区动态 | 表单 | Form组件 | stories, auth | 待开始 | 多图上传 |
 | message.html | 消息中心 | 列表 | 列表组件 | 新增:消息 | 待开始 | |

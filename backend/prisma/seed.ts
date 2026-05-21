@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -85,6 +86,146 @@ const quizzes = [
   { tag: '人气专场', title: '岭南美食问答', desc: '一边馋一边答，解锁早茶、煲汤与街头小吃冷知识', btn: '马上去答题', sort: 3 },
 ];
 
+// 社区动态作者（演示用户，密码统一 123456）。
+const communityAuthors = [
+  { username: '岭南阿May', email: 'amay@tripgo.demo' },
+  { username: '老广日记', email: 'laoguang@tripgo.demo' },
+  { username: '潮味食客', email: 'chaowei@tripgo.demo' },
+  { username: '山客随行', email: 'shanke@tripgo.demo' },
+  { username: '骑楼下的猫', email: 'qilou@tripgo.demo' },
+  { username: '早茶续命中', email: 'zaocha@tripgo.demo' },
+  { username: '龙舟少年', email: 'longzhou@tripgo.demo' },
+  { username: '醒狮阿强', email: 'xingshi@tripgo.demo' },
+];
+
+// 社区动态。images 为前端本地资源 key；authorIdx 指向 communityAuthors。
+const storyDefs = [
+  {
+    authorIdx: 0,
+    title: '夜爬小蛮腰，把广州的灯都看了一遍',
+    content:
+      '傍晚六点上的广州塔，刚好赶上珠江两岸亮灯。摩天轮转到最高点时整座城像撒了一把碎金，强烈建议挑工作日来，人少风也凉。',
+    images: ['jd/gz.jpg'],
+  },
+  {
+    authorIdx: 3,
+    title: '丹霞山日出，值得四点半起床',
+    content:
+      '凌晨摸黑爬到观日亭，云海在脚下翻。第一缕光打在赤红的山体上那一下，真的会起鸡皮疙瘩。下山记得带件外套。',
+    images: ['jd/dxs.png'],
+  },
+  {
+    authorIdx: 2,
+    title: '潮州牌坊街，一路吃到扶墙走',
+    content:
+      '蚝烙、鸭母捻、腐乳饼、手打牛肉丸……牌坊街从头吃到尾，胃都不够用。最爱巷子里那家凤凰单丛，老板冲茶的手法像表演。',
+    images: ['xc/xc_chaozhou.jpeg'],
+  },
+  {
+    authorIdx: 1,
+    title: '带娃打卡长隆海洋王国',
+    content:
+      '鲸鲨馆里小朋友盯着看了半小时不肯走，花车巡游也很好出片。建议早上开园就冲热门项目，下午留给室内馆避暑。',
+    images: ['changlong.png'],
+  },
+  {
+    authorIdx: 4,
+    title: '江门侨乡，碉楼里藏着一整个时代',
+    content:
+      '赤坎古镇的骑楼一栋挨一栋，斑驳的墙面上还留着当年的招牌。在巷口喝了碗陈皮绿豆沙，慢悠悠晃了一下午。',
+    images: ['xc/xc_jiangmen.jpg'],
+  },
+  {
+    authorIdx: 3,
+    title: '肇庆七星岩，城市边上的山水画',
+    content:
+      '环湖骑行一圈很舒服，岩峰倒映在湖面，随手一拍都是壁纸。鼎湖山负氧离子拉满，适合周末来洗洗肺。',
+    images: ['xc/xc_zhaoqing.jpg', 'xc/xc_qingyuan.jpg'],
+  },
+  {
+    authorIdx: 5,
+    title: '在深圳，逛展和喝早茶并不冲突',
+    content:
+      '上午在湾区看了场设计展，中午拐进老街找了家茶楼，虾饺烧麦凤爪一字排开。新与旧在这座城市贴得很近。',
+    images: ['xc/xc_shenzhen.jpg'],
+  },
+  {
+    authorIdx: 6,
+    title: '梅州围龙屋，客家人的向心力',
+    content:
+      '第一次走进围龙屋，半圆形的屋舍把祠堂围在正中间，一族人住一栋楼。屋里阿婆给我盛了碗腌面，热乎乎的。',
+    images: ['xc/xc_meizhou.jpg'],
+  },
+];
+
+// 评论文案池。
+const commentTexts = [
+  '太想去了，已加入收藏清单！',
+  '图拍得真好看，求机位～',
+  '上周刚去过，确实绝',
+  '广东真的怎么逛都逛不完',
+  '请问大概玩了几天呀？',
+  '这条路线很适合周末',
+];
+
+// 社区动态相关数据（作者 upsert 保留已注册账号，动态/点赞/评论清空重插）。
+async function seedCommunity() {
+  const pw = await bcrypt.hash('123456', 10);
+  const authors: { id: string }[] = [];
+  for (const a of communityAuthors) {
+    const u = await prisma.user.upsert({
+      where: { username: a.username },
+      update: {},
+      create: { username: a.username, email: a.email, password: pw },
+    });
+    authors.push(u);
+  }
+
+  await prisma.story.deleteMany(); // 级联清空 like / comment
+  // 时间错开，动态流的「x 小时/天前」更自然。
+  const hoursAgo = [1, 4, 9, 19, 30, 49, 73, 102];
+  const stories: { id: number }[] = [];
+  for (let i = 0; i < storyDefs.length; i += 1) {
+    const s = storyDefs[i];
+    const row = await prisma.story.create({
+      data: {
+        title: s.title,
+        content: s.content,
+        images: s.images,
+        authorId: authors[s.authorIdx].id,
+        createdAt: new Date(Date.now() - hoursAgo[i] * 3_600_000),
+      },
+    });
+    stories.push(row);
+  }
+
+  // 点赞：每条动态被一部分作者点赞，计数随动态错开（3~7 个）。
+  const likeData: { storyId: number; userId: string }[] = [];
+  stories.forEach((st, j) => {
+    authors.forEach((au, i) => {
+      if ((i * 3 + j * 5) % 8 < 3 + (j % 5)) {
+        likeData.push({ storyId: st.id, userId: au.id });
+      }
+    });
+  });
+  await prisma.like.createMany({ data: likeData });
+
+  // 评论：每条动态 1~3 条。
+  const commentData: { storyId: number; authorId: string; text: string }[] = [];
+  stories.forEach((st, j) => {
+    for (let k = 0; k < 1 + (j % 3); k += 1) {
+      commentData.push({
+        storyId: st.id,
+        authorId: authors[(j + k + 1) % authors.length].id,
+        text: commentTexts[(j * 2 + k) % commentTexts.length],
+      });
+    }
+  });
+  await prisma.comment.createMany({ data: commentData });
+
+  return { authors: authors.length, stories: stories.length };
+}
+
 async function main() {
   // 幂等：清空后重插，便于反复跑
   await prisma.destination.deleteMany();
@@ -95,8 +236,9 @@ async function main() {
   await prisma.scenic.createMany({ data: scenics });
   await prisma.quiz.deleteMany();
   await prisma.quiz.createMany({ data: quizzes });
+  const community = await seedCommunity();
   console.log(
-    `已 seed：文创 ${destinations.length} / 轮播 ${banners.length} / 景点 ${scenics.length} / 课堂 ${quizzes.length}`,
+    `已 seed：文创 ${destinations.length} / 轮播 ${banners.length} / 景点 ${scenics.length} / 课堂 ${quizzes.length} / 社区作者 ${community.authors} / 动态 ${community.stories}`,
   );
 }
 

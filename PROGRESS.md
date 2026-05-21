@@ -7,7 +7,7 @@
 
 ## 当前阶段
 
-W2。底部 5 个 Tab 中 home / itinerary / mine 三屏已复刻、接真后端，home 与个人中心并做了改版升级 —— PR #1–#22 均已合并、均浏览器实测通过。下一步：复刻剩余核心 Tab（community 社区、add 发布），并按 auth 模板补对应后端模块。
+W2。底部 5 个 Tab 中 home / itinerary / mine / community 四屏已复刻并接真后端，home 与个人中心做了改版升级 —— PR #1–#26 均已合并、均浏览器实测通过。下一步：`add` 发布流程 + itinerary「添加行程」子页，并按 auth 模板补对应后端模块。
 
 ## 已完成
 
@@ -41,6 +41,8 @@ W2。底部 5 个 Tab 中 home / itinerary / mine 三屏已复刻、接真后端
 - 三个核心 Tab 接真后端（PR #18/#19/#20）：新增后端只读模块 `banners` / `scenic` / `quiz`；schema 加 `Banner.title/subtitle`、`Scenic.section`、`User.balance/couponCount`；`prisma/seed.ts` 灌入轮播 / 景点 / 知识课堂演示数据；前端 home / itinerary / mine 三屏改为 `apiRequest` 拉真实数据，图片字段存"本地资源 key"由 `lib/legacy-images.ts` 解析。PR #20 顺带修复 web 登录崩溃 —— 新增 `lib/persist-storage.ts` 跨端存储（web=localStorage / 原生=SecureStore），`auth` store 切到此存储
 - 首页改版（PR #21）：绿渐变头部 + 高清广东城市轮播（4 图，4s 自动轮播 + 翻页 + 动画圆点）+ 卡片化入口宫格 + 知识小课堂 / 热门景点横滑 + 高低落差双列瀑布流（按较矮列优先分配 `MASONRY_HEIGHTS`）；精简 `lib/legacy-images.ts` 注册表至在用 key
 - 个人中心改版（PR #22）：渐变 hero 头部（右上角图标换 `Ionicons` 的 `notifications-outline` / `settings-outline`）+ 等级徽章 + 成长值进度条 + 钱包 / 券 / 积分资产卡（上浮压渐变）+ 卡片化「我的订单」「更多服务」+ 退出登录按钮
+- 图标与路由收尾（PR #23/#24/#25）：首页入口图标 + 个人中心更多服务图标做透明底处理（边界 flood-fill 抠图）、智能助手换矢量机器人、个人中心加「我的发布」分区；修复非首 tab 深链接误跳登录（`index.tsx` 改用 `useFocusEffect`）、注册在 web 走不通（`Alert` 在 web 不渲染 → 改行内错误 + 直接跳转）
+- 社区动态流（PR #26）：后端新增 `stories` 只读模块（`GET /stories`，按时间倒序含作者与点赞/评论数）；`seed.ts` 灌入 8 位社区作者（upsert）+ 8 条岭南旅途动态 + 错开的点赞/评论/时间；前端 `community.tsx` 从占位页改为真实动态流——渐变头 + 动态卡（字母头像 / 配图 / 点赞本地乐观切换）
 
 ## 进行中
 
@@ -50,8 +52,8 @@ W2。底部 5 个 Tab 中 home / itinerary / mine 三屏已复刻、接真后端
 
 ## 下一步（按优先级）
 
-1. frontend：核心 Tab 还剩 community 社区 + add 发布；itinerary 的「添加行程」日历子页待补；之后继续主线详情/列表屏
-2. backend：按 auth 模板推进 trips / orders / stories 等模块（配合前端垂直切片）
+1. frontend：核心 Tab 还剩 `add` 发布流程（发故事 / 建行程）；itinerary 的「添加行程」日历子页待补；之后继续主线详情/列表屏
+2. backend：按 auth 模板推进 trips / orders 等模块（配合前端垂直切片）；stories 后续可补「发布动态 / 点赞」写接口
 3. frontend：协议 / 隐私 / 非遗介绍等长尾屏套共享组件批量铺
 4. RAG 模块：基于已验证的 sqlite-vec 方案搭建（后续）
 
