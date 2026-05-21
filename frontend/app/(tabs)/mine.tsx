@@ -33,6 +33,14 @@ const SERVICES = [
   { icon: require('../../assets/legacy/img/mine/yqhy.png'), label: '邀请好友' },
 ];
 
+// 我的发布：对应底部「+」发布的故事 / 动态内容入口。
+const PUBLISH = [
+  { icon: 'document-text-outline' as const, label: '我的故事' },
+  { icon: 'create-outline' as const, label: '草稿箱' },
+  { icon: 'heart-outline' as const, label: '获赞' },
+  { icon: 'chatbubble-ellipses-outline' as const, label: '评论' },
+];
+
 // 区块卡通用包裹。
 function Section({
   children,
@@ -79,7 +87,7 @@ function SectionTitle({
 }
 
 // 个人中心（对应 Legacy mine1.html，整体重设计）：渐变 hero + 资产卡 +
-// 我的订单 + 更多服务 + 退出登录。
+// 我的订单 + 我的发布 + 更多服务 + 退出登录。
 export default function MineScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -251,8 +259,33 @@ export default function MineScreen() {
           </Section>
         </Animated.View>
 
-        {/* 更多服务 */}
+        {/* 我的发布 —— 对应底部「+」发布的故事内容 */}
         <Animated.View entering={FadeInDown.delay(160).duration(420)}>
+          <Section>
+            <SectionTitle
+              title="我的发布"
+              onMore={() => comingSoon('我发布的故事')}
+            />
+            <View className="flex-row justify-around">
+              {PUBLISH.map((it) => (
+                <Pressable
+                  key={it.label}
+                  onPress={() => comingSoon(it.label)}
+                  accessibilityRole="button"
+                  accessibilityLabel={it.label}
+                  className="items-center py-1">
+                  <Ionicons name={it.icon} size={26} color="#386641" />
+                  <Text className="mt-2 text-[12px] text-[#726A57]">
+                    {it.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </Section>
+        </Animated.View>
+
+        {/* 更多服务 */}
+        <Animated.View entering={FadeInDown.delay(240).duration(420)}>
           <Section>
             <SectionTitle title="更多服务" />
             <View className="flex-row flex-wrap">
@@ -266,7 +299,7 @@ export default function MineScreen() {
                   <Image
                     source={it.icon}
                     resizeMode="contain"
-                    style={{ width: 36, height: 36 }}
+                    style={{ width: 46, height: 46 }}
                   />
                   <Text className="mt-1.5 text-[12px] text-[#6F6756]">
                     {it.label}
@@ -279,7 +312,7 @@ export default function MineScreen() {
 
         {/* 退出登录 */}
         {user ? (
-          <Animated.View entering={FadeInDown.delay(240).duration(420)}>
+          <Animated.View entering={FadeInDown.delay(320).duration(420)}>
             <Pressable
               onPress={logout}
               accessibilityRole="button"
