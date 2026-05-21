@@ -7,7 +7,7 @@
 
 ## 当前阶段
 
-W1 进行中。后端 auth / destinations 模块、Expo 工程、前端 API 层、首启引导流程（hello + login1 + 登录页，均实测通过）、Legacy 图片资源迁移、web 预览修复 —— PR #1–#13 均已合并。下一步：按 Legacy 复刻其余主线屏（index1 首页等）。
+W1 收尾 / W2 起步。后端 auth / destinations 模块、Expo 工程、前端 API 层、首启引导流程（hello + login1 + 登录页）、index1 首页（核心 Tab）—— PR #1–#14 均已合并，均浏览器实测通过。下一步：按 Legacy 复刻其余核心 Tab（mine1 我的、itinerary 行程）。
 
 ## 已完成
 
@@ -35,6 +35,7 @@ W1 进行中。后端 auth / destinations 模块、Expo 工程、前端 API 层�
 - web 预览修复（PR #11）：`babel-preset-expo` 加 `unstable_transformImportMeta`，转译 Expo SDK 54 web 产物里的 `import.meta`，消除浏览器白屏
 - auth 三屏 web 布局修复（PR #12）：NativeWind 不给非核心组件启用 className —— 新增 `components/ui/animated.ts`（cssInterop 包装 reanimated 的 Animated.*），屏幕改从此处取 `Animated`；`<Image>` 尺寸改走 `style` prop；修正被错误迁移覆盖的 `beijing.png`/`dingwei.png`。三屏已在浏览器实测渲染正确
 - 首启引导流程（PR #13）：① 登录页问候语柔光 + 去输入框聚焦描边；② hello 隐私协议页卡片式重构 + 滚动到底才可同意；③ 新增 `app/login1.tsx` 复刻 Legacy 启动动画；④ 新增 `stores/onboarding.ts` 跨端持久化引导标记，`/` 引导感知路由 —— 首启 hello→login1→login，完成后直达 login，hello/login1 仅首启各展示一次。全流程浏览器实测通过
+- index1 首页复刻（PR #14）：`app/(tabs)/home.tsx` 按 Legacy 还原——分段控件 + 搜索 + 轮播 + 四宫格/五入口 + 知识小课堂答题卡 + 景点大横卡 + 景点瀑布流，区块带进场动画。入口目标页未建，先「敬请期待」占位
 
 ## 进行中
 
