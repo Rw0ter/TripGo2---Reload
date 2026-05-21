@@ -76,6 +76,7 @@ export default function HelloScreen() {
 
   const boxHeight = Math.min(260, Math.round(height * 0.34));
 
+  // 滚动到底部即解锁「同意」；解锁后保持，不再回退。
   function handleScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
     if (contentOffset.y + layoutMeasurement.height >= contentSize.height - 16) {

@@ -14,19 +14,13 @@ import {
 } from 'react-native-reanimated';
 
 import { Animated } from '@/components/ui/animated';
+import { SPLASH_BG, SPLASH_GRADIENT } from '@/constants/colors';
 
 const beijing = require('../assets/legacy/img/beijing.png');
 
 // 停留时长后自动进入登录页（对应 Legacy login1.html 的 setTimeout）。
 const SPLASH_MS = 4200;
 const PARTICLE_COUNT = 18;
-const FLOW_COLORS = [
-  '#003d2b',
-  '#017a54',
-  '#003d2b',
-  '#017a54',
-  '#003d2b',
-] as const;
 
 // 用 index 派生稳定伪随机，避免重渲染时粒子跳变。
 function seeded(seed: number) {
@@ -187,7 +181,7 @@ export default function Login1Screen() {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#003d2b' }}>
+    <View style={{ flex: 1, backgroundColor: SPLASH_BG }}>
       {/* 流动绿色渐变背景 */}
       <Animated.View
         style={[
@@ -195,7 +189,7 @@ export default function Login1Screen() {
           flowStyle,
         ]}>
         <LinearGradient
-          colors={FLOW_COLORS}
+          colors={SPLASH_GRADIENT}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={{ flex: 1 }}
