@@ -1,0 +1,29 @@
+-- CreateTable
+CREATE TABLE "Banner" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "image" TEXT NOT NULL,
+    "sort" INTEGER NOT NULL DEFAULT 0
+);
+
+-- CreateTable
+CREATE TABLE "Scenic" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "name" TEXT NOT NULL,
+    "image" TEXT NOT NULL,
+    "city" TEXT NOT NULL DEFAULT '',
+    "summary" TEXT NOT NULL DEFAULT '',
+    "tag" TEXT NOT NULL DEFAULT '',
+    "note" TEXT NOT NULL DEFAULT '',
+    "hot" BOOLEAN NOT NULL DEFAULT false,
+    "sort" INTEGER NOT NULL DEFAULT 0
+);
+
+-- CreateTable
+CREATE TABLE "Quiz" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "tag" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "desc" TEXT NOT NULL,
+    "btn" TEXT NOT NULL,
+    "sort" INTEGER NOT NULL DEFAULT 0
+);
