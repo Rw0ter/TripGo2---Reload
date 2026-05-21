@@ -181,7 +181,10 @@ export default function Login1Screen() {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: SPLASH_BG }}>
+    // overflow:hidden —— 流动渐变层是 2 倍视窗宽，必须裁剪，否则 web 端
+    // 整页被撑出横向滚动条、超出视窗。
+    <View
+      style={{ flex: 1, overflow: 'hidden', backgroundColor: SPLASH_BG }}>
       {/* 流动绿色渐变背景 */}
       <Animated.View
         style={[
