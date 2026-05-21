@@ -32,7 +32,7 @@ export default function LoginScreen() {
         { method: 'POST', body: { username: name, password } },
       );
       setAuth(data.token, data.user);
-      router.replace('/');
+      router.replace('/home');
     } catch (e) {
       Alert.alert('登录失败', e instanceof Error ? e.message : '请重试');
     } finally {
