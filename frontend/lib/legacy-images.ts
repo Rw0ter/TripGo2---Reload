@@ -21,6 +21,19 @@ export const legacyImages: Record<string, ImageSourcePropType> = {
   'dghmdq.jpg': require('../assets/legacy/img/dghmdq.jpg'),
   'dgypzzbwg.png': require('../assets/legacy/img/dgypzzbwg.png'),
   'gysgjslgy.png': require('../assets/legacy/img/gysgjslgy.png'),
+  // 广东城市大图（首页轮播 + 城市精选瀑布流）
+  'xc/xc_guangzhou.jpg': require('../assets/legacy/img/xc/xc_guangzhou.jpg'),
+  'xc/xc_shenzhen.jpg': require('../assets/legacy/img/xc/xc_shenzhen.jpg'),
+  'xc/xc_zhuhai.jpg': require('../assets/legacy/img/xc/xc_zhuhai.jpg'),
+  'xc/xc_chaozhou.jpeg': require('../assets/legacy/img/xc/xc_chaozhou.jpeg'),
+  'xc/xc_dongguan.jpg': require('../assets/legacy/img/xc/xc_dongguan.jpg'),
+  'xc/xc_huizhou.jpg': require('../assets/legacy/img/xc/xc_huizhou.jpg'),
+  'xc/xc_jiangmen.jpg': require('../assets/legacy/img/xc/xc_jiangmen.jpg'),
+  'xc/xc_heyuan.png': require('../assets/legacy/img/xc/xc_heyuan.png'),
+  'xc/xc_qingyuan.jpg': require('../assets/legacy/img/xc/xc_qingyuan.jpg'),
+  'xc/xc_zhaoqing.jpg': require('../assets/legacy/img/xc/xc_zhaoqing.jpg'),
+  'xc/xc_jieyang.jpeg': require('../assets/legacy/img/xc/xc_jieyang.jpeg'),
+  'xc/xc_meizhou.jpg': require('../assets/legacy/img/xc/xc_meizhou.jpg'),
 };
 
 // 按 key 取本地图；key 未登记时返回占位图并告警，

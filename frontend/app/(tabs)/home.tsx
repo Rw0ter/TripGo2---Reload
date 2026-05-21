@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -9,7 +9,6 @@ import {
   type NativeSyntheticEvent,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   useWindowDimensions,
   View,
@@ -34,26 +33,29 @@ const GRID4 = [
 const ENTRY5 = [
   { icon: require('../../assets/legacy/img/pipa1.png'), label: '文创产品' },
   { icon: require('../../assets/legacy/img/lxdt3.png'), label: '旅行地图' },
-  { icon: require('../../assets/legacy/img/book1.png'), label: '智能旅行助手' },
+  { icon: require('../../assets/legacy/img/book1.png'), label: '智能助手' },
   { icon: require('../../assets/legacy/img/people_dance.png'), label: '学习小课堂' },
   { icon: require('../../assets/legacy/img/tieding1.png'), label: '粤语课堂' },
 ];
 
 const quizIcon = require('../../assets/legacy/img/count.png');
 
-// 顶部轮播图（对应 Legacy .top_AD），每 3 秒自动切换，可手动滑动。
+// 瀑布流卡片高度池——交错取值制造「高低落差」。
+const MASONRY_HEIGHTS = [212, 166, 196, 236, 172, 204, 184, 224];
+
+// 顶部轮播图：高清广东城市大图 + 名称浮层，每 4 秒自动切换、可手动滑动。
 function Carousel({
-  bannerKeys,
+  banners,
   pageWidth,
 }: {
-  bannerKeys: string[];
+  banners: Banner[];
   pageWidth: number;
 }) {
   const scrollRef = useRef<ScrollView>(null);
   const [index, setIndex] = useState(0);
   const indexRef = useRef(0);
-  const imgWidth = pageWidth - 32;
-  const count = bannerKeys.length;
+  const imgWidth = pageWidth - 28;
+  const count = banners.length;
 
   useEffect(() => {
     if (count < 2) return;
@@ -62,7 +64,7 @@ function Carousel({
       indexRef.current = next;
       setIndex(next);
       scrollRef.current?.scrollTo({ x: next * pageWidth, animated: true });
-    }, 3000);
+    }, 4000);
     return () => clearInterval(timer);
   }, [pageWidth, count]);
 
@@ -80,23 +82,49 @@ function Carousel({
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={onMomentumEnd}>
-        {bannerKeys.map((key, i) => (
-          <View key={i} style={{ width: pageWidth }} className="items-center">
-            <Image
-              source={resolveLegacyImage(key)}
-              resizeMode="cover"
-              style={{ width: imgWidth, height: 162, borderRadius: 14 }}
-            />
+        {banners.map((b) => (
+          <View key={b.id} style={{ width: pageWidth }} className="items-center">
+            <View
+              style={{ width: imgWidth, height: 196, boxShadow: '0px 8px 20px rgba(0,0,0,0.28)' }}
+              className="overflow-hidden rounded-3xl">
+              <Image
+                source={resolveLegacyImage(b.image)}
+                resizeMode="cover"
+                style={{ width: imgWidth, height: 196 }}
+              />
+              <LinearGradient
+                colors={['transparent', 'rgba(0,0,0,0.66)']}
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 110,
+                }}
+              />
+              <View className="absolute bottom-3.5 left-4 right-4">
+                <Text className="text-xl font-extrabold text-white">
+                  {b.title}
+                </Text>
+                <Text className="mt-0.5 text-[12px] text-white/85">
+                  {b.subtitle}
+                </Text>
+              </View>
+            </View>
           </View>
         ))}
       </ScrollView>
-      <View className="absolute bottom-2.5 left-0 right-0 flex-row justify-center gap-1.5">
-        {bannerKeys.map((_, i) => (
+      <View className="mt-2.5 flex-row justify-center gap-1.5">
+        {banners.map((b, i) => (
           <View
-            key={i}
-            className={`h-2 w-2 rounded-full ${
-              i === index ? 'bg-white' : 'bg-white/50'
-            }`}
+            key={b.id}
+            style={{
+              width: i === index ? 16 : 6,
+              height: 6,
+              borderRadius: 3,
+              backgroundColor:
+                i === index ? '#ffffff' : 'rgba(255,255,255,0.45)',
+            }}
           />
         ))}
       </View>
@@ -104,7 +132,40 @@ function Carousel({
   );
 }
 
-// 知识小课堂答题卡（对应 Legacy .list_4）。
+// 区块标题：彩条 + 标题 + 可选「更多」。
+function SectionHeader({
+  title,
+  subtitle,
+  onMore,
+}: {
+  title: string;
+  subtitle?: string;
+  onMore?: () => void;
+}) {
+  return (
+    <View className="mb-2.5 flex-row items-end justify-between px-4">
+      <View className="flex-row items-center">
+        <View
+          style={{ width: 4, height: 17, borderRadius: 2 }}
+          className="bg-[#386641]"
+        />
+        <Text className="ml-2 text-[16px] font-extrabold text-[#2f3a30]">
+          {title}
+        </Text>
+        {subtitle ? (
+          <Text className="ml-2 text-[11px] text-[#9a9382]">{subtitle}</Text>
+        ) : null}
+      </View>
+      {onMore ? (
+        <Pressable onPress={onMore}>
+          <Text className="text-[12px] text-[#9a9382]">更多 ›</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+// 知识小课堂答题卡。
 function QuizCard({ item, width }: { item: Quiz; width: number }) {
   return (
     <Pressable
@@ -154,65 +215,80 @@ function QuizCard({ item, width }: { item: Quiz; width: number }) {
   );
 }
 
-// 景点大横卡（对应 Legacy .list_5）。
-function BigCard({ item, width }: { item: Scenic; width: number }) {
+// 热门景点大横卡。
+function HotCard({ item, width }: { item: Scenic; width: number }) {
   return (
     <Pressable
       onPress={() => comingSoon('景点详情')}
       accessibilityRole="button"
       accessibilityLabel={item.name}
-      style={{ width, height: 112 }}
-      className="mr-2.5 overflow-hidden rounded-2xl">
+      style={{ width, height: 130 }}
+      className="mr-3 overflow-hidden rounded-2xl">
       <Image
         source={resolveLegacyImage(item.image)}
         resizeMode="cover"
-        style={{ width, height: 112 }}
+        style={{ width, height: 130 }}
       />
       <LinearGradient
-        colors={['#AA9465', 'rgba(170,148,101,0)']}
-        locations={[0.35, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={StyleSheet.absoluteFill}
+        colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.72)']}
+        style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: 0 }}
       />
-      <View className="absolute bottom-2.5 left-3">
-        <Text className="text-base font-semibold text-white">{item.name}</Text>
-        <Text className="mt-0.5 text-[11px] text-white/90">广东景点·人气榜</Text>
+      <View className="absolute right-2.5 top-2.5 rounded-full bg-[#f97316] px-2 py-0.5">
+        <Text className="text-[10px] font-bold text-white">热门</Text>
+      </View>
+      <View className="absolute bottom-2.5 left-3 right-3">
+        <Text className="text-base font-bold text-white">{item.name}</Text>
+        <Text numberOfLines={1} className="mt-0.5 text-[11px] text-white/85">
+          {item.summary}
+        </Text>
       </View>
     </Pressable>
   );
 }
 
-// 景点瀑布流卡（对应 Legacy .list_6）。
-function WaterfallCard({ item, width }: { item: Scenic; width: number }) {
+// 城市精选瀑布流卡：整图铺底 + 底部渐隐浮层，高度交错。
+function MasonryCard({
+  item,
+  width,
+  height,
+}: {
+  item: Scenic;
+  width: number;
+  height: number;
+}) {
   return (
     <Pressable
-      onPress={() => comingSoon('景点详情')}
+      onPress={() => comingSoon(`${item.name}城市精选`)}
       accessibilityRole="button"
-      accessibilityLabel={item.city}
-      style={{ width, boxShadow: '0px 4px 12px rgba(0,0,0,0.12)' }}
-      className="mb-4 overflow-hidden rounded-2xl bg-white">
-      <View>
-        <Image
-          source={resolveLegacyImage(item.image)}
-          resizeMode="cover"
-          style={{ width, height: 158 }}
-        />
-        <View className="absolute bottom-2 left-2 flex-row items-center rounded-2xl bg-black/40 px-2 py-1">
-          <Ionicons name="location" size={12} color="#ffffff" />
-          <Text className="ml-1 text-[11px] font-semibold text-white">
-            {item.city}
-          </Text>
+      accessibilityLabel={item.name}
+      style={{ width, height, boxShadow: '0px 5px 14px rgba(0,0,0,0.16)' }}
+      className="mb-3 overflow-hidden rounded-2xl">
+      <Image
+        source={resolveLegacyImage(item.image)}
+        resizeMode="cover"
+        style={{ width, height }}
+      />
+      <LinearGradient
+        colors={['transparent', 'rgba(0,0,0,0.72)']}
+        style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '66%' }}
+      />
+      <View className="absolute left-0 right-0 top-0 flex-row justify-start p-2">
+        <View className="rounded-md bg-white/22 px-1.5 py-0.5">
+          <Text className="text-[10px] font-medium text-white">广东 · 城市</Text>
         </View>
       </View>
-      <Text className="px-2.5 py-2.5 text-[13px] leading-5 text-[#333]">
-        {item.summary}
-      </Text>
+      <View className="absolute bottom-2.5 left-3 right-3">
+        <Text className="text-[15px] font-extrabold text-white">
+          {item.name}
+        </Text>
+        <Text numberOfLines={2} className="mt-0.5 text-[11px] leading-4 text-white/82">
+          {item.summary}
+        </Text>
+      </View>
     </Pressable>
   );
 }
 
-// 四宫格 / 五项入口的单个图标入口。
 function EntryItem({
   icon,
   label,
@@ -229,25 +305,26 @@ function EntryItem({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
-      className="items-center py-2">
+      className="items-center py-1.5">
       <Image
         source={icon}
         resizeMode="contain"
         style={{ width: size, height: size }}
       />
-      <Text className="mt-1.5 text-[12px] text-[#333]">{label}</Text>
+      <Text className="mt-1.5 text-[12px] text-[#4a4a42]">{label}</Text>
     </Pressable>
   );
 }
 
 interface HomeData {
   banners: Banner[];
-  big: Scenic[];
-  waterfall: Scenic[];
+  hot: Scenic[];
+  masonry: Scenic[];
   quizzes: Quiz[];
 }
 
-// 首页（对应 Legacy index1.html）：轮播 / 景点 / 知识小课堂数据走后端。
+// 首页（对应 Legacy index1.html）：高清城市轮播 + 入口宫格 + 知识小课堂 +
+// 热门景点 + 城市精选高低落差瀑布流，内容均走后端。
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -255,8 +332,8 @@ export default function HomeScreen() {
   const [error, setError] = useState(false);
 
   const quizCardW = Math.round(width * 0.66);
-  const bigCardW = Math.round(width * 0.78);
-  const waterfallW = Math.floor((width - 32 - 12) / 2);
+  const hotCardW = Math.round(width * 0.62);
+  const colW = Math.floor((width - 32 - 12) / 2);
 
   const load = useCallback(async () => {
     setError(false);
@@ -268,8 +345,8 @@ export default function HomeScreen() {
       ]);
       setData({
         banners,
-        big: scenic.filter((s) => s.hot),
-        waterfall: scenic.filter((s) => !s.hot),
+        hot: scenic.filter((s) => s.hot),
+        masonry: scenic.filter((s) => !s.hot),
         quizzes,
       });
     } catch {
@@ -281,61 +358,94 @@ export default function HomeScreen() {
     void load();
   }, [load]);
 
+  // 把瀑布流条目按「较矮列优先」分到两列，制造交错。
+  const columns = useMemo(() => {
+    const colA: { item: Scenic; h: number }[] = [];
+    const colB: { item: Scenic; h: number }[] = [];
+    let hA = 0;
+    let hB = 0;
+    (data?.masonry ?? []).forEach((item, i) => {
+      const h = MASONRY_HEIGHTS[i % MASONRY_HEIGHTS.length];
+      if (hA <= hB) {
+        colA.push({ item, h });
+        hA += h;
+      } else {
+        colB.push({ item, h });
+        hB += h;
+      }
+    });
+    return { colA, colB };
+  }, [data?.masonry]);
+
   return (
-    <View className="flex-1 bg-[#476647]">
+    <View className="flex-1 bg-[#F4F1E4]">
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 24 }}>
-        {/* 顶部：分段控件 + 搜索（绿色背景） */}
-        <Animated.View
-          entering={FadeInDown.duration(450)}
-          style={{ paddingTop: insets.top + 6 }}
-          className="bg-[#476647] px-4 pb-3">
-          <View className="flex-row items-end justify-center gap-12">
-            <Text className="text-lg font-bold text-white">发现</Text>
-            <Pressable onPress={() => comingSoon('非遗文化')}>
-              <Text className="pb-0.5 text-sm font-bold text-[#D8D0BE]">
-                非遗
+        contentContainerStyle={{ paddingBottom: 28 }}>
+        {/* 绿色头部：分段控件 + 搜索 + 轮播 */}
+        <LinearGradient colors={['#3E6B4F', '#5C8A6D']}>
+          <Animated.View
+            entering={FadeInDown.duration(450)}
+            style={{ paddingTop: insets.top + 6 }}
+            className="px-4 pb-2">
+            <View className="flex-row items-end justify-center gap-12">
+              <Text className="text-lg font-bold text-white">发现</Text>
+              <Pressable onPress={() => comingSoon('非遗文化')}>
+                <Text className="pb-0.5 text-sm font-bold text-white/65">
+                  非遗
+                </Text>
+              </Pressable>
+            </View>
+            <Pressable
+              onPress={() => comingSoon('搜索')}
+              accessibilityRole="search"
+              style={{ boxShadow: '0px 2px 8px rgba(0,0,0,0.12)' }}
+              className="mt-3 h-11 flex-row items-center rounded-full bg-white px-4">
+              <Ionicons name="search" size={16} color="#5C8A6D" />
+              <Text className="ml-2 text-sm text-[#9aa39b]">
+                搜索目的地 / 景点 / 酒店
               </Text>
             </Pressable>
-          </View>
-          <Pressable
-            onPress={() => comingSoon('搜索')}
-            accessibilityRole="search"
-            className="mt-3 h-11 flex-row items-center rounded-full bg-white/30 px-4">
-            <Ionicons name="search" size={16} color="#ffffff" />
-            <Text className="ml-2 text-sm text-white/90">
-              搜索目的地/景点/酒店
-            </Text>
-          </Pressable>
-        </Animated.View>
+          </Animated.View>
 
-        {/* 轮播图 */}
-        <View className="bg-[#476647] pb-4">
-          {data ? (
-            <Animated.View entering={FadeInDown.duration(450)}>
-              <Carousel
-                bannerKeys={data.banners.map((b) => b.image)}
-                pageWidth={width}
+          <Animated.View
+            entering={FadeInDown.delay(90).duration(450)}
+            className="pb-7 pt-1">
+            {data ? (
+              <Carousel banners={data.banners} pageWidth={width} />
+            ) : (
+              <View
+                style={{ height: 196 }}
+                className="mx-3.5 rounded-3xl bg-white/12"
               />
-            </Animated.View>
-          ) : (
-            <View
-              style={{ height: 162 }}
-              className="mx-4 rounded-2xl bg-white/10"
-            />
-          )}
-        </View>
+            )}
+          </Animated.View>
+        </LinearGradient>
 
         {/* 主体 */}
-        <LinearGradient
-          colors={['#CCF6E9', '#D7F9EE', '#E3E2F5']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}>
-          <View className="rounded-t-[18px] bg-[#F8F5E6] pb-2 pt-4">
-            {/* 四宫格 */}
-            <View className="flex-row justify-around px-3">
+        <View className="-mt-4 rounded-t-[22px] bg-[#F4F1E4] pt-5">
+          {/* 入口宫格 */}
+          <Animated.View
+            entering={FadeInDown.delay(160).duration(450)}
+            style={{ boxShadow: '0px 4px 14px rgba(0,0,0,0.06)' }}
+            className="mx-4 rounded-2xl bg-white pb-2 pt-3">
+            <View className="flex-row justify-around px-2">
               {GRID4.map((it) => (
+                <EntryItem
+                  key={it.label}
+                  icon={it.icon}
+                  label={it.label}
+                  size={40}
+                  onPress={() => comingSoon(it.label)}
+                />
+              ))}
+            </View>
+            <View
+              style={{ height: 1 }}
+              className="mx-3 my-1.5 bg-[#EFEBDC]"
+            />
+            <View className="flex-row justify-around px-1">
+              {ENTRY5.map((it) => (
                 <EntryItem
                   key={it.label}
                   icon={it.icon}
@@ -345,85 +455,89 @@ export default function HomeScreen() {
                 />
               ))}
             </View>
+          </Animated.View>
 
-            {/* 五项入口 */}
-            <View className="mt-1 flex-row justify-around px-2">
-              {ENTRY5.map((it) => (
-                <EntryItem
-                  key={it.label}
-                  icon={it.icon}
-                  label={it.label}
-                  size={46}
-                  onPress={() => comingSoon(it.label)}
-                />
-              ))}
+          {error ? (
+            <Pressable
+              onPress={() => void load()}
+              accessibilityRole="button"
+              className="items-center py-14">
+              <Ionicons name="cloud-offline-outline" size={32} color="#9C8E7A" />
+              <Text className="mt-2 text-sm text-[#9C8E7A]">
+                内容加载失败，点此重试
+              </Text>
+            </Pressable>
+          ) : !data ? (
+            <View className="items-center py-16">
+              <ActivityIndicator color="#386641" />
             </View>
-
-            {error ? (
-              <Pressable
-                onPress={() => void load()}
-                accessibilityRole="button"
-                className="items-center py-14">
-                <Ionicons
-                  name="cloud-offline-outline"
-                  size={32}
-                  color="#9C8E7A"
+          ) : (
+            <>
+              {/* 知识小课堂 */}
+              <Animated.View
+                entering={FadeInDown.delay(220).duration(450)}
+                className="mt-5">
+                <SectionHeader
+                  title="知识小课堂"
+                  subtitle="答题赢积分"
+                  onMore={() => comingSoon('知识小课堂')}
                 />
-                <Text className="mt-2 text-sm text-[#9C8E7A]">
-                  内容加载失败，点此重试
-                </Text>
-              </Pressable>
-            ) : !data ? (
-              <View className="items-center py-16">
-                <ActivityIndicator color="#386641" />
-              </View>
-            ) : (
-              <>
-                {/* 知识小课堂 */}
-                <Animated.View
-                  entering={FadeInDown.duration(450)}
-                  className="mx-3 mt-3 rounded-2xl bg-[#EEE6C1] p-3">
-                  <View className="mb-2 flex-row items-center justify-between">
-                    <Text className="text-sm font-bold text-[#9B824A]">
-                      知识小课堂
-                    </Text>
-                    <Pressable onPress={() => comingSoon('知识小课堂')}>
-                      <Text className="text-sm text-[#CAAF75]">更多</Text>
-                    </Pressable>
-                  </View>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    {data.quizzes.map((it) => (
-                      <QuizCard key={it.id} item={it} width={quizCardW} />
-                    ))}
-                  </ScrollView>
-                </Animated.View>
-
-                {/* 景点大横卡 */}
-                <Animated.View
-                  entering={FadeInDown.delay(80).duration(450)}
-                  className="mt-4">
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ paddingHorizontal: 12 }}>
-                    {data.big.map((it) => (
-                      <BigCard key={it.id} item={it} width={bigCardW} />
-                    ))}
-                  </ScrollView>
-                </Animated.View>
-
-                {/* 景点瀑布流 */}
-                <Animated.View
-                  entering={FadeInDown.delay(160).duration(450)}
-                  className="mt-4 flex-row flex-wrap justify-between px-4">
-                  {data.waterfall.map((it) => (
-                    <WaterfallCard key={it.id} item={it} width={waterfallW} />
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingHorizontal: 16 }}>
+                  {data.quizzes.map((it) => (
+                    <QuizCard key={it.id} item={it} width={quizCardW} />
                   ))}
-                </Animated.View>
-              </>
-            )}
-          </View>
-        </LinearGradient>
+                </ScrollView>
+              </Animated.View>
+
+              {/* 热门景点 */}
+              <Animated.View
+                entering={FadeInDown.delay(300).duration(450)}
+                className="mt-6">
+                <SectionHeader title="热门景点" subtitle="广东人气榜" />
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingHorizontal: 16 }}>
+                  {data.hot.map((it) => (
+                    <HotCard key={it.id} item={it} width={hotCardW} />
+                  ))}
+                </ScrollView>
+              </Animated.View>
+
+              {/* 城市精选 —— 高低落差瀑布流 */}
+              <Animated.View
+                entering={FadeInDown.delay(380).duration(450)}
+                className="mt-6">
+                <SectionHeader title="城市精选" subtitle="发现岭南" />
+                <View className="flex-row gap-3 px-4">
+                  <View className="flex-1">
+                    {columns.colA.map(({ item, h }) => (
+                      <MasonryCard
+                        key={item.id}
+                        item={item}
+                        width={colW}
+                        height={h}
+                      />
+                    ))}
+                  </View>
+                  <View className="flex-1">
+                    {columns.colB.map(({ item, h }) => (
+                      <MasonryCard
+                        key={item.id}
+                        item={item}
+                        width={colW}
+                        height={h}
+                      />
+                    ))}
+                  </View>
+                </View>
+              </Animated.View>
+            </>
+          )}
+        </View>
       </ScrollView>
     </View>
   );

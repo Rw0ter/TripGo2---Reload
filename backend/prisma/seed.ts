@@ -48,22 +48,30 @@ const destinations = [
 
 // 首页轮播图。image 为前端本地资源 key（assets/legacy/img 下相对路径）。
 const banners = [
-  { image: 'top_AD.png', sort: 0 },
-  { image: 'top_AD2.png', sort: 1 },
-  { image: 'top_AD3.png', sort: 2 },
+  { image: 'xc/xc_guangzhou.jpg', title: '广州', subtitle: '珠水夜韵 · 羊城新貌', sort: 0 },
+  { image: 'xc/xc_shenzhen.jpg', title: '深圳', subtitle: '湾区之光 · 创新之城', sort: 1 },
+  { image: 'xc/xc_zhuhai.jpg', title: '珠海', subtitle: '日月贝畔 · 浪漫滨海', sort: 2 },
+  { image: 'xc/xc_chaozhou.jpeg', title: '潮州', subtitle: '韩江古城 · 千年潮韵', sort: 3 },
 ];
 
 // 景点。section=home：hot=true 进首页人气榜大横卡，hot=false 进首页瀑布流；
 // section=poi：进行程页的城市精选。
 const scenics = [
-  { name: '广州塔', image: 'jd/gz.jpg', city: '广州', summary: '', tag: '', note: '', hot: true, section: 'home', sort: 0 },
-  { name: '欢乐谷', image: 'jd/gzcl.png', city: '广州', summary: '', tag: '', note: '', hot: true, section: 'home', sort: 1 },
-  { name: '长隆海洋王国', image: 'changlong.png', city: '珠海', summary: '', tag: '', note: '', hot: true, section: 'home', sort: 2 },
-  { name: '鼎湖山', image: 'dxs.jpg', city: '肇庆', summary: '', tag: '', note: '', hot: true, section: 'home', sort: 3 },
-  { name: '岭南非遗殿堂', image: 'jd/gdsfwzwhycg.png', city: '潮州', summary: '岭南非遗殿堂，一馆尽览千年匠心与风华', tag: '', note: '', hot: false, section: 'home', sort: 0 },
-  { name: '丹霞山', image: 'jd/dxs.png', city: '丹霞山', summary: '来丹霞山，观“色如渥丹”的赤壁，览“灿若明霞”的奇景', tag: '', note: '', hot: false, section: 'home', sort: 1 },
-  { name: '南粤乡村', image: 'jd/nsthg.png', city: '广州', summary: '着重助力乡村振兴 汇聚岭南文化特色', tag: '', note: '', hot: false, section: 'home', sort: 2 },
-  { name: '岭南印象园', image: 'jd/lnyxy.png', city: '广州', summary: '访岭南印象园，赏古建、品非遗、尝粤味', tag: '', note: '', hot: false, section: 'home', sort: 3 },
+  // 热门景点（首页大横卡）
+  { name: '广州塔', image: 'jd/gz.jpg', city: '广州', summary: '小蛮腰夜景，珠江畔的城市地标', tag: '', note: '', hot: true, section: 'home', sort: 0 },
+  { name: '丹霞山', image: 'jd/dxs.png', city: '韶关', summary: '色如渥丹，灿若明霞的丹霞奇观', tag: '', note: '', hot: true, section: 'home', sort: 1 },
+  { name: '长隆海洋王国', image: 'changlong.png', city: '珠海', summary: '亲子必打卡的世界级海洋乐园', tag: '', note: '', hot: true, section: 'home', sort: 2 },
+  { name: '欢乐谷', image: 'jd/gzcl.png', city: '广州', summary: '刺激与欢乐并存的主题乐园', tag: '', note: '', hot: true, section: 'home', sort: 3 },
+  // 城市精选（首页瀑布流）
+  { name: '东莞', image: 'xc/xc_dongguan.jpg', city: '东莞', summary: '篮球之城，国贸潮购与岭南古韵', tag: '', note: '', hot: false, section: 'home', sort: 0 },
+  { name: '惠州', image: 'xc/xc_huizhou.jpg', city: '惠州', summary: '半城山色半城湖，西湖泛舟', tag: '', note: '', hot: false, section: 'home', sort: 1 },
+  { name: '江门', image: 'xc/xc_jiangmen.jpg', city: '江门', summary: '侨乡碉楼，赤坎古镇的时光剪影', tag: '', note: '', hot: false, section: 'home', sort: 2 },
+  { name: '河源', image: 'xc/xc_heyuan.png', city: '河源', summary: '万绿湖畔，恐龙故乡的青山绿水', tag: '', note: '', hot: false, section: 'home', sort: 3 },
+  { name: '清远', image: 'xc/xc_qingyuan.jpg', city: '清远', summary: '北江画廊，温泉峡谷漂流胜地', tag: '', note: '', hot: false, section: 'home', sort: 4 },
+  { name: '肇庆', image: 'xc/xc_zhaoqing.jpg', city: '肇庆', summary: '七星岩映月，鼎湖山天然氧吧', tag: '', note: '', hot: false, section: 'home', sort: 5 },
+  { name: '揭阳', image: 'xc/xc_jieyang.jpeg', city: '揭阳', summary: '岭南水城，进贤门下的潮味烟火', tag: '', note: '', hot: false, section: 'home', sort: 6 },
+  { name: '梅州', image: 'xc/xc_meizhou.jpg', city: '梅州', summary: '客家围龙屋，世界长寿之乡', tag: '', note: '', hot: false, section: 'home', sort: 7 },
+  // 行程城市精选 POI
   { name: '东莞虎门大桥', image: 'dghmdq.jpg', city: '东莞', summary: '东莞虎门大桥！极具艺术性，创造历史…', tag: '文史口碑馆', note: '📷 16 个上榜项', hot: false, section: 'poi', sort: 0 },
   { name: '东莞战争博物馆', image: 'dgypzzbwg.png', city: '东莞', summary: '东莞照片战争博物馆，观展珍贵文献文物…', tag: '文史口碑馆', note: '📷 16 个上榜项', hot: false, section: 'poi', sort: 1 },
   { name: '山谷古村落', image: 'gysgjslgy.png', city: '东莞', summary: '隐秘山谷里的古村落，周末走走…', tag: '文史口碑馆', note: '📷 12 个上榜项', hot: false, section: 'poi', sort: 2 },
