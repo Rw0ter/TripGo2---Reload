@@ -82,7 +82,11 @@ function StoryCard({
             className="ml-1.5 flex-1 text-[11px] text-[#9C8E7A]">
             {item.author.username}
           </Text>
-          <Ionicons name="heart-outline" size={13} color="#C3BBA8" />
+          <Ionicons
+            name={item.liked ? 'heart' : 'heart-outline'}
+            size={13}
+            color={item.liked ? '#C0584B' : '#C3BBA8'}
+          />
           <Text className="ml-0.5 text-[11px] text-[#9C8E7A]">
             {item.likeCount}
           </Text>
@@ -106,7 +110,8 @@ export default function CommunityScreen() {
   const load = useCallback(async () => {
     setError(false);
     try {
-      const data = await apiRequest<Story[]>('/stories');
+      // auth:true —— 登录时带上 token，后端据此回填 liked。
+      const data = await apiRequest<Story[]>('/stories', { auth: true });
       setStories(data);
     } catch {
       setError(true);
