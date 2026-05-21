@@ -46,7 +46,7 @@
 | login.html | 账号登录 | 认证 | 单独实现 | auth | 完成 | Legacy 像素级复刻；成功跳首页 |
 | register.html | 账号注册 | 认证 | 单独实现 | auth | 完成 | Legacy 像素级复刻 |
 | forget_sendEmail.html | 找回密码（邮箱+图形验证码） | 认证 | Form组件 | auth | 待开始 | |
-| hello.html | 欢迎页 / 隐私协议确认 | 静态文本 | 单独实现 | 无 | 完成 | 启动引导；`/` 进入即重定向到此 |
+| hello.html | 欢迎页 / 隐私协议确认 | 静态文本 | 单独实现 | 无 | 完成 | 卡片式重构 + 滚动到底才可同意；仅首启展示一次 |
 | index1.html | 首页（正式版） | 核心Tab | 单独实现 | 多模块 | 待开始 | 底部导航主屏 |
 | fywh.html | 首页·非遗文化 Tab | 核心Tab | 单独实现 | search 等 | 待开始 | 与 index1 首页关系待理清 |
 | itinerary.html | 行程 Tab | 核心Tab | 列表组件 | trips | 待开始 | 底部导航 |
@@ -74,7 +74,7 @@
 
 | 文件 | 功能 | 类型 | 复用模式 | 依赖API | 状态 | 备注 |
 |------|------|------|----------|---------|------|------|
-| login1.html | 启动闪屏 | 静态文本 | 单独实现 | 无 | 待开始 | 可用 Expo SplashScreen |
+| login1.html | 启动闪屏 | 动画屏 | 单独实现 | 无 | 完成 | 复刻 Legacy 启动动画（流动绿渐变+粒子+发光标题+加载环）；引导仅首启展示一次 |
 | welcome.html | 启动欢迎页（倒计时） | 静态文本 | 单独实现 | 无 | 待开始 | 可用 Expo SplashScreen |
 | resetPW.html | 重置密码 | 认证 | Form组件 | auth | 待开始 | |
 | about_us.html | 关于我们 | 静态文本 | StaticPage组件 | 无 | 待开始 | |

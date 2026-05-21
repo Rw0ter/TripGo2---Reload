@@ -7,7 +7,7 @@
 
 ## 当前阶段
 
-W1 进行中。后端 auth / destinations 模块、Expo 工程、前端 API 层、登录/注册/hello 三屏（Legacy 像素级复刻 + web 布局修复并实测通过）、Legacy 图片资源迁移、启动路由、web 预览修复 —— PR #1–#12 均已合并。下一步：按 Legacy 复刻其余主线屏。
+W1 进行中。后端 auth / destinations 模块、Expo 工程、前端 API 层、首启引导流程（hello + login1 + 登录页，均实测通过）、Legacy 图片资源迁移、web 预览修复 —— PR #1–#13 均已合并。下一步：按 Legacy 复刻其余主线屏（index1 首页等）。
 
 ## 已完成
 
@@ -34,6 +34,7 @@ W1 进行中。后端 auth / destinations 模块、Expo 工程、前端 API 层�
 - 启动路由：`/` 重定向到 hello 引导页（PR #10）；首页 tab 路由从 `index` 改名 `home`
 - web 预览修复（PR #11）：`babel-preset-expo` 加 `unstable_transformImportMeta`，转译 Expo SDK 54 web 产物里的 `import.meta`，消除浏览器白屏
 - auth 三屏 web 布局修复（PR #12）：NativeWind 不给非核心组件启用 className —— 新增 `components/ui/animated.ts`（cssInterop 包装 reanimated 的 Animated.*），屏幕改从此处取 `Animated`；`<Image>` 尺寸改走 `style` prop；修正被错误迁移覆盖的 `beijing.png`/`dingwei.png`。三屏已在浏览器实测渲染正确
+- 首启引导流程（PR #13）：① 登录页问候语柔光 + 去输入框聚焦描边；② hello 隐私协议页卡片式重构 + 滚动到底才可同意；③ 新增 `app/login1.tsx` 复刻 Legacy 启动动画；④ 新增 `stores/onboarding.ts` 跨端持久化引导标记，`/` 引导感知路由 —— 首启 hello→login1→login，完成后直达 login，hello/login1 仅首启各展示一次。全流程浏览器实测通过
 
 ## 进行中
 
@@ -83,3 +84,5 @@ W1 进行中。后端 auth / destinations 模块、Expo 工程、前端 API 层�
 - **2026-05-21** auth store 启用持久化：用 `expo-secure-store` 落地 token（兑现 2026-05-20"待登录屏接入时再加"的推迟项）。
 - **2026-05-21** 第三方组件用 className 统一走 `cssInterop` 返回值：reanimated `Animated.*` 等不在 NativeWind 白名单内，全局副作用注册无效，必须导出包装后的组件（`@/components/ui/animated`）。后续 60 屏都走这个 `Animated`，避免每屏踩坑。
 - **2026-05-21** 前端用浏览器实测验收，不只 `tsc`/`expo export`：本次布局错乱 tsc 与 export 全过，问题只在运行时可见。屏级改动应起 dev server 截图核对。
+- **2026-05-21** 启动流程定为 `/` → 首启 hello → login1 → login、完成后 `/` 直达 login：hello（隐私协议）与 login1（启动动画）仅首启各展示一次，用 `stores/onboarding.ts` 的 `done` 标记控制，在 hello 点「同意」时落库。
+- **2026-05-21** 引导标记用跨端存储（web=localStorage，原生=SecureStore）：`expo-secure-store` 不支持 web，而本项目开发/演示走 web，必须保证 web 端也能持久化。注：现有 `auth.ts` 仍纯用 SecureStore，web 端登录态不持久化——后续可同样切到跨端存储。
