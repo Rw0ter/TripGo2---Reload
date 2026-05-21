@@ -18,3 +18,16 @@ export const legacyImages: Record<string, ImageSourcePropType> = {
   'jd/nsthg.png': require('../assets/legacy/img/jd/nsthg.png'),
   'jd/lnyxy.png': require('../assets/legacy/img/jd/lnyxy.png'),
 };
+
+// 按 key 取本地图；key 未登记时返回占位图并告警，
+// 避免 <Image source={undefined}> 在端上崩溃 / 空白。
+export function resolveLegacyImage(key: string): ImageSourcePropType {
+  const img = legacyImages[key];
+  if (!img) {
+    if (__DEV__) {
+      console.warn(`[legacy-images] 未登记的图片 key：${key}`);
+    }
+    return legacyImages['top_AD.png'];
+  }
+  return img;
+}

@@ -21,7 +21,7 @@ import { Animated } from '@/components/ui/animated';
 import { apiRequest } from '@/lib/api';
 import type { Banner, Quiz, Scenic } from '@/lib/api-types';
 import { comingSoon } from '@/lib/coming-soon';
-import { legacyImages } from '@/lib/legacy-images';
+import { resolveLegacyImage } from '@/lib/legacy-images';
 
 // 四宫格 / 五项入口是 App 导航菜单（非后端数据），保持静态。
 const GRID4 = [
@@ -83,7 +83,7 @@ function Carousel({
         {bannerKeys.map((key, i) => (
           <View key={i} style={{ width: pageWidth }} className="items-center">
             <Image
-              source={legacyImages[key]}
+              source={resolveLegacyImage(key)}
               resizeMode="cover"
               style={{ width: imgWidth, height: 162, borderRadius: 14 }}
             />
@@ -164,7 +164,7 @@ function BigCard({ item, width }: { item: Scenic; width: number }) {
       style={{ width, height: 112 }}
       className="mr-2.5 overflow-hidden rounded-2xl">
       <Image
-        source={legacyImages[item.image]}
+        source={resolveLegacyImage(item.image)}
         resizeMode="cover"
         style={{ width, height: 112 }}
       />
@@ -194,7 +194,7 @@ function WaterfallCard({ item, width }: { item: Scenic; width: number }) {
       className="mb-4 overflow-hidden rounded-2xl bg-white">
       <View>
         <Image
-          source={legacyImages[item.image]}
+          source={resolveLegacyImage(item.image)}
           resizeMode="cover"
           style={{ width, height: 158 }}
         />
