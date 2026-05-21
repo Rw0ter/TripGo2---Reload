@@ -44,6 +44,7 @@ export interface Story {
   author: StoryAuthor;
   likeCount: number;
   commentCount: number;
+  liked: boolean; // 当前用户是否已点赞（未登录恒 false）
 }
 
 export interface Comment {
