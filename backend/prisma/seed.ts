@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -85,6 +86,146 @@ const quizzes = [
   { tag: '人气专场', title: '岭南美食问答', desc: '一边馋一边答，解锁早茶、煲汤与街头小吃冷知识', btn: '马上去答题', sort: 3 },
 ];
 
+// 社区动态作者（演示用户，密码统一 123456）。
+const communityAuthors = [
+  { username: '岭南阿May', email: 'amay@tripgo.demo' },
+  { username: '老广日记', email: 'laoguang@tripgo.demo' },
+  { username: '潮味食客', email: 'chaowei@tripgo.demo' },
+  { username: '山客随行', email: 'shanke@tripgo.demo' },
+  { username: '骑楼下的猫', email: 'qilou@tripgo.demo' },
+  { username: '早茶续命中', email: 'zaocha@tripgo.demo' },
+  { username: '龙舟少年', email: 'longzhou@tripgo.demo' },
+  { username: '醒狮阿强', email: 'xingshi@tripgo.demo' },
+];
+
+// 社区动态——非遗文化传承主题。images 为前端本地资源 key；authorIdx 指向 communityAuthors。
+const storyDefs = [
+  {
+    authorIdx: 0,
+    title: '粤剧后台探班：一勾脸，半世纪功夫',
+    content:
+      '红船弟子的油彩一层层叠上去，凤冠珠串轻轻一晃就是百年。老倌说唱念做打里最难的是「做」——一个水袖甩出去，台下要看得懂悲喜。这门戏，值得被更多年轻人接住。',
+    images: ['xc/xc_guangzhou.jpg'],
+  },
+  {
+    authorIdx: 1,
+    title: '跟广绣阿姨学了一下午，才绣完半片木棉',
+    content:
+      '广绣的针脚细到要眯着眼找，一根丝线劈成十六分之一才够细。阿姨绣了四十年，木棉花在她手里像会呼吸。她说手艺不怕慢，怕没人学。',
+    images: ['jd/gzcl.png'],
+  },
+  {
+    authorIdx: 3,
+    title: '醒狮采青，鼓点一响整条街都醒了',
+    content:
+      '狮头一抬一探，眼睛会眨、耳朵会动，全靠舞狮人腰马的功夫。最震撼是采青那一跳，桩与桩之间一丈来宽，落点稳得像生了根。岭南人过节的精气神都在这鼓点里。',
+    images: ['changlong.png'],
+  },
+  {
+    authorIdx: 2,
+    title: '潮州工夫茶：三杯之间，皆是规矩',
+    content:
+      '关公巡城、韩信点兵，斟茶的手法一点不能马虎。老伯说工夫茶喝的不是茶，是待客的心意。一壶单丛冲到第七道还有余香，时间都泡在杯里了。',
+    images: ['xc/xc_chaozhou.jpeg'],
+  },
+  {
+    authorIdx: 5,
+    title: '龙舟下水前，先给龙头簪花挂红',
+    content:
+      '端午前的祠堂，老人给龙头点睛、簪花、挂上红绸。一村人扛着龙舟往河里走，号子一喊，几十支桨同时入水。这条河，他们划了几百年。',
+    images: ['xc/xc_dongguan.jpg'],
+  },
+  {
+    authorIdx: 4,
+    title: '香云纱晒莨：阳光和河泥染出的「软黄金」',
+    content:
+      '一匹香云纱要过三十几道工序，薯莨汁浸、河泥涂、草地上晾晒，全看天吃饭。师傅说这布越穿越亮，是大自然亲手染的，摸上去像凉玉。',
+    images: ['xc/xc_huizhou.jpg'],
+  },
+  {
+    authorIdx: 6,
+    title: '广彩瓷：在白瓷上画一座岭南城',
+    content:
+      '描金的笔尖比头发还细，金线绕着花鸟一圈圈铺开，行内叫「织金彩瓷」。画师说一只杯子要烧三次、画十几天，急不得。出窑那一刻整间作坊都亮了。',
+    images: ['dgypzzbwg.png'],
+  },
+  {
+    authorIdx: 2,
+    title: '英歌舞：揭阳少年的脸谱与槌声',
+    content:
+      '一百零八条好汉的脸谱画在年轻人脸上，木槌相击，地动山摇。领舞的少年才十六岁，他说爷爷跳过、爸爸跳过，现在轮到他。这股劲，叫传承。',
+    images: ['xc/xc_jieyang.jpeg'],
+  },
+];
+
+// 评论文案池——贴合非遗传承主题。
+const commentTexts = [
+  '这门手艺真该好好传下去',
+  '看得人起鸡皮疙瘩，太震撼了',
+  '请问这个工坊可以预约体验吗？',
+  '岭南的非遗越了解越着迷',
+  '为坚守的手艺人点赞',
+  '已收藏，下次带孩子一起去看',
+];
+
+// 社区动态相关数据（作者 upsert 保留已注册账号，动态/点赞/评论清空重插）。
+async function seedCommunity() {
+  const pw = await bcrypt.hash('123456', 10);
+  const authors: { id: string }[] = [];
+  for (const a of communityAuthors) {
+    const u = await prisma.user.upsert({
+      where: { username: a.username },
+      update: {},
+      create: { username: a.username, email: a.email, password: pw },
+    });
+    authors.push(u);
+  }
+
+  await prisma.story.deleteMany(); // 级联清空 like / comment
+  // 时间错开，动态流的「x 小时/天前」更自然。
+  const hoursAgo = [1, 4, 9, 19, 30, 49, 73, 102];
+  const stories: { id: number }[] = [];
+  for (let i = 0; i < storyDefs.length; i += 1) {
+    const s = storyDefs[i];
+    const row = await prisma.story.create({
+      data: {
+        title: s.title,
+        content: s.content,
+        images: s.images,
+        authorId: authors[s.authorIdx].id,
+        createdAt: new Date(Date.now() - hoursAgo[i] * 3_600_000),
+      },
+    });
+    stories.push(row);
+  }
+
+  // 点赞：每条动态被一部分作者点赞，计数随动态错开（3~7 个）。
+  const likeData: { storyId: number; userId: string }[] = [];
+  stories.forEach((st, j) => {
+    authors.forEach((au, i) => {
+      if ((i * 3 + j * 5) % 8 < 3 + (j % 5)) {
+        likeData.push({ storyId: st.id, userId: au.id });
+      }
+    });
+  });
+  await prisma.like.createMany({ data: likeData });
+
+  // 评论：每条动态 1~3 条。
+  const commentData: { storyId: number; authorId: string; text: string }[] = [];
+  stories.forEach((st, j) => {
+    for (let k = 0; k < 1 + (j % 3); k += 1) {
+      commentData.push({
+        storyId: st.id,
+        authorId: authors[(j + k + 1) % authors.length].id,
+        text: commentTexts[(j * 2 + k) % commentTexts.length],
+      });
+    }
+  });
+  await prisma.comment.createMany({ data: commentData });
+
+  return { authors: authors.length, stories: stories.length };
+}
+
 async function main() {
   // 幂等：清空后重插，便于反复跑
   await prisma.destination.deleteMany();
@@ -95,8 +236,9 @@ async function main() {
   await prisma.scenic.createMany({ data: scenics });
   await prisma.quiz.deleteMany();
   await prisma.quiz.createMany({ data: quizzes });
+  const community = await seedCommunity();
   console.log(
-    `已 seed：文创 ${destinations.length} / 轮播 ${banners.length} / 景点 ${scenics.length} / 课堂 ${quizzes.length}`,
+    `已 seed：文创 ${destinations.length} / 轮播 ${banners.length} / 景点 ${scenics.length} / 课堂 ${quizzes.length} / 社区作者 ${community.authors} / 动态 ${community.stories}`,
   );
 }
 

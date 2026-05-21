@@ -29,3 +29,31 @@ export interface Quiz {
   btn: string;
   sort: number;
 }
+
+export interface StoryAuthor {
+  username: string;
+  avatar: string | null;
+}
+
+export interface Story {
+  id: number;
+  title: string;
+  content: string;
+  images: string[]; // 本地资源 key，见 lib/legacy-images.ts
+  createdAt: string; // ISO 时间串
+  author: StoryAuthor;
+  likeCount: number;
+  commentCount: number;
+}
+
+export interface Comment {
+  id: number;
+  text: string;
+  createdAt: string; // ISO 时间串
+  author: StoryAuthor;
+}
+
+// 动态详情：在列表字段基础上附评论列表，对应 GET /stories/:id。
+export interface StoryDetail extends Story {
+  comments: Comment[];
+}
