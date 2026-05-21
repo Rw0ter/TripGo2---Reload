@@ -1,11 +1,16 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, Text } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { FormField } from '@/components/shared/form-field';
-import { FormScreen } from '@/components/shared/form-screen';
+import { AuthButton } from '@/components/auth/auth-button';
+import { AuthInput } from '@/components/auth/auth-input';
+import { AuthScreenLayout } from '@/components/auth/auth-screen-layout';
 import { apiRequest } from '@/lib/api';
 import { AuthUser, useAuthStore } from '@/stores/auth';
+
+const userIcon = require('../../assets/legacy/img/user-3-line.png');
+const passwordIcon = require('../../assets/legacy/img/password.png');
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -17,7 +22,7 @@ export default function LoginScreen() {
   async function handleLogin() {
     const name = username.trim();
     if (!name || !password) {
-      Alert.alert('提示', '请输入用户名和密码');
+      Alert.alert('提示', '用户名和密码不能为空');
       return;
     }
     setLoading(true);
@@ -36,30 +41,58 @@ export default function LoginScreen() {
   }
 
   return (
-    <FormScreen
-      title="登录"
-      submitLabel={loading ? '登录中…' : '登录'}
-      loading={loading}
-      onSubmit={handleLogin}>
-      <FormField
-        label="用户名"
-        value={username}
-        onChangeText={setUsername}
-        placeholder="请输入用户名"
-      />
-      <FormField
-        label="密码"
-        value={password}
-        onChangeText={setPassword}
-        placeholder="请输入密码"
-        secureTextEntry
-      />
-      <View className="mt-4 flex-row justify-center">
-        <Text className="text-sm text-gray-500">还没有账号？</Text>
-        <Pressable onPress={() => router.push('/register')}>
-          <Text className="text-sm font-medium text-primary">去注册</Text>
+    <AuthScreenLayout>
+      <Animated.View entering={FadeInDown.delay(200).duration(500)}>
+        <AuthInput
+          icon={userIcon}
+          value={username}
+          onChangeText={setUsername}
+          placeholder="请输入手机号/用户名/邮箱"
+          accessibilityLabel="用户名"
+          autoComplete="username"
+          textContentType="username"
+        />
+      </Animated.View>
+
+      <Animated.View
+        entering={FadeInDown.delay(300).duration(500)}
+        className="mt-[18px]">
+        <AuthInput
+          icon={passwordIcon}
+          value={password}
+          onChangeText={setPassword}
+          placeholder="密码"
+          secureTextEntry
+          accessibilityLabel="密码"
+          autoComplete="password"
+          textContentType="password"
+        />
+      </Animated.View>
+
+      <Animated.View
+        entering={FadeInDown.delay(400).duration(500)}
+        className="mt-4 flex-row justify-between">
+        <Pressable
+          onPress={() => router.push('/register')}
+          accessibilityRole="button">
+          <Text className="text-sm font-semibold text-white">账号注册</Text>
         </Pressable>
-      </View>
-    </FormScreen>
+        <Pressable
+          onPress={() => Alert.alert('提示', '找回密码功能开发中')}
+          accessibilityRole="button">
+          <Text className="text-sm font-semibold text-white">忘记密码</Text>
+        </Pressable>
+      </Animated.View>
+
+      <Animated.View
+        entering={FadeInDown.delay(500).duration(500)}
+        className="mt-6">
+        <AuthButton
+          label={loading ? '登录中…' : '登录'}
+          loading={loading}
+          onPress={handleLogin}
+        />
+      </Animated.View>
+    </AuthScreenLayout>
   );
 }
