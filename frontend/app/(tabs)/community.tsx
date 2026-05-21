@@ -48,7 +48,7 @@ function StoryCard({ item, width }: { item: Story; width: number }) {
   const [liked, setLiked] = useState(false);
   const likeCount = item.likeCount + (liked ? 1 : 0);
 
-  const imgs = item.images.slice(0, 3);
+  const imgs = (item.images ?? []).slice(0, 3);
   const gap = 6;
   const single = imgs.length === 1;
   const cellW = single
