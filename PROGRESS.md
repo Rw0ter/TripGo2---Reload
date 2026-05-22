@@ -78,6 +78,7 @@ W2。底部 5 个 Tab 全部复刻并接真后端；社区已打通完整闭环�
 - web 登录崩溃 `setValueWithKeyAsync is not a function`（已修，PR #20）：`auth` store 直接用 `expo-secure-store`，该库不支持 web。修法是新增 `lib/persist-storage.ts` 跨端存储（web=localStorage / 原生=SecureStore）。
 - 非首个 tab 的深链接会被拦截跳登录（已修，PR #25）：深链接非首 tab 时，`index.tsx` 作为根 Stack 锚点被挂载，其 `<Redirect>` 在 mount 时即触发跳转。修法是改用 `useFocusEffect`——只在 `index` 自身被聚焦时才跳转。
 - `Alert.alert` 在 react-native-web 上不渲染（已修，PR #25）：注册成功后的跳转写在 `Alert` 按钮的 `onPress` 里，web 端 Alert 是 no-op → 注册"走不通"。约定：auth 等关键反馈不能依赖 `Alert`，用行内错误/直接跳转。`comingSoon` 仍用 Alert，web 端同样静默——后续可统一换成跨端轻提示。
+- NativeWind 的 `className` 与**函数式** `style` 不能在同一组件上混用（已踩，PR #33）：NativeWind 把 className 样式与 `style` 并进数组 `[cnStyle, style]`，若 `style` 是函数（如 `Pressable` 的 `({pressed})=>({...})`），数组里的函数会被丢弃 → 该函数里的样式（如 `position:'absolute'`）全部失效。需要函数式 `style` 时，该组件就别挂 className，全部走纯 `style`。
 
 ## 关键决策记录
 
