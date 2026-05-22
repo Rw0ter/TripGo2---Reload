@@ -19,14 +19,6 @@ export interface GdPoi {
   summary: string;
 }
 
-// 广东地理范围（投影到离线地图画布用）。略放宽，保证所有 POI 落在画布内。
-export const GUANGDONG_BBOX = {
-  lngMin: 112.0,
-  lngMax: 117.3,
-  latMin: 21.5,
-  latMax: 25.6,
-} as const;
-
 // 各分类的主题色（离线地图标注 + 图例）。
 export const CATEGORY_COLOR: Record<PoiCategory, string> = {
   城市地标: '#386641',

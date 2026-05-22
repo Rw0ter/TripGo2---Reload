@@ -7,7 +7,7 @@
 // GL JS Key：走 EXPO_PUBLIC_* 环境变量（见 .env.example），缺省回退到演示 Key。
 // 地图 JS Key 必然暴露在客户端，应在腾讯位置服务控制台配置域名白名单。
 export const TENCENT_MAP_KEY =
-  process.env.EXPO_PUBLIC_TENCENT_MAP_KEY ?? 'OB4BZ-D4W3U-B7VVO-4PJWW-6TKDJ-WPB77';
+  process.env.EXPO_PUBLIC_TENCENT_MAP_KEY ?? 'YAVBZ-DSK64-EG2U3-K3K5J-6762Z-3GBKO';
 
 // 桥消息的来源标记，避免误收 Metro / 浏览器扩展等无关 postMessage。
 export const EVENT_TAG = 'tmap';
@@ -66,8 +66,10 @@ const MAP_SCRIPT = `
 
   function initMap(){
     if(!window.TMap){ emit({type:'fatal',message:'地图组件初始化失败'}); return; }
+    // viewMode 用 3D（pitch 0 → 视觉仍是平面俯视）：GL JS 仅在 3D 模式下支持
+    // 地图旋转，导航时随罗盘转向需要它。
     map=new TMap.Map(document.getElementById('map'),{
-      center:new TMap.LatLng(23.1288,113.2644), zoom:11, viewMode:'2D'
+      center:new TMap.LatLng(23.1288,113.2644), zoom:11, viewMode:'3D', pitch:0
     });
     userMarker=new TMap.MultiMarker({map:map,styles:{u:new TMap.MarkerStyle({width:22,height:22,anchor:{x:11,y:11},src:dot('#1E9E63')})},geometries:[]});
     poiMarker=new TMap.MultiMarker({map:map,styles:{p:new TMap.MarkerStyle({width:26,height:34,anchor:{x:13,y:34},src:pin('#386641')})},geometries:[]});
@@ -87,20 +89,38 @@ const MAP_SCRIPT = `
     if(cmd.type==='clearRoute') return doClearRoute();
     if(cmd.type==='startNav') return doStartNav();
     if(cmd.type==='stopNav') return doStopNav();
+    if(cmd.type==='rotateMap') return doRotateMap(cmd.deg);
   }
 
+  // 定位兜底链：浏览器 GPS → 腾讯 IP 定位 → 默认广州中心，必出结果。
+  function applyLocation(lat,lng,source){
+    var ll=new TMap.LatLng(lat,lng);
+    userLatLng=ll;
+    userMarker.setGeometries([{id:'u',styleId:'u',position:ll}]);
+    map.setCenter(ll);
+    map.setZoom(source==='gps'?15:(source==='ip'?12:11));
+    reverseCity(ll);
+    emit({type:'located',lat:lat,lng:lng,source:source});
+  }
+  function ipLocate(){
+    try{
+      new TMap.service.IPLocation().locate({}).then(function(res){
+        var loc=res&&res.result&&res.result.location;
+        if(loc&&typeof loc.lat==='number'){ applyLocation(loc.lat,loc.lng,'ip'); }
+        else { applyLocation(23.1288,113.2644,'default'); }
+      }).catch(function(){ applyLocation(23.1288,113.2644,'default'); });
+    }catch(e){ applyLocation(23.1288,113.2644,'default'); }
+  }
   function doLocate(){
-    if(!navigator.geolocation){ emit({type:'locateError',message:'当前环境不支持定位'}); return; }
+    if(!navigator.geolocation){ ipLocate(); return; }
     navigator.geolocation.getCurrentPosition(function(pos){
-      var ll=new TMap.LatLng(pos.coords.latitude,pos.coords.longitude);
-      userLatLng=ll;
-      userMarker.setGeometries([{id:'u',styleId:'u',position:ll}]);
-      map.setCenter(ll); map.setZoom(14);
-      reverseCity(ll);
-      emit({type:'located',lat:pos.coords.latitude,lng:pos.coords.longitude});
-    },function(err){
-      emit({type:'locateError',message:(err&&err.message)||'定位失败'});
+      applyLocation(pos.coords.latitude,pos.coords.longitude,'gps');
+    },function(){
+      ipLocate();
     },{enableHighAccuracy:true,timeout:8000,maximumAge:0});
+  }
+  function doRotateMap(deg){
+    if(map&&typeof map.setRotation==='function'){ map.setRotation(((deg%360)+360)%360); }
   }
 
   function reverseCity(ll){
@@ -187,6 +207,7 @@ const MAP_SCRIPT = `
   }
   function doStopNav(){
     if(navTimer){ clearInterval(navTimer); navTimer=null; }
+    doRotateMap(0);
   }
 
   var sdk=document.createElement('script');

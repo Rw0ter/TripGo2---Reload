@@ -32,6 +32,9 @@ export interface RouteInfo {
   steps: RouteStep[];
 }
 
+// 定位结果来源：浏览器 GPS / IP 粗定位 / 默认兜底。
+export type LocateSource = 'gps' | 'ip' | 'default';
+
 // React → 地图 的指令。
 export type MapCommand =
   | { type: 'locate' }
@@ -40,14 +43,14 @@ export type MapCommand =
   | { type: 'planRoute'; mode: RouteMode; toLat: number; toLng: number }
   | { type: 'clearRoute' }
   | { type: 'startNav' }
-  | { type: 'stopNav' };
+  | { type: 'stopNav' }
+  | { type: 'rotateMap'; deg: number };
 
 // 地图 → React 的事件。
 export type MapEvent =
   | { type: 'ready' }
   | { type: 'fatal'; message: string } // SDK 加载/初始化失败 → 触发离线兜底
-  | { type: 'located'; lat: number; lng: number }
-  | { type: 'locateError'; message: string }
+  | { type: 'located'; lat: number; lng: number; source: LocateSource }
   | { type: 'searchResults'; list: MapPoi[] }
   | { type: 'searchError'; message: string }
   | { type: 'routeResult'; route: RouteInfo }

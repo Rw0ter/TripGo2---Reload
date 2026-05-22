@@ -1,6 +1,4 @@
-// 地理计算工具 —— 离线地图的距离、投影、路线估算。
-
-import { GUANGDONG_BBOX } from './guangdong-poi';
+// 地理计算工具 —— 离线地图的距离、墨卡托投影、路线估算。
 
 export interface LatLng {
   lat: number;
@@ -9,6 +7,16 @@ export interface LatLng {
 
 // 离线路线支持的出行方式（公交无法离线估算，故不含 transit）。
 export type OfflineRouteMode = 'driving' | 'walking' | 'bicycling';
+
+// 瓦片网格描述（与 lib/offline-tiles.ts 的 OFFLINE_TILE_GRID 结构一致）。
+export interface TileGrid {
+  z: number;
+  xMin: number;
+  yMin: number;
+  cols: number;
+  rows: number;
+  tileSize: number;
+}
 
 const EARTH_RADIUS_M = 6371000;
 const toRad = (deg: number) => (deg * Math.PI) / 180;
@@ -26,13 +34,21 @@ export function haversineMeters(a: LatLng, b: LatLng): number {
   return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(h));
 }
 
-// 经纬度 → 离线地图画布上的归一化坐标 [0,1]。
-// y 轴翻转：纬度越大越靠画布上方。
-export function projectToUnit(p: LatLng): { x: number; y: number } {
-  const { lngMin, lngMax, latMin, latMax } = GUANGDONG_BBOX;
+// 经纬度 → 瓦片网格内的归一化坐标 [0,1]（Web 墨卡托投影，与真实瓦片对齐）。
+export function projectOnTileGrid(
+  p: LatLng,
+  grid: TileGrid,
+): { x: number; y: number } {
+  const worldPx = (1 << grid.z) * grid.tileSize; // 整个世界的像素宽 / 高
+  const px = ((p.lng + 180) / 360) * worldPx;
+  const sinLat = Math.sin(toRad(p.lat));
+  const py =
+    (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) * worldPx;
+  const originX = grid.xMin * grid.tileSize;
+  const originY = grid.yMin * grid.tileSize;
   return {
-    x: clamp01((p.lng - lngMin) / (lngMax - lngMin)),
-    y: clamp01(1 - (p.lat - latMin) / (latMax - latMin)),
+    x: clamp01((px - originX) / (grid.cols * grid.tileSize)),
+    y: clamp01((py - originY) / (grid.rows * grid.tileSize)),
   };
 }
 
