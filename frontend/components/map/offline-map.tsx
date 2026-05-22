@@ -1,17 +1,16 @@
 // 离线地图 —— 断网时的旅行地图兜底方案。
-// 静态可缩放/可平移画布 + 随 App 内置的广东景点 POI + 重点景点离线路线规划
-// （直线距离 + 出行方式时长估算，全程不依赖网络）。
+// 用随 App 打包的腾讯真实地图瓦片（zoom 9，广东范围）渲染底图，可缩放 / 可平移，
+// POI 走 Web 墨卡托投影精确落点；支持重点景点离线路线规划（直线距离 + 时长估算）。
 
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Animated,
+  Image,
   type LayoutChangeEvent,
   PanResponder,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -20,7 +19,7 @@ import {
   formatDistance,
   formatDuration,
   type OfflineRouteMode,
-  projectToUnit,
+  projectOnTileGrid,
   routeTotals,
 } from '@/lib/geo';
 import {
@@ -28,10 +27,11 @@ import {
   type GdPoi,
   GUANGDONG_POIS,
 } from '@/lib/guangdong-poi';
+import { OFFLINE_TILE_GRID, OFFLINE_TILES } from '@/lib/offline-tiles';
 
-const PAD = 34; // 画布内边距，避免边缘 POI 被裁
-const MIN_SCALE = 1;
-const MAX_SCALE = 3;
+const GRID = OFFLINE_TILE_GRID;
+const MIN_SCALE = 1; // 1 = cover 铺满；不允许更小，避免出现黑边
+const MAX_SCALE = 4;
 
 const MODES: {
   key: OfflineRouteMode;
@@ -65,6 +65,8 @@ function RouteSegment({ from, to }: { from: XY; to: XY }) {
         height: 4,
         borderRadius: 2,
         backgroundColor: '#1E9E63',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.85)',
         transform: [{ rotate: `${angle}deg` }],
       }}
     />
@@ -109,7 +111,7 @@ function PoiPin({
           borderColor: '#FFFFFF',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0px 2px 6px rgba(0,0,0,0.28)',
+          boxShadow: '0px 2px 6px rgba(0,0,0,0.4)',
         }}>
         {inRoute ? (
           <Text className="text-[12px] font-extrabold text-white">{order}</Text>
@@ -125,7 +127,7 @@ function PoiPin({
         )}
       </View>
       <View
-        style={{ boxShadow: '0px 1px 4px rgba(0,0,0,0.18)' }}
+        style={{ boxShadow: '0px 1px 4px rgba(0,0,0,0.35)' }}
         className="mt-1 rounded-md bg-white/95 px-1.5 py-0.5">
         <Text
           numberOfLines={1}
@@ -184,20 +186,18 @@ export function OfflineMap() {
     [pan],
   );
 
-  // 画布铺满可视区（POI 按经纬度归一化投影，轻微拉伸对示意地图无碍）。
-  const world = useMemo(
-    () => (viewport ? { w: viewport.w, h: viewport.h } : null),
-    [viewport],
-  );
+  // 瓦片网格按「cover」铺满可视区：初始即填满屏幕，靠平移浏览全省。
+  const world = useMemo(() => {
+    if (!viewport) return null;
+    const cell = Math.max(viewport.w / GRID.cols, viewport.h / GRID.rows);
+    return { w: GRID.cols * cell, h: GRID.rows * cell };
+  }, [viewport]);
 
   const posOf = useCallback(
     (poi: GdPoi): XY => {
       if (!world) return { x: 0, y: 0 };
-      const u = projectToUnit(poi);
-      return {
-        x: PAD + u.x * (world.w - 2 * PAD),
-        y: PAD + u.y * (world.h - 2 * PAD),
-      };
+      const u = projectOnTileGrid(poi, GRID);
+      return { x: u.x * world.w, y: u.y * world.h };
     },
     [world],
   );
@@ -209,10 +209,7 @@ export function OfflineMap() {
         .filter((p): p is GdPoi => Boolean(p)),
     [routeIds],
   );
-  const totals = useMemo(
-    () => routeTotals(routePois, mode),
-    [routePois, mode],
-  );
+  const totals = useMemo(() => routeTotals(routePois, mode), [routePois, mode]);
   const focusedPoi = focusedId
     ? GUANGDONG_POIS.find((p) => p.id === focusedId) ?? null
     : null;
@@ -227,7 +224,7 @@ export function OfflineMap() {
   const zoomBy = (dir: 1 | -1) => {
     const next = Math.min(
       MAX_SCALE,
-      Math.max(MIN_SCALE, scaleRef.current + dir * 0.5),
+      Math.max(MIN_SCALE, scaleRef.current + dir * 0.6),
     );
     scaleRef.current = next;
     Animated.timing(scale, {
@@ -260,9 +257,12 @@ export function OfflineMap() {
     setFocusedId(null);
   };
 
+  const tileW = world ? world.w / GRID.cols : 0;
+  const tileH = world ? world.h / GRID.rows : 0;
+
   return (
-    <View className="flex-1 bg-[#EDEAD9]">
-      {/* 可缩放 / 可平移画布 */}
+    <View className="flex-1 bg-[#11221C]">
+      {/* 可缩放 / 可平移的真实瓦片地图 */}
       <View
         className="flex-1 items-center justify-center overflow-hidden"
         onLayout={onLayout}
@@ -278,66 +278,23 @@ export function OfflineMap() {
                 { scale },
               ],
             }}>
-            <LinearGradient
-              colors={['#DCEAD7', '#E8E6CC']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFill}
-            />
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  pointerEvents: 'none',
-                  borderWidth: 1,
-                  borderColor: '#C7C6A6',
-                  borderRadius: 6,
-                },
-              ]}
-            />
-            {/* 装饰网格 */}
-            {[0.25, 0.5, 0.75].map((f) => (
-              <View
-                key={`v${f}`}
-                style={{
-                  pointerEvents: 'none',
-                  position: 'absolute',
-                  left: world.w * f,
-                  top: 0,
-                  bottom: 0,
-                  width: 1,
-                  backgroundColor: 'rgba(120,140,110,0.16)',
-                }}
-              />
-            ))}
-            {[0.33, 0.66].map((f) => (
-              <View
-                key={`h${f}`}
-                style={{
-                  pointerEvents: 'none',
-                  position: 'absolute',
-                  top: world.h * f,
-                  left: 0,
-                  right: 0,
-                  height: 1,
-                  backgroundColor: 'rgba(120,140,110,0.16)',
-                }}
-              />
-            ))}
-            {/* 水印 */}
-            <View
-              style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}
-              className="items-center justify-center">
-              <Text
-                style={{
-                  fontSize: world.w * 0.17,
-                  fontWeight: '900',
-                  color: 'rgba(56,102,65,0.08)',
-                  letterSpacing: 6,
-                }}>
-                广东
-              </Text>
-            </View>
+            {/* 真实地图瓦片 */}
+            {OFFLINE_TILES.map((rowTiles, row) =>
+              rowTiles.map((src, col) => (
+                <Image
+                  key={`t-${row}-${col}`}
+                  source={src}
+                  resizeMode="cover"
+                  style={{
+                    position: 'absolute',
+                    left: col * tileW,
+                    top: row * tileH,
+                    width: tileW + 0.6,
+                    height: tileH + 0.6,
+                  }}
+                />
+              )),
+            )}
             {/* 路线连线 */}
             {routePois.slice(1).map((p, i) => (
               <RouteSegment
@@ -362,11 +319,11 @@ export function OfflineMap() {
 
         {/* 离线徽标 */}
         <View
-          style={{ boxShadow: '0px 2px 8px rgba(0,0,0,0.12)' }}
+          style={{ boxShadow: '0px 2px 8px rgba(0,0,0,0.25)' }}
           className="absolute left-3 top-3 flex-row items-center rounded-full bg-white px-3 py-1.5">
           <Ionicons name="cloud-offline-outline" size={14} color="#B5503C" />
           <Text className="ml-1.5 text-[11px] font-semibold text-[#6B4740]">
-            离线地图 · 数据随 App 内置
+            离线地图 · 地图瓦片随 App 内置
           </Text>
         </View>
 

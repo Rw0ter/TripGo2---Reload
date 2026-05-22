@@ -26,6 +26,7 @@ import {
   type RouteMode,
   type TencentMapHandle,
 } from '@/components/map/tencent-map-types';
+import { subscribeHeading } from '@/lib/compass';
 import { formatDistance, formatDuration } from '@/lib/geo';
 
 const ROUTE_MODES: {
@@ -90,6 +91,23 @@ export default function TravelMapScreen() {
     return () => clearTimeout(timer);
   }, [mapMode, status, attempt, showNotice]);
 
+  // 导航中：地图随设备罗盘方向实时旋转。
+  // 「开始导航」是用户手势，满足 iOS DeviceOrientation 的授权要求。
+  useEffect(() => {
+    if (!navving) return;
+    let lastSent = -999;
+    const unsubscribe = subscribeHeading((deg) => {
+      // 节流：方位变化超过 2° 才下发（按圆周计算，跨 0/360 不误判）。
+      const diff = Math.abs(deg - lastSent) % 360;
+      if (Math.min(diff, 360 - diff) < 2) return;
+      lastSent = deg;
+      // 用实时 mapRef，避免重连换实例后指向旧地图。
+      mapRef.current?.send({ type: 'rotateMap', deg });
+    });
+    // 停止导航时地图复位由内嵌文档的 doStopNav 负责，这里只需退订。
+    return unsubscribe;
+  }, [navving]);
+
   const handleEvent = useCallback(
     (e: MapEvent) => {
       switch (e.type) {
@@ -98,10 +116,13 @@ export default function TravelMapScreen() {
           break;
         case 'fatal':
           setMapMode('offline');
+          setNavving(false);
           showNotice('在线地图不可用，已切换到离线地图');
           break;
-        case 'locateError':
-          showNotice(e.message || '定位失败');
+        case 'located':
+          if (e.source === 'ip') showNotice('已按 IP 大致定位到所在城市');
+          else if (e.source === 'default')
+            showNotice('定位不可用，已显示默认位置（广州）');
           break;
         case 'searchResults':
           setResults(e.list);
@@ -120,7 +141,7 @@ export default function TravelMapScreen() {
           break;
         case 'navEnd':
           setNavving(false);
-          showNotice('模拟导航结束');
+          showNotice('导航结束');
           break;
         default:
           break;
@@ -424,9 +445,17 @@ export default function TravelMapScreen() {
                     color="#FFFFFF"
                   />
                   <Text className="ml-1.5 text-[13px] font-bold text-white">
-                    {navving ? '停止模拟导航' : '开始模拟导航'}
+                    {navving ? '结束导航' : '开始导航'}
                   </Text>
                 </Pressable>
+                <View className="mt-2 flex-row items-center justify-center">
+                  <Ionicons name="compass-outline" size={12} color="#9AA09A" />
+                  <Text className="ml-1 text-[11px] text-[#9AA09A]">
+                    {navving
+                      ? '地图正随设备罗盘方向实时转向'
+                      : '导航中地图将随设备罗盘方向转向'}
+                  </Text>
+                </View>
               </View>
             ) : destination ? (
               <View
