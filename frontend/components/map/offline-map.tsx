@@ -1,9 +1,10 @@
 // 离线地图 —— 断网时的旅行地图兜底方案。
-// 用随 App 打包的腾讯真实地图瓦片（zoom 9，广东范围）渲染底图，可缩放 / 可平移，
-// POI 走 Web 墨卡托投影精确落点；支持重点景点离线路线规划（直线距离 + 时长估算）。
+// 用随 App 打包的腾讯真实地图瓦片（多级：z9 概览 + z10 细节）渲染底图，
+// 可缩放 / 可平移；POI 走 Web 墨卡托投影精确落点、标注随缩放反向补偿保持
+// 恒定屏幕尺寸；支持定位当前位置 + 重点景点离线路线规划（haversine 距离）。
 
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Image,
@@ -18,6 +19,8 @@ import {
 import {
   formatDistance,
   formatDuration,
+  haversineMeters,
+  type LatLng,
   type OfflineRouteMode,
   projectOnTileGrid,
   routeTotals,
@@ -27,11 +30,13 @@ import {
   type GdPoi,
   GUANGDONG_POIS,
 } from '@/lib/guangdong-poi';
-import { OFFLINE_TILE_GRID, OFFLINE_TILES } from '@/lib/offline-tiles';
+import { getCurrentLocation } from '@/lib/locate';
+import { OFFLINE_TILE_GRID, OFFLINE_TILE_LEVELS } from '@/lib/offline-tiles';
 
 const GRID = OFFLINE_TILE_GRID;
-const MIN_SCALE = 1; // 1 = cover 铺满；不允许更小，避免出现黑边
+const MIN_SCALE = 1; // 1 = cover 铺满
 const MAX_SCALE = 4;
+const DETAIL_LEVEL_AT = 2; // 缩放 ≥ 此值切到 z10 细节瓦片
 
 const MODES: {
   key: OfflineRouteMode;
@@ -47,42 +52,78 @@ interface XY {
   x: number;
   y: number;
 }
+// 反向缩放节点（Animated.divide 的返回类型）。
+type AnimNumber = ReturnType<typeof Animated.divide>;
 
-// 两个 POI 之间的路线连线（一条按夹角旋转的细条）。
-function RouteSegment({ from, to }: { from: XY; to: XY }) {
+// 反向缩放锚点容器：定位在 pos，子节点抵消地图缩放保持恒定屏幕尺寸。
+function Anchored({
+  pos,
+  invScale,
+  children,
+}: {
+  pos: XY;
+  invScale: AnimNumber;
+  children: React.ReactNode;
+}) {
+  return (
+    <Animated.View
+      style={{
+        position: 'absolute',
+        left: pos.x,
+        top: pos.y,
+        width: 0,
+        height: 0,
+        transform: [{ scale: invScale }],
+      }}>
+      {children}
+    </Animated.View>
+  );
+}
+
+// 两个点之间的路线连线：长度随地图缩放、粗细反向补偿保持恒定。
+function RouteSegment({
+  from,
+  to,
+  invScale,
+}: {
+  from: XY;
+  to: XY;
+  invScale: AnimNumber;
+}) {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const length = Math.hypot(dx, dy);
   const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
   return (
-    <View
+    <Animated.View
       style={{
         pointerEvents: 'none',
         position: 'absolute',
         left: (from.x + to.x) / 2 - length / 2,
-        top: (from.y + to.y) / 2 - 2,
+        top: (from.y + to.y) / 2,
         width: length,
-        height: 4,
+        height: Animated.multiply(invScale, 4),
+        marginTop: Animated.multiply(invScale, -2),
         borderRadius: 2,
         backgroundColor: '#1E9E63',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.85)',
         transform: [{ rotate: `${angle}deg` }],
       }}
     />
   );
 }
 
-// 画布上的单个 POI 标注。
+// 画布上的单个 POI 标注（恒定屏幕尺寸）。
 function PoiPin({
   poi,
   pos,
+  invScale,
   order,
   focused,
   onPress,
 }: {
   poi: GdPoi;
   pos: XY;
+  invScale: AnimNumber;
   order: number; // 0 = 未加入路线，>0 = 路线中的序号
   focused: boolean;
   onPress: () => void;
@@ -90,62 +131,85 @@ function PoiPin({
   const inRoute = order > 0;
   const size = focused ? 30 : 24;
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${poi.name}（${poi.city}）`}
-      style={{
-        position: 'absolute',
-        left: pos.x - 36,
-        top: pos.y - size / 2,
-        width: 72,
-        alignItems: 'center',
-      }}>
-      <View
-        style={{
-          width: size,
-          height: size,
-          borderRadius: 999,
-          backgroundColor: inRoute ? '#1E9E63' : CATEGORY_COLOR[poi.category],
-          borderWidth: 2.5,
-          borderColor: '#FFFFFF',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0px 2px 6px rgba(0,0,0,0.4)',
-        }}>
-        {inRoute ? (
-          <Text className="text-[12px] font-extrabold text-white">{order}</Text>
-        ) : (
-          <View
-            style={{
-              width: 7,
-              height: 7,
-              borderRadius: 999,
-              backgroundColor: '#FFFFFF',
-            }}
-          />
-        )}
-      </View>
-      <View
-        style={{ boxShadow: '0px 1px 4px rgba(0,0,0,0.35)' }}
-        className="mt-1 rounded-md bg-white/95 px-1.5 py-0.5">
-        <Text
-          numberOfLines={1}
-          className="text-[9px] font-semibold text-[#33403A]">
-          {poi.name}
-        </Text>
-      </View>
-    </Pressable>
+    <Anchored pos={pos} invScale={invScale}>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`${poi.name}（${poi.city}）`}
+        style={{ position: 'absolute', left: -36, top: -size / 2, width: 72, alignItems: 'center' }}>
+        <View
+          style={{
+            width: size,
+            height: size,
+            borderRadius: 999,
+            backgroundColor: inRoute ? '#1E9E63' : CATEGORY_COLOR[poi.category],
+            borderWidth: 2.5,
+            borderColor: '#FFFFFF',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0px 2px 6px rgba(0,0,0,0.4)',
+          }}>
+          {inRoute ? (
+            <Text className="text-[12px] font-extrabold text-white">{order}</Text>
+          ) : (
+            <View
+              style={{ width: 7, height: 7, borderRadius: 999, backgroundColor: '#FFFFFF' }}
+            />
+          )}
+        </View>
+        <View
+          style={{ boxShadow: '0px 1px 4px rgba(0,0,0,0.35)' }}
+          className="mt-1 rounded-md bg-white/95 px-1.5 py-0.5">
+          <Text numberOfLines={1} className="text-[9px] font-semibold text-[#33403A]">
+            {poi.name}
+          </Text>
+        </View>
+      </Pressable>
+    </Anchored>
   );
 }
 
-// 缩放 / 复位按钮。
-function ZoomButton({
+// 「我的位置」标注。
+function UserMarker({ pos, invScale }: { pos: XY; invScale: AnimNumber }) {
+  return (
+    <Anchored pos={pos} invScale={invScale}>
+      <View
+        style={{
+          pointerEvents: 'none',
+          position: 'absolute',
+          left: -15,
+          top: -15,
+          width: 30,
+          height: 30,
+          borderRadius: 999,
+          backgroundColor: 'rgba(47,127,230,0.25)',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+        <View
+          style={{
+            width: 15,
+            height: 15,
+            borderRadius: 999,
+            backgroundColor: '#2F7FE6',
+            borderWidth: 3,
+            borderColor: '#FFFFFF',
+          }}
+        />
+      </View>
+    </Anchored>
+  );
+}
+
+// 缩放 / 复位 / 定位按钮。
+function MapButton({
   icon,
   onPress,
+  busy,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   onPress: () => void;
+  busy?: boolean;
 }) {
   return (
     <Pressable
@@ -153,7 +217,7 @@ function ZoomButton({
       accessibilityRole="button"
       style={{ boxShadow: '0px 2px 8px rgba(0,0,0,0.16)' }}
       className="mb-2 h-10 w-10 items-center justify-center rounded-xl bg-white">
-      <Ionicons name={icon} size={20} color="#386641" />
+      <Ionicons name={busy ? 'ellipsis-horizontal' : icon} size={20} color="#386641" />
     </Pressable>
   );
 }
@@ -165,10 +229,30 @@ export function OfflineMap() {
   const [mode, setMode] = useState<OfflineRouteMode>('driving');
   const [routeIds, setRouteIds] = useState<string[]>([]);
   const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [level, setLevel] = useState(0); // 0=z9 概览 / 1=z10 细节
+  const [userPos, setUserPos] = useState<LatLng | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const pan = useRef(new Animated.ValueXY()).current;
   const scale = useRef(new Animated.Value(1)).current;
   const scaleRef = useRef(1);
+  // 标注 / 连线粗细反向缩放：1/scale，抵消地图缩放保持恒定屏幕尺寸。
+  const invScale = useRef(Animated.divide(1, scale)).current;
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (noticeTimer.current) clearTimeout(noticeTimer.current);
+    },
+    [],
+  );
+
+  const showNotice = useCallback((msg: string) => {
+    setNotice(msg);
+    if (noticeTimer.current) clearTimeout(noticeTimer.current);
+    noticeTimer.current = setTimeout(() => setNotice(null), 3200);
+  }, []);
 
   // 拖拽平移：阈值外才接管，保证点选 POI 的 tap 不被吞。
   const panResponder = useMemo(
@@ -194,9 +278,9 @@ export function OfflineMap() {
   }, [viewport]);
 
   const posOf = useCallback(
-    (poi: GdPoi): XY => {
+    (p: LatLng): XY => {
       if (!world) return { x: 0, y: 0 };
-      const u = projectOnTileGrid(poi, GRID);
+      const u = projectOnTileGrid(p, GRID);
       return { x: u.x * world.w, y: u.y * world.h };
     },
     [world],
@@ -209,7 +293,15 @@ export function OfflineMap() {
         .filter((p): p is GdPoi => Boolean(p)),
     [routeIds],
   );
-  const totals = useMemo(() => routeTotals(routePois, mode), [routePois, mode]);
+  // 路线途经点：定位成功后以「我的位置」为起点。
+  const routeLine = useMemo<LatLng[]>(
+    () => (userPos ? [userPos, ...routePois] : routePois),
+    [userPos, routePois],
+  );
+  const totals = useMemo(
+    () => routeTotals(routeLine, mode),
+    [routeLine, mode],
+  );
   const focusedPoi = focusedId
     ? GUANGDONG_POIS.find((p) => p.id === focusedId) ?? null
     : null;
@@ -221,33 +313,62 @@ export function OfflineMap() {
     );
   };
 
-  const zoomBy = (dir: 1 | -1) => {
-    const next = Math.min(
-      MAX_SCALE,
-      Math.max(MIN_SCALE, scaleRef.current + dir * 0.6),
-    );
+  const applyScale = (next: number) => {
     scaleRef.current = next;
+    setLevel(next >= DETAIL_LEVEL_AT ? 1 : 0);
     Animated.timing(scale, {
       toValue: next,
-      duration: 160,
+      duration: 180,
       useNativeDriver: false,
     }).start();
   };
+  const zoomBy = (dir: 1 | -1) => {
+    applyScale(
+      Math.min(MAX_SCALE, Math.max(MIN_SCALE, scaleRef.current + dir * 0.6)),
+    );
+  };
   const resetView = () => {
     scaleRef.current = 1;
+    setLevel(0);
     pan.flattenOffset();
     Animated.parallel([
-      Animated.timing(scale, {
-        toValue: 1,
-        duration: 220,
-        useNativeDriver: false,
-      }),
+      Animated.timing(scale, { toValue: 1, duration: 220, useNativeDriver: false }),
       Animated.timing(pan, {
         toValue: { x: 0, y: 0 },
         duration: 220,
         useNativeDriver: false,
       }),
     ]).start();
+  };
+
+  // 把某个世界坐标点平移到可视区中心。
+  const centerOnWorld = useCallback(
+    (p: XY) => {
+      if (!world) return;
+      pan.flattenOffset();
+      Animated.timing(pan, {
+        toValue: {
+          x: -(p.x - world.w / 2) * scaleRef.current,
+          y: -(p.y - world.h / 2) * scaleRef.current,
+        },
+        duration: 280,
+        useNativeDriver: false,
+      }).start();
+    },
+    [pan, world],
+  );
+
+  const onLocate = () => {
+    if (locating) return;
+    setLocating(true);
+    getCurrentLocation()
+      .then((pos) => {
+        setUserPos(pos);
+        centerOnWorld(posOf(pos));
+        showNotice('已定位到当前位置');
+      })
+      .catch((e: Error) => showNotice(e.message || '定位失败'))
+      .finally(() => setLocating(false));
   };
 
   const toggleRoute = (id: string) => {
@@ -257,8 +378,9 @@ export function OfflineMap() {
     setFocusedId(null);
   };
 
-  const tileW = world ? world.w / GRID.cols : 0;
-  const tileH = world ? world.h / GRID.rows : 0;
+  const tiles = OFFLINE_TILE_LEVELS[level];
+  const tileW = world ? world.w / tiles.cols : 0;
+  const tileH = world ? world.h / tiles.rows : 0;
 
   return (
     <View className="flex-1 bg-[#11221C]">
@@ -278,11 +400,11 @@ export function OfflineMap() {
                 { scale },
               ],
             }}>
-            {/* 真实地图瓦片 */}
-            {OFFLINE_TILES.map((rowTiles, row) =>
+            {/* 真实地图瓦片（按缩放选用 z9 / z10 级别） */}
+            {tiles.tiles.map((rowTiles, row) =>
               rowTiles.map((src, col) => (
                 <Image
-                  key={`t-${row}-${col}`}
+                  key={`L${level}-${row}-${col}`}
                   source={src}
                   resizeMode="cover"
                   style={{
@@ -296,11 +418,12 @@ export function OfflineMap() {
               )),
             )}
             {/* 路线连线 */}
-            {routePois.slice(1).map((p, i) => (
+            {routeLine.slice(1).map((p, i) => (
               <RouteSegment
-                key={`seg-${p.id}`}
-                from={posOf(routePois[i])}
+                key={`seg-${i}`}
+                from={posOf(routeLine[i])}
                 to={posOf(p)}
+                invScale={invScale}
               />
             ))}
             {/* POI 标注 */}
@@ -309,11 +432,14 @@ export function OfflineMap() {
                 key={poi.id}
                 poi={poi}
                 pos={posOf(poi)}
+                invScale={invScale}
                 order={routeIds.indexOf(poi.id) + 1}
                 focused={focusedId === poi.id}
                 onPress={() => setFocusedId(poi.id)}
               />
             ))}
+            {/* 我的位置 */}
+            {userPos && <UserMarker pos={posOf(userPos)} invScale={invScale} />}
           </Animated.View>
         )}
 
@@ -327,11 +453,23 @@ export function OfflineMap() {
           </Text>
         </View>
 
-        {/* 缩放控件 */}
-        <View className="absolute right-3 top-1/3">
-          <ZoomButton icon="add" onPress={() => zoomBy(1)} />
-          <ZoomButton icon="remove" onPress={() => zoomBy(-1)} />
-          <ZoomButton icon="scan-outline" onPress={resetView} />
+        {/* 提示条 */}
+        {notice && (
+          <View
+            style={{ pointerEvents: 'none' }}
+            className="absolute left-0 right-0 top-14 items-center">
+            <View className="rounded-full bg-black/78 px-4 py-2">
+              <Text className="text-[12px] text-white">{notice}</Text>
+            </View>
+          </View>
+        )}
+
+        {/* 缩放 + 定位控件 */}
+        <View className="absolute right-3 top-1/4">
+          <MapButton icon="add" onPress={() => zoomBy(1)} />
+          <MapButton icon="remove" onPress={() => zoomBy(-1)} />
+          <MapButton icon="scan-outline" onPress={resetView} />
+          <MapButton icon="locate" onPress={onLocate} busy={locating} />
         </View>
       </View>
 
@@ -343,16 +481,20 @@ export function OfflineMap() {
           <FocusedCard
             poi={focusedPoi}
             inRoute={routeIds.includes(focusedPoi.id)}
+            userPos={userPos}
             onToggle={() => toggleRoute(focusedPoi.id)}
             onClose={() => setFocusedId(null)}
           />
         ) : (
           <RoutePlanner
             routePois={routePois}
+            userPos={userPos}
             mode={mode}
             onModeChange={setMode}
             totals={totals}
+            routeLineLength={routeLine.length}
             onRemove={toggleRoute}
+            onClearUser={() => setUserPos(null)}
             onClear={() => setRouteIds([])}
           />
         )}
@@ -365,11 +507,13 @@ export function OfflineMap() {
 function FocusedCard({
   poi,
   inRoute,
+  userPos,
   onToggle,
   onClose,
 }: {
   poi: GdPoi;
   inRoute: boolean;
+  userPos: LatLng | null;
   onToggle: () => void;
   onClose: () => void;
 }) {
@@ -404,10 +548,18 @@ function FocusedCard({
       <Text className="mt-2.5 text-[12px] leading-5 text-[#5A5F58]">
         {poi.summary}
       </Text>
+      {userPos && (
+        <View className="mt-2 flex-row items-center">
+          <Ionicons name="navigate-circle-outline" size={13} color="#2F7FE6" />
+          <Text className="ml-1 text-[12px] text-[#2F7FE6]">
+            距我的位置直线 {formatDistance(haversineMeters(userPos, poi))}
+          </Text>
+        </View>
+      )}
       <Pressable
         onPress={onToggle}
         accessibilityRole="button"
-        className={`mt-3.5 h-11 flex-row items-center justify-center rounded-xl ${
+        className={`mt-3 h-11 flex-row items-center justify-center rounded-xl ${
           inRoute ? 'bg-[#F1F0E4]' : 'bg-primary'
         }`}>
         <Ionicons
@@ -429,19 +581,26 @@ function FocusedCard({
 // 离线路线规划面板。
 function RoutePlanner({
   routePois,
+  userPos,
   mode,
   onModeChange,
   totals,
+  routeLineLength,
   onRemove,
+  onClearUser,
   onClear,
 }: {
   routePois: GdPoi[];
+  userPos: LatLng | null;
   mode: OfflineRouteMode;
   onModeChange: (m: OfflineRouteMode) => void;
   totals: { distance: number; duration: number };
+  routeLineLength: number;
   onRemove: (id: string) => void;
+  onClearUser: () => void;
   onClear: () => void;
 }) {
+  const hasRoute = routeLineLength >= 2;
   return (
     <View>
       <View className="flex-row items-center justify-between">
@@ -468,9 +627,7 @@ function RoutePlanner({
               onPress={() => onModeChange(m.key)}
               accessibilityRole="button"
               className={`mr-2 flex-row items-center rounded-full border px-3 py-1.5 ${
-                active
-                  ? 'border-primary bg-primary'
-                  : 'border-[#E3E2D4] bg-white'
+                active ? 'border-primary bg-primary' : 'border-[#E3E2D4] bg-white'
               }`}>
               <Ionicons
                 name={m.icon}
@@ -492,17 +649,41 @@ function RoutePlanner({
         <View className="mt-3 flex-row items-center rounded-xl bg-[#F7F6EC] px-3 py-3">
           <Ionicons name="hand-left-outline" size={15} color="#9AA09A" />
           <Text className="ml-2 flex-1 text-[12px] leading-5 text-[#9AA09A]">
-            点选地图上的景点加入路线，离线即可估算总距离与用时。
+            点选地图上的景点加入路线；右侧「定位」可把当前位置设为起点。
           </Text>
         </View>
       ) : (
         <>
-          {/* 途经景点 */}
+          {/* 途经点：定位后以「我的位置」为起点 */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             className="mt-3"
             contentContainerStyle={{ alignItems: 'center' }}>
+            {userPos && (
+              <View className="flex-row items-center">
+                <Pressable
+                  onPress={onClearUser}
+                  accessibilityRole="button"
+                  accessibilityLabel="移除起点「我的位置」"
+                  className="flex-row items-center rounded-full bg-[#E7F0FB] py-1 pl-1.5 pr-2">
+                  <Ionicons name="navigate" size={12} color="#2F7FE6" />
+                  <Text className="ml-1 text-[12px] text-[#2F6FCF]">我的位置</Text>
+                  <Ionicons
+                    name="close"
+                    size={12}
+                    color="#9AB6DC"
+                    style={{ marginLeft: 3 }}
+                  />
+                </Pressable>
+                <Ionicons
+                  name="arrow-forward"
+                  size={12}
+                  color="#C0C4BC"
+                  style={{ marginHorizontal: 4 }}
+                />
+              </View>
+            )}
             {routePois.map((p, i) => (
               <View key={p.id} className="flex-row items-center">
                 {i > 0 && (
@@ -523,9 +704,7 @@ function RoutePlanner({
                       {i + 1}
                     </Text>
                   </View>
-                  <Text className="ml-1 text-[12px] text-[#3C4A40]">
-                    {p.name}
-                  </Text>
+                  <Text className="ml-1 text-[12px] text-[#3C4A40]">{p.name}</Text>
                   <Ionicons
                     name="close"
                     size={12}
@@ -537,11 +716,7 @@ function RoutePlanner({
             ))}
           </ScrollView>
 
-          {routePois.length < 2 ? (
-            <Text className="mt-3 text-[12px] text-[#9AA09A]">
-              再选一个景点即可生成离线路线。
-            </Text>
-          ) : (
+          {hasRoute ? (
             <View className="mt-3 flex-row rounded-xl bg-[#F1FAF4] px-3 py-3">
               <View className="flex-1 flex-row items-center">
                 <Ionicons name="git-branch-outline" size={16} color="#1E9E63" />
@@ -562,6 +737,10 @@ function RoutePlanner({
                 </View>
               </View>
             </View>
+          ) : (
+            <Text className="mt-3 text-[12px] text-[#9AA09A]">
+              再选一个景点、或点「定位」加入起点，即可生成离线路线。
+            </Text>
           )}
         </>
       )}
