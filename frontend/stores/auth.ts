@@ -16,6 +16,9 @@ export interface AuthUser {
 interface AuthState {
   token: string | null;
   user: AuthUser | null;
+  // persist 是否已从存储恢复完毕——自动登录路由必须等它为 true 再读 token，
+  // 否则首帧读到 null 会把已登录用户误跳到登录页。
+  hydrated: boolean;
   setAuth: (token: string, user: AuthUser) => void;
   clearAuth: () => void;
 }
@@ -27,12 +30,18 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       token: null,
       user: null,
+      hydrated: false,
       setAuth: (token, user) => set({ token, user }),
       clearAuth: () => set({ token: null, user: null }),
     }),
     {
       name: 'tripgo-auth',
       storage: createJSONStorage(() => persistStorage),
+      // 只持久化 token / user；hydrated 是运行期状态。
+      partialize: (s) => ({ token: s.token, user: s.user }),
+      onRehydrateStorage: () => () => {
+        useAuthStore.setState({ hydrated: true });
+      },
     },
   ),
 );
