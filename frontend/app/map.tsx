@@ -95,18 +95,17 @@ export default function TravelMapScreen() {
   // 「开始导航」是用户手势，满足 iOS DeviceOrientation 的授权要求。
   useEffect(() => {
     if (!navving) return;
-    const handle = mapRef.current;
     let lastSent = -999;
     const unsubscribe = subscribeHeading((deg) => {
-      // 节流：方位变化超过 2° 才下发，避免桥消息过密。
-      if (Math.abs(deg - lastSent) < 2) return;
+      // 节流：方位变化超过 2° 才下发（按圆周计算，跨 0/360 不误判）。
+      const diff = Math.abs(deg - lastSent) % 360;
+      if (Math.min(diff, 360 - diff) < 2) return;
       lastSent = deg;
-      handle?.send({ type: 'rotateMap', deg });
+      // 用实时 mapRef，避免重连换实例后指向旧地图。
+      mapRef.current?.send({ type: 'rotateMap', deg });
     });
-    return () => {
-      unsubscribe();
-      handle?.send({ type: 'rotateMap', deg: 0 });
-    };
+    // 停止导航时地图复位由内嵌文档的 doStopNav 负责，这里只需退订。
+    return unsubscribe;
   }, [navving]);
 
   const handleEvent = useCallback(
@@ -123,7 +122,7 @@ export default function TravelMapScreen() {
         case 'located':
           if (e.source === 'ip') showNotice('已按 IP 大致定位到所在城市');
           else if (e.source === 'default')
-            showNotice('定位未授权，已显示默认位置（广州）');
+            showNotice('定位不可用，已显示默认位置（广州）');
           break;
         case 'searchResults':
           setResults(e.list);

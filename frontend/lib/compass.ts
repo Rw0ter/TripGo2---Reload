@@ -5,7 +5,8 @@ import { Magnetometer } from 'expo-sensors';
 export function subscribeHeading(onHeading: (deg: number) => void): () => void {
   Magnetometer.setUpdateInterval(200);
   const sub = Magnetometer.addListener(({ x, y }) => {
-    // 由磁场分量推算水平方位角。
+    // 由磁场水平分量推算方位角（设备大致平放时有效，未做倾斜补偿与
+    // 磁偏角校正，作导航地图转向的近似朝向足够）。
     let deg = Math.atan2(y, x) * (180 / Math.PI);
     deg = (deg + 360) % 360;
     onHeading(deg);

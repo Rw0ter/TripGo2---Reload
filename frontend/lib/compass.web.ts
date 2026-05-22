@@ -22,11 +22,14 @@ export function subscribeHeading(onHeading: (deg: number) => void): () => void {
       })
     | undefined;
 
+  // 授权是异步的，取消订阅可能早于其 resolve —— 用标志位防止监听器泄漏。
+  let cancelled = false;
+
   if (DOE && typeof DOE.requestPermission === 'function') {
     // iOS 13+：需在用户手势内授权（「开始导航」按钮即手势）。
     DOE.requestPermission()
       .then((state) => {
-        if (state === 'granted') {
+        if (!cancelled && state === 'granted') {
           window.addEventListener('deviceorientation', handler);
         }
       })
@@ -37,6 +40,7 @@ export function subscribeHeading(onHeading: (deg: number) => void): () => void {
   }
 
   return () => {
+    cancelled = true;
     window.removeEventListener('deviceorientation', handler);
     window.removeEventListener('deviceorientationabsolute', handler);
   };
