@@ -31,7 +31,11 @@ import {
   GUANGDONG_POIS,
 } from '@/lib/guangdong-poi';
 import { getCurrentLocation } from '@/lib/locate';
-import { OFFLINE_TILE_GRID, OFFLINE_TILE_LEVELS } from '@/lib/offline-tiles';
+import {
+  OFFLINE_TILE_GRID,
+  OFFLINE_TILE_LEVELS,
+  type OfflineTileLevel,
+} from '@/lib/offline-tiles';
 
 const GRID = OFFLINE_TILE_GRID;
 const MIN_SCALE = 1; // 1 = cover 铺满
@@ -201,6 +205,38 @@ function UserMarker({ pos, invScale }: { pos: XY; invScale: AnimNumber }) {
   );
 }
 
+// 单级瓦片图层（铺满 world 矩形）。
+function TileLayer({
+  level,
+  world,
+}: {
+  level: OfflineTileLevel;
+  world: { w: number; h: number };
+}) {
+  const tw = world.w / level.cols;
+  const th = world.h / level.rows;
+  return (
+    <>
+      {level.tiles.map((rowTiles, row) =>
+        rowTiles.map((src, col) => (
+          <Image
+            key={`${level.cols}-${row}-${col}`}
+            source={src}
+            resizeMode="cover"
+            style={{
+              position: 'absolute',
+              left: col * tw,
+              top: row * th,
+              width: tw + 0.6,
+              height: th + 0.6,
+            }}
+          />
+        )),
+      )}
+    </>
+  );
+}
+
 // 缩放 / 复位 / 定位按钮。
 function MapButton({
   icon,
@@ -238,7 +274,12 @@ export function OfflineMap() {
   const scale = useRef(new Animated.Value(1)).current;
   const scaleRef = useRef(1);
   // 标注 / 连线粗细反向缩放：1/scale，抵消地图缩放保持恒定屏幕尺寸。
-  const invScale = useRef(Animated.divide(1, scale)).current;
+  // 惰性初始化：Animated.divide 会挂到 scale 的节点图上，只能建一次。
+  const invScaleRef = useRef<AnimNumber | null>(null);
+  if (invScaleRef.current === null) {
+    invScaleRef.current = Animated.divide(1, scale);
+  }
+  const invScale = invScaleRef.current;
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
@@ -378,10 +419,6 @@ export function OfflineMap() {
     setFocusedId(null);
   };
 
-  const tiles = OFFLINE_TILE_LEVELS[level];
-  const tileW = world ? world.w / tiles.cols : 0;
-  const tileH = world ? world.h / tiles.rows : 0;
-
   return (
     <View className="flex-1 bg-[#11221C]">
       {/* 可缩放 / 可平移的真实瓦片地图 */}
@@ -400,22 +437,11 @@ export function OfflineMap() {
                 { scale },
               ],
             }}>
-            {/* 真实地图瓦片（按缩放选用 z9 / z10 级别） */}
-            {tiles.tiles.map((rowTiles, row) =>
-              rowTiles.map((src, col) => (
-                <Image
-                  key={`L${level}-${row}-${col}`}
-                  source={src}
-                  resizeMode="cover"
-                  style={{
-                    position: 'absolute',
-                    left: col * tileW,
-                    top: row * tileH,
-                    width: tileW + 0.6,
-                    height: tileH + 0.6,
-                  }}
-                />
-              )),
+            {/* z9 概览底图常驻；放大后 z10 细节图层叠加在上层，
+                切级别不会白屏闪烁。 */}
+            <TileLayer level={OFFLINE_TILE_LEVELS[0]} world={world} />
+            {level === 1 && (
+              <TileLayer level={OFFLINE_TILE_LEVELS[1]} world={world} />
             )}
             {/* 路线连线 */}
             {routeLine.slice(1).map((p, i) => (

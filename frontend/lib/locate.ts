@@ -9,8 +9,9 @@ export async function getCurrentLocation(): Promise<LatLng> {
   if (status !== 'granted') {
     throw new Error('未授予定位权限');
   }
+  // 用 High（GPS 优先）：离线时网络/Wi-Fi 定位不可用，需走卫星定位。
   const pos = await Location.getCurrentPositionAsync({
-    accuracy: Location.Accuracy.Balanced,
+    accuracy: Location.Accuracy.High,
   });
   return { lat: pos.coords.latitude, lng: pos.coords.longitude };
 }
