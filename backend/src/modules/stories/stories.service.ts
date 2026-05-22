@@ -7,8 +7,23 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 export class StoriesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // 社区动态流：按时间倒序，附作者信息与点赞 / 评论数。
-  async findAll() {
+  // 取 userId 在给定动态里点过赞的 id 集合（未登录返回空集）。
+  private async likedStoryIds(
+    userId: string | undefined,
+    storyIds: number[],
+  ): Promise<Set<number>> {
+    if (!userId || storyIds.length === 0) {
+      return new Set();
+    }
+    const likes = await this.prisma.like.findMany({
+      where: { userId, storyId: { in: storyIds } },
+      select: { storyId: true },
+    });
+    return new Set(likes.map((l) => l.storyId));
+  }
+
+  // 社区动态流：按时间倒序，附作者、点赞 / 评论数与当前用户是否已点赞。
+  async findAll(userId?: string) {
     const rows = await this.prisma.story.findMany({
       orderBy: { createdAt: 'desc' },
       select: {
@@ -21,6 +36,10 @@ export class StoriesService {
         _count: { select: { likes: true, comments: true } },
       },
     });
+    const liked = await this.likedStoryIds(
+      userId,
+      rows.map((r) => r.id),
+    );
     return rows.map((s) => ({
       id: s.id,
       title: s.title,
@@ -30,11 +49,12 @@ export class StoriesService {
       author: s.author,
       likeCount: s._count.likes,
       commentCount: s._count.comments,
+      liked: liked.has(s.id),
     }));
   }
 
-  // 动态详情：含作者、点赞 / 评论数与评论列表（按时间正序）。
-  async findOne(id: number) {
+  // 动态详情：含作者、点赞 / 评论数、评论列表与当前用户是否已点赞。
+  async findOne(id: number, userId?: string) {
     const s = await this.prisma.story.findUnique({
       where: { id },
       select: {
@@ -59,6 +79,7 @@ export class StoriesService {
     if (!s) {
       throw new NotFoundException('动态不存在');
     }
+    const liked = await this.likedStoryIds(userId, [id]);
     return {
       id: s.id,
       title: s.title,
@@ -68,6 +89,7 @@ export class StoriesService {
       author: s.author,
       likeCount: s._count.likes,
       commentCount: s._count.comments,
+      liked: liked.has(id),
       comments: s.comments,
     };
   }
@@ -87,6 +109,7 @@ export class StoriesService {
   }
 
   // 点赞 / 取消点赞（切换），返回切换后的状态与计数。
+  // Like 表 @@id([storyId, userId]) 复合主键，天然保证一个用户一条点赞。
   async toggleLike(userId: string, storyId: number) {
     const story = await this.prisma.story.findUnique({
       where: { id: storyId },

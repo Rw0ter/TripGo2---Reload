@@ -50,7 +50,7 @@ export default function StoryDetailScreen() {
 
   const [story, setStory] = useState<StoryDetail | null>(null);
   const [error, setError] = useState(false);
-  // liked 初始 false：详情接口未返回当前用户的点赞态；点赞按切换处理、服务端为准。
+  // liked 由详情接口按当前用户回填（见 load）；加载完成前先 false。
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -60,8 +60,12 @@ export default function StoryDetailScreen() {
   const load = useCallback(async () => {
     setError(false);
     try {
-      const d = await apiRequest<StoryDetail>(`/stories/${storyId}`);
+      // auth:true —— 登录时带 token，后端回填 liked。
+      const d = await apiRequest<StoryDetail>(`/stories/${storyId}`, {
+        auth: true,
+      });
       setStory(d);
+      setLiked(d.liked);
       setLikeCount(d.likeCount);
       setComments(d.comments);
     } catch {

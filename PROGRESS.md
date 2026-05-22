@@ -7,7 +7,7 @@
 
 ## 当前阶段
 
-W2。底部 5 个 Tab 全部复刻并接真后端；社区已打通完整闭环（动态流 + 详情 + 点赞 + 评论 + 发布），旅行地图屏（在线腾讯 GL JS + 离线兜底）已重写完成，home / 个人中心做了改版升级 —— PR #1–#29 均已合并、均浏览器实测通过。下一步：`trip/create` 新建行程表单 + itinerary「添加行程」子页 + 行程后端，之后铺主线详情 / 列表屏。
+W2。底部 5 个 Tab 全部复刻并接真后端；社区已打通完整闭环（动态流 + 详情 + 点赞 + 评论 + 发布），旅行地图屏（在线腾讯 GL JS + 离线兜底）已重写完成，已登录用户启动自动进首页，home / 个人中心做了改版升级 —— PR #1–#32 均已合并、均浏览器实测通过。下一步：`trip/create` 新建行程表单 + itinerary「添加行程」子页 + 行程后端，之后铺主线详情 / 列表屏。
 
 ## 已完成
 
@@ -44,7 +44,9 @@ W2。底部 5 个 Tab 全部复刻并接真后端；社区已打通完整闭环�
 - 图标与路由收尾（PR #23/#24/#25）：首页入口图标 + 个人中心更多服务图标做透明底处理（边界 flood-fill 抠图）、智能助手换矢量机器人、个人中心加「我的发布」分区；修复非首 tab 深链接误跳登录（`index.tsx` 改用 `useFocusEffect`）、注册在 web 走不通（`Alert` 在 web 不渲染 → 改行内错误 + 直接跳转）
 - 社区动态流（PR #26）：后端新增 `stories` 只读模块（`GET /stories`，按时间倒序含作者与点赞/评论数）；`seed.ts` 灌入 8 位社区作者（upsert）+ 8 条岭南旅途动态 + 错开的点赞/评论/时间；前端 `community.tsx` 从占位页改为真实动态流——渐变头 + 动态卡（字母头像 / 配图 / 点赞本地乐观切换）
 - 社区功能完整打通（PR #27/#28）：后端 `stories` 模块补全 `GET /stories/:id` 详情、`POST /stories` 发布、`POST /stories/:id/like` 点赞切换、`POST /stories/:id/comments` 评论（写接口走 `JwtAuthGuard`），`seed.ts` 改写为非遗文化传承主题（粤剧/广绣/醒狮/工夫茶/龙舟等）；前端 `community.tsx` 改固定绿色头 + 两栏高低落差瀑布流 + 非遗文案，新增 `app/story/[id].tsx` 故事详情（点赞 / 评论接真）与 `app/post/story.tsx` 发布表单（标题 + 正文 + 精选配图），底部「+」→ 发布故事流程贯通；新增共享 `lib/story-format.ts`
-- 旅行地图屏（PR #29，对应 Legacy `map.html`）：路由 `/map`，itinerary 的「旅游地图」「开始规划」入口接入。**在线**用腾讯地图 JavaScript API GL 封装成跨端 React 组件（`components/map/`，web=iframe srcDoc / 原生=react-native-webview，共用一份内嵌 HTML + postMessage 桥）——定位 / 搜索 / 路线规划全部走 GL SDK 的 `service` 库在客户端直接完成，**彻底去掉旧版后端 WebService 代理**；定位做三级兜底（浏览器 GPS → 腾讯 IP 定位 → 默认广州中心）；导航时地图随设备罗盘方向实时旋转（web=DeviceOrientation / 原生=expo-sensors 磁力计 → `map.setRotation`）。**离线**用 `components/map/offline-map.tsx`：随 App 内置腾讯真实地图瓦片（45 块 z9 瓦片，`scripts/fetch-offline-tiles.js` 下载到 `assets/offline-map/`）+ 16 个广东景点 POI（Web 墨卡托投影精确落点），可缩放 / 可平移 + 重点景点离线路线规划（haversine 直线距离 + 出行方式时长估算，`lib/geo.ts`）。在线地图加载失败 / 超时 15s 自动切离线，顶栏可手动切换。新增依赖 `react-native-webview@13.15.0`、`expo-sensors@15.0.8`
+- 旅行地图屏（PR #29，对应 Legacy `map.html`）：路由 `/map`，itinerary 的「旅游地图」「开始规划」入口接入。**在线**用腾讯地图 JavaScript API GL 封装成跨端 React 组件（`components/map/`，web=iframe srcDoc / 原生=react-native-webview，共用一份内嵌 HTML + postMessage 桥）——定位 / 搜索 / 路线规划全部走 GL SDK 的 `service` 库在客户端直接完成，**彻底去掉旧版后端 WebService 代理**；定位做三级兜底（浏览器 GPS → 腾讯 IP 定位 → 默认广州中心）；导航时地图随设备罗盘方向实时旋转（web=DeviceOrientation / 原生=expo-sensors 磁力计 → `map.setRotation`）。**离线**用 `components/map/offline-map.tsx`：随 App 内置腾讯真实地图瓦片（45 块 z9 瓦片，`scripts/fetch-offline-tiles.js` 下载到 `assets/offline-map/`）+ 16 个广东景点 POI（Web 墨卡托投影精确落点），可缩放 / 可平移 + 重点景点离线路线规划（haversine 直线距离 + 出行方式时长估算，`lib/geo.ts`）。在线地图加载失败 / 超时 15s 自动切离线，顶栏可手动切换。新增依赖 `react-native-webview`、`expo-sensors`
+- 社区点赞按用户回填 + 自动登录（PR #30/#31）：新增 `OptionalJwtAuthGuard`（可选鉴权守卫，有 token 则识别用户、无 token 也放行）+ `CurrentUserIdOptional` 装饰器，`GET /stories`、`/stories/:id` 据此返回当前用户 `liked`，前端动态卡 / 详情红心回填（一人一赞本由 `Like` 复合主键 `@@id([storyId,userId])` 保证）；`auth` store 仿 `onboarding` 加 `hydrated` 标志，`index.tsx` 等 onboarding 与 auth 两个 store 都恢复完再路由——已登录直接进 `/home`，实现自动登录
+- token 过期 / 被判废的边界处理（PR #32）：`apiRequest` 加全局 401 拦截——带 token 的请求若返回 `code 401`，清本地登录态并跳回 `/login`（`if(stale)` 守卫防并发重复跳转，网络错误更早抛出不误判）；`index.tsx` 自动登录时附带静默 `GET /auth/me` 校验，token 已死即弹回登录页，消除「僵尸会话」
 
 ## 进行中
 

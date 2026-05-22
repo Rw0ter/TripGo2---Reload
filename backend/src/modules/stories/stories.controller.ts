@@ -9,7 +9,11 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
+import {
+  CurrentUser,
+  CurrentUserIdOptional,
+} from '../../common/decorators/current-user.decorator';
 import { StoriesService } from './stories.service';
 import { CreateStoryDto } from './dto/create-story.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -20,15 +24,24 @@ export class StoriesController {
   constructor(private readonly storiesService: StoriesService) {}
 
   @Get()
-  @ApiOperation({ summary: '社区动态流（按时间倒序，含作者与点赞/评论数）' })
-  findAll() {
-    return this.storiesService.findAll();
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '社区动态流（按时间倒序，含作者/点赞/评论数，登录则带 liked）',
+  })
+  findAll(@CurrentUserIdOptional() userId?: string) {
+    return this.storiesService.findAll(userId);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: '动态详情（含评论列表）' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.storiesService.findOne(id);
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '动态详情（含评论列表，登录则带 liked）' })
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUserIdOptional() userId?: string,
+  ) {
+    return this.storiesService.findOne(id, userId);
   }
 
   @Post()

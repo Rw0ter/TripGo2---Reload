@@ -24,3 +24,11 @@ export const CurrentUser = createParamDecorator(
     return data ? user[data] : user;
   },
 );
+
+// 可选地取当前用户 id：配合 OptionalJwtAuthGuard，未登录时返回 undefined（不抛错）。
+export const CurrentUserIdOptional = createParamDecorator(
+  (_data: unknown, ctx: ExecutionContext): string | undefined => {
+    const user: AuthUser | undefined = ctx.switchToHttp().getRequest().user;
+    return user?.userId;
+  },
+);
