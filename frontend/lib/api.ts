@@ -1,3 +1,5 @@
+import { router } from 'expo-router';
+
 import { useAuthStore } from '@/stores/auth';
 
 // 后端 API 基址走环境变量（见 .env.example），不硬编码 IP。
@@ -61,6 +63,16 @@ export async function apiRequest<T>(
   }
 
   if (json.code !== 0) {
+    // 带 token 的请求被判 401 —— 登录态已失效（过期 / 被服务端判废）。
+    // 清掉本地登录态并回登录页，避免「僵尸会话」。仅在仍有 token 时处理一次，
+    // 防止并发失败请求重复跳转。
+    if (auth && json.code === 401) {
+      const { token: stale, clearAuth } = useAuthStore.getState();
+      if (stale) {
+        clearAuth();
+        router.replace('/login');
+      }
+    }
     throw new Error(json.message || '请求失败');
   }
   return json.data;

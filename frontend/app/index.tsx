@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { View } from 'react-native';
 
 import { SPLASH_BG } from '@/constants/colors';
+import { apiRequest } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
 import { useOnboardingStore } from '@/stores/onboarding';
 
@@ -25,7 +26,10 @@ export default function Index() {
       if (!done) {
         router.replace('/hello');
       } else if (token) {
-        router.replace('/home'); // 已登录 —— 自动登录，跳过登录页
+        // 已登录 —— 自动登录跳首页；同时静默校验 token 是否仍有效，
+        // 失效（过期 / 被判废）时 apiRequest 的 401 处理会清登录态并跳回登录。
+        router.replace('/home');
+        void apiRequest('/auth/me', { auth: true }).catch(() => {});
       } else {
         router.replace('/login');
       }
