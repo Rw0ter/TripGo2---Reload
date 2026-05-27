@@ -8,6 +8,7 @@ import { DestinationsModule } from './modules/destinations/destinations.module';
 import { QuizModule } from './modules/quiz/quiz.module';
 import { ScenicModule } from './modules/scenic/scenic.module';
 import { StoriesModule } from './modules/stories/stories.module';
+import { TripsModule } from './modules/trips/trips.module';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { StoriesModule } from './modules/stories/stories.module';
     BannersModule,
     QuizModule,
     StoriesModule,
-    // 业务模块在此注册：TripsModule, OrdersModule, ...
+    TripsModule,
+    // 业务模块在此注册：OrdersModule, ...
   ],
   controllers: [AppController],
 })
