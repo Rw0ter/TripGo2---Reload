@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -17,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiRequest } from '@/lib/api';
 import { resolveLegacyImage } from '@/lib/legacy-images';
 import { useAuthStore } from '@/stores/auth';
+import { toast } from '@/lib/toast';
 
 // TODO: 接入 expo-image-picker 后，可将预设图库与相机/相册统一为图片选择面板。
 // 当前 expo-image-picker 未列入 package.json，暂用内置预设图库。
@@ -76,11 +76,7 @@ export default function PostStoryScreen() {
 
   function handlePickFromGallery() {
     // expo-image-picker 尚未安装，提示用户使用预设图库。
-    Alert.alert(
-      '相册选择',
-      'expo-image-picker 暂未接入。\n\n当前请从下方预设图库中选取配图（最多 3 张）。\n\n相机 / 相册选择功能将在后续版本上线。',
-      [{ text: '知道了' }],
-    );
+    toast.info('相册选择暂未接入，请从下方预设图库中选取配图（最多 3 张）');
   }
 
   async function onSubmit() {

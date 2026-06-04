@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { toast } from '@/lib/toast';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiRequest } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
@@ -57,7 +58,7 @@ export default function ProfileEditScreen() {
   const handleSave = useCallback(async () => {
     const err = validate();
     if (err) {
-      Alert.alert('提示', err);
+      toast.warning(err);
       return;
     }
 
@@ -86,14 +87,14 @@ export default function ProfileEditScreen() {
       setAuth(token!, updatedUser);
       router.back();
     } catch (err: any) {
-      Alert.alert('保存失败', err.message || '请稍后重试');
+      toast.error(err.message || '保存失败，请稍后重试');
     } finally {
       setSaving(false);
     }
   }, [username, email, validate, user, token, setAuth, router]);
 
   const handleAvatarPress = useCallback(() => {
-    Alert.alert('更换头像', '头像上传功能即将上线，敬请期待');
+    toast.info('头像上传功能即将上线，敬请期待');
   }, []);
 
   const avatarSource = user?.avatar ? { uri: user.avatar } : avatarPlaceholder;

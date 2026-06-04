@@ -15,6 +15,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import { toast } from '@/lib/toast';
 import {
   cancelAnimation,
   Easing,
@@ -98,7 +99,7 @@ export default function HelloScreen() {
     if (Platform.OS === 'android') {
       BackHandler.exitApp();
     } else {
-      Alert.alert('提示', '需同意隐私政策才能使用文脉粤游，您可手动关闭 App。');
+      toast.warning('需同意隐私政策才能使用文脉粤游，您可手动关闭 App。');
     }
   }
 
