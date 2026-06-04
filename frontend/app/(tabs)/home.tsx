@@ -436,7 +436,7 @@ export default function HomeScreen() {
             className="mx-4 rounded-2xl bg-white pb-2 pt-3">
             <View className="flex-row justify-around px-2">
               {GRID4.map((it) => {
-                const routes: Record<string, string> = { '签到': '/checkin', '研学智囊团': '/study', '排行榜': '/leaderboard' };
+                const routes: Record<string, string> = { '签到': '/checkin', '研学智囊团': '/study', '排行榜': '/leaderboard', 'VR': '/vr' };
                 const target = routes[it.label];
                 return (
                   <EntryItem
@@ -455,7 +455,7 @@ export default function HomeScreen() {
             />
             <View className="flex-row justify-around px-1">
               {ENTRY5.map((it) => {
-                const routes: Record<string, string> = { '文创产品': '/products', '旅行地图': '/map', '学习小课堂': '/study' };
+                const routes: Record<string, string> = { '文创产品': '/products', '旅行地图': '/map', '智能助手': '/ai/assistant', '学习小课堂': '/study', '粤语课堂': '/cantonese' };
                 const target = routes[it.label];
                 return (
                   <EntryItem

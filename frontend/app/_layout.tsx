@@ -37,6 +37,12 @@ export default function RootLayout() {
         <Stack.Screen name="wallet" options={{ headerShown: false }} />
         <Stack.Screen name="orders" options={{ headerShown: false }} />
         <Stack.Screen name="collections" options={{ headerShown: false }} />
+        <Stack.Screen name="vr" options={{ headerShown: false }} />
+        <Stack.Screen name="cantonese" options={{ headerShown: false }} />
+        <Stack.Screen name="ai/assistant" options={{ headerShown: false }} />
+        <Stack.Screen name="my/trips" options={{ headerShown: false }} />
+        <Stack.Screen name="my/stories" options={{ headerShown: false }} />
+        <Stack.Screen name="my/likes" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

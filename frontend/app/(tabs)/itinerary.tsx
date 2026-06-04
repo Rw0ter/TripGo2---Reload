@@ -103,7 +103,7 @@ export default function ItineraryScreen() {
           className="flex-row items-center justify-between px-4 pb-1">
           <Text className="text-base font-bold text-[#6B4740]">暂无行程</Text>
           <Pressable
-            onPress={() => comingSoon('智能行程')}
+            onPress={() => router.push('/ai/assistant')}
             accessibilityRole="button"
             accessibilityLabel="添加智能行程"
             style={{ width: Math.round(width * 0.6), boxShadow: '0px 0px 8px rgba(0,0,0,0.08)' }}
@@ -124,7 +124,7 @@ export default function ItineraryScreen() {
           className="mx-3.5 mt-2.5 rounded-2xl border border-[#EEE7D4] bg-white p-2.5">
           <View className="flex-row items-center justify-between px-1 pb-2">
             <Text className="text-sm font-bold text-[#000000]">线路规划</Text>
-            <Pressable onPress={() => comingSoon('我的线路')}>
+            <Pressable onPress={() => router.push('/my/trips')}>
               <Text className="text-[12px] text-[#9B9F9A]">我的线路 &gt;</Text>
             </Pressable>
           </View>
