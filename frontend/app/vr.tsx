@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
@@ -42,23 +43,6 @@ const SCENES: VRScene[] = [
 
 const FEATURED = SCENES[0];
 
-// 用 5 层半透明 View 模拟平滑渐变 —— 不依赖任何渐变库，跨端 100% 一致
-function FadeOverlay({ height, maxAlpha = 0.7 }: { height: number; maxAlpha?: number }) {
-  const layers = 6;
-  return (
-    <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height }}>
-      {Array.from({ length: layers }, (_, i) => (
-        <View key={i} style={{
-          position: 'absolute',
-          bottom: (height / layers) * i,
-          left: 0, right: 0,
-          height: height / layers,
-          backgroundColor: `rgba(0,0,0,${((maxAlpha / layers) * (i + 1)).toFixed(3)})`,
-        }} />
-      ))}
-    </View>
-  );
-}
 
 // ── 卡片 ────────────────────────────────────────────────
 function SceneCard({ s, w, large, i, onPress }: {
@@ -74,8 +58,12 @@ function SceneCard({ s, w, large, i, onPress }: {
           style={{ width: cw, height: ch, borderRadius: 12, position: 'absolute' }}
           resizeMode="cover" />
 
-        {/* 渐变遮罩 — 分层模拟，跨端一致 */}
-        <FadeOverlay height={ch * 0.55} maxAlpha={0.72} />
+        {/* 渐变遮罩 */}
+        <LinearGradient
+          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.75)']}
+          locations={[0.35, 1]}
+          style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: ch * 0.6, borderRadius: 12 }}
+        />
 
         <View className="absolute right-2.5 top-2.5 rounded-md bg-black/40 px-2 py-0.5">
           <Text className="text-[10px] font-semibold text-white">360°</Text>
@@ -114,7 +102,11 @@ function Hero({ insets, onExplore }: { insets: number; onExplore: () => void }) 
         style={{ position: 'absolute', top: 0, left: 0, width, height: H }}
         resizeMode="cover" />
 
-      <FadeOverlay height={H} maxAlpha={0.55} />
+      <LinearGradient
+        colors={['rgba(0,0,0,0.5)', 'rgba(0,0,0,0.05)', 'rgba(0,0,0,0.7)']}
+        locations={[0, 0.35, 1]}
+        style={{ position: 'absolute', inset: 0 }}
+      />
 
       <ScreenHeader title="全景漫游" subtitle="广东 · 岭南风光" tint="dark" />
 
