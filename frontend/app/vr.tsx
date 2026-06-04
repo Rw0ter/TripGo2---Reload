@@ -1,20 +1,23 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { apiRequest } from '@/lib/api';
 
-const SCENES = [
-  { name: '广州塔 360°', icon: 'eye', color: '#E05C3A' },
-  { name: '丹霞山全景', icon: 'mountain', color: '#5C8A6D' },
-  { name: '开平碉楼', icon: 'home', color: '#8E6B3F' },
-  { name: '珠江夜景', icon: 'moon', color: '#3B7CB6' },
-  { name: '粤剧艺术博物馆', icon: 'business', color: '#7B68AE' },
-  { name: '潮州古城', icon: 'flag', color: '#C0392B' },
-];
+interface VRScene { id: number; title: string; subtitle: string; content: string; icon: string; color: string; }
 
 export default function VRScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const [scenes, setScenes] = useState<VRScene[] | null>(null);
+
+  const load = useCallback(async () => {
+    try { setScenes(await apiRequest<VRScene[]>('/cultural?category=vr_scene')); }
+    catch { setScenes(null); }
+  }, []);
+
+  useEffect(() => { void load(); }, [load]);
 
   return (
     <View className="flex-1 bg-[#1a1a2e]">
@@ -27,19 +30,23 @@ export default function VRScreen() {
 
       <Text className="mb-4 text-center text-[13px] text-white/50">沉浸式体验岭南风光</Text>
 
-      <View className="flex-row flex-wrap px-4" style={{ gap: 12 }}>
-        {SCENES.map((s) => (
-          <Pressable key={s.name}
-            style={{ width: '46%', aspectRatio: 1.3, backgroundColor: s.color + '30', borderRadius: 16, borderWidth: 1, borderColor: s.color + '40' }}
-            className="items-center justify-center">
-            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: s.color + '60' }} className="items-center justify-center">
-              <Ionicons name={s.icon as any} size={26} color="#fff" />
-            </View>
-            <Text className="mt-3 text-[14px] font-bold text-white">{s.name}</Text>
-            <Text className="mt-1 text-[11px] text-white/40">点击进入全景</Text>
-          </Pressable>
-        ))}
-      </View>
+      {!scenes ? (
+        <View className="items-center py-20"><ActivityIndicator color="#ffffff40" /></View>
+      ) : (
+        <View className="flex-row flex-wrap px-4" style={{ gap: 12 }}>
+          {scenes.map((s) => (
+            <Pressable key={s.id}
+              style={{ width: '46%', aspectRatio: 1.3, backgroundColor: s.color + '30', borderRadius: 16, borderWidth: 1, borderColor: s.color + '40' }}
+              className="items-center justify-center">
+              <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: s.color + '60' }} className="items-center justify-center">
+                <Ionicons name={s.icon as any} size={26} color="#fff" />
+              </View>
+              <Text className="mt-3 text-[14px] font-bold text-white">{s.title}</Text>
+              <Text className="mt-1 text-[11px] text-white/40">{s.subtitle}</Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
 
       <View className="mx-4 mt-6 rounded-xl bg-white/5 p-4">
         <Text className="text-[13px] text-white/60">
