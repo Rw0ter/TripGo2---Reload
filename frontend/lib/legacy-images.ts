@@ -28,6 +28,18 @@ export const legacyImages: Record<string, ImageSourcePropType> = {
   'xc/xc_zhaoqing.jpg': require('../assets/legacy/img/xc/xc_zhaoqing.jpg'),
   'xc/xc_jieyang.jpeg': require('../assets/legacy/img/xc/xc_jieyang.jpeg'),
   'xc/xc_meizhou.jpg': require('../assets/legacy/img/xc/xc_meizhou.jpg'),
+  // 非遗学习页 (study)
+  'fyxx/yuejufm.jpg': require('../assets/legacy/img/fyxx/yuejufm.jpg'),
+  'fyxx/jianzhifm1.jpg': require('../assets/legacy/img/fyxx/jianzhifm1.jpg'),
+  'fyxx/zhenjiufm.jpg': require('../assets/legacy/img/fyxx/zhenjiufm.jpg'),
+  'fyxx/piyingfm.png': require('../assets/legacy/img/fyxx/piyingfm.png'),
+  'fyxx/syhd.jpg': require('../assets/legacy/img/fyxx/syhd.jpg'),
+  'fyxx/sywhz.png': require('../assets/legacy/img/fyxx/sywhz.png'),
+  // 景点详情页轮播兜底图（与旧版 xq.html 一致）
+  'gz.jpg': require('../assets/legacy/img/gz.jpg'),
+  'gz2.jpg': require('../assets/legacy/img/gz2.jpg'),
+  'gz3.jpg': require('../assets/legacy/img/gz3.jpg'),
+  'gz4.jpg': require('../assets/legacy/img/gz4.jpg'),
 };
 
 // 按 key 取本地图；key 未登记时返回占位图并告警，

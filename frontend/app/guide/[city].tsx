@@ -11,10 +11,35 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FadeInDown } from 'react-native-reanimated';
+import { Animated } from '@/components/ui/animated';
 
 import { apiRequest } from '@/lib/api';
 import type { Scenic } from '@/lib/api-types';
 import { resolveLegacyImage } from '@/lib/legacy-images';
+
+// Static address / hours for known scenic spots (matches Legacy hotTrip.html).
+const SPOT_DETAILS: Record<string, { address: string; hours: string }> = {
+  '广州塔': { address: '广东省广州市海珠区阅江西路222号', hours: '09:00-22:30' },
+  '丹霞山': { address: '广东省韶关市仁化县境内', hours: '00:00-24:00' },
+  '长隆海洋王国': { address: '广东省珠海市横琴新区富祥湾', hours: '10:00-19:00' },
+  '欢乐谷': { address: '广东省广州市番禺区迎宾路', hours: '09:30-21:00' },
+  '东莞虎门大桥': { address: '广东省东莞市虎门镇', hours: '全天开放' },
+  '东莞战争博物馆': { address: '广东省东莞市虎门镇威远岛', hours: '09:00-17:00' },
+  '山谷古村落': { address: '广东省东莞市清溪镇', hours: '08:00-18:00' },
+};
+
+function getSpotDetail(name: string, city: string): { address: string; hours: string } {
+  if (SPOT_DETAILS[name]) return SPOT_DETAILS[name];
+  return { address: `广东省${city}市境内`, hours: '08:00-18:00' };
+}
+
+function computeStarRating(name: string): string {
+  let h = 0;
+  for (let i = 0; i < name.length; i += 1) h = (h * 31 + name.charCodeAt(i)) & 0xffff;
+  const stars = 3 + (h % 3);
+  return '★'.repeat(stars) + '☆'.repeat(5 - stars);
+}
 
 export default function CityGuideScreen() {
   const { city } = useLocalSearchParams<{ city: string }>();
@@ -36,12 +61,12 @@ export default function CityGuideScreen() {
 
   useEffect(() => { void load(); }, [load]);
 
-  const cardW = Math.floor((width - 32 - 12) / 2);
+  const cardW = width - 32; // full-width cards matching Legacy hotTrip.html
 
   return (
-    <View className="flex-1 bg-[#f4f5f7]">
+    <View className="flex-1 bg-[#eef2f5]">
       {/* Hero header — matching Legacy moreTrip.html */}
-      <View className="relative h-[20vh] items-center justify-end bg-[#3E6B4F] pb-6">
+      <View className="relative items-center justify-end bg-[#3E6B4F] pb-6" style={{ height: '20%' }}>
         <Pressable
           onPress={() => router.back()}
           style={{ position: 'absolute', top: insets.top + 6, left: 16 }}
@@ -55,7 +80,7 @@ export default function CityGuideScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
+        contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 16 }}>
         {error ? (
           <View className="items-center py-16">
             <Ionicons name="alert-circle-outline" size={40} color="#aaa" />
@@ -74,41 +99,82 @@ export default function CityGuideScreen() {
             <Text className="mt-3 text-[15px] text-[#999]">该城市暂无景点数据</Text>
           </View>
         ) : (
-          <View className="flex-row flex-wrap" style={{ gap: 12 }}>
-            {spots.map((s) => (
-              <Pressable
+          spots.map((s, idx) => {
+            const detail = getSpotDetail(s.name, city ?? '');
+            const rating = computeStarRating(s.name);
+            return (
+              <Animated.View
                 key={s.id}
-                onPress={() => router.push({ pathname: '/scenic/[id]', params: { id: s.id } })}
-                accessibilityRole="button"
+                entering={FadeInDown.delay(idx * 100).springify()}
                 style={{
                   width: cardW,
-                  borderRadius: 12,
+                  borderRadius: 20,
                   overflow: 'hidden',
                   backgroundColor: '#fff',
-                  boxShadow: '0px 4px 12px rgba(0,0,0,0.08)',
+                  boxShadow: '0px 6px 20px rgba(0,0,0,0.12)',
                 }}>
+                {/* Image */}
                 <Image
                   source={resolveLegacyImage(s.image)}
-                  style={{ width: cardW, height: 120 }}
+                  style={{ width: cardW, height: 180 }}
                   resizeMode="cover"
                 />
-                <View className="p-2.5">
-                  <Text numberOfLines={1} className="text-[15px] font-bold text-[#1a1a1a]">
-                    {s.name}
-                  </Text>
-                  <Text numberOfLines={2} className="mt-1 text-[12px] leading-4 text-[#777]">
+
+                {/* Card content */}
+                <View className="p-4">
+                  {/* Title */}
+                  <Text className="text-[18px] font-bold text-[#333]">{s.name}</Text>
+
+                  {/* Star rating */}
+                  <Text className="mt-1 text-[14px] tracking-wider text-[#ffb400]">{rating}</Text>
+
+                  {/* Description */}
+                  <Text numberOfLines={2} className="mt-2 text-[13px] leading-5 text-[#555]">
                     {s.summary}
                   </Text>
-                  {s.note ? (
-                    <View className="mt-2 flex-row items-center">
-                      <Ionicons name="star" size={12} color="#ffb400" />
-                      <Text className="ml-1 text-[11px] text-[#ffb400]">{s.note}</Text>
+
+                  {/* Address & hours */}
+                  <View className="mt-3 space-y-1">
+                    <View className="flex-row items-center">
+                      <Ionicons name="location-outline" size={14} color="#888" />
+                      <Text className="ml-1.5 text-[12px] text-[#666]">地址：{detail.address}</Text>
                     </View>
-                  ) : null}
+                    <View className="flex-row items-center">
+                      <Ionicons name="time-outline" size={14} color="#888" />
+                      <Text className="ml-1.5 text-[12px] text-[#666]">时间：{detail.hours}</Text>
+                    </View>
+                  </View>
+
+                  {/* Map placeholder */}
+                  <View
+                    className="mt-3 items-center justify-center rounded-2xl bg-[#e8e8e8]"
+                    style={{ height: 100 }}>
+                    <Ionicons name="map" size={32} color="#bbb" />
+                    <Text className="mt-1 text-[12px] text-[#aaa]">{detail.address}</Text>
+                  </View>
+
+                  {/* Action buttons — 路线 + 分享 */}
+                  <View className="mt-3 flex-row" style={{ gap: 8 }}>
+                    <Pressable
+                      onPress={() => router.push({ pathname: '/scenic/[id]', params: { id: s.id } })}
+                      className="flex-1 items-center rounded-xl bg-[#3E6B4F] py-2.5 active:opacity-80">
+                      <View className="flex-row items-center">
+                        <Ionicons name="navigate" size={16} color="#fff" />
+                        <Text className="ml-1.5 text-[14px] font-semibold text-white">路线</Text>
+                      </View>
+                    </Pressable>
+                    <Pressable
+                      className="flex-1 items-center rounded-xl border border-[#3E6B4F] bg-white py-2.5 active:opacity-80">
+                      <View className="flex-row items-center">
+                        <Ionicons name="share-outline" size={16} color="#3E6B4F" />
+                        <Text className="ml-1.5 text-[14px] font-semibold text-[#3E6B4F]">分享</Text>
+                      </View>
+                    </Pressable>
+                  </View>
                 </View>
-              </Pressable>
-            ))}
-          </View>
+              </Animated.View>
+            );
+          })
         )}
       </ScrollView>
     </View>
