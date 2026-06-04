@@ -5,6 +5,7 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { apiRequest } from '@/lib/api';
+import { toast } from '@/lib/toast';
 
 interface TripDay {
   day?: number;
@@ -69,7 +70,7 @@ export default function MyTripsScreen() {
             await apiRequest(`/trips/${id}`, { method: 'DELETE', auth: true });
             void load();
           } catch {
-            Alert.alert('删除失败', '操作失败，请重试');
+            toast.error('删除失败，操作失败，请重试');
           } finally {
             setDeleting((prev) => {
               const next = new Set(prev);

@@ -2,9 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { Alert, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/stores/auth';
+import { toast } from '@/lib/toast';
 
 const VERSION = Constants.expoConfig?.version ?? '1.0.0';
 
@@ -87,9 +88,9 @@ async function clearCache(): Promise<void> {
         if (v !== null) localStorage.setItem(k, v);
       });
     }
-    Alert.alert('成功', '已清除本地缓存并保留登录状态');
+    toast.success('已清除本地缓存并保留登录状态');
   } catch {
-    Alert.alert('提示', '清除缓存失败，请稍后重试');
+    toast.error('清除缓存失败，请稍后重试');
   }
 }
 
@@ -204,7 +205,7 @@ export default function SettingsScreen() {
           <SettingItem
             label="好评一下"
             showChevron
-            onPress={() => Alert.alert('好评一下', '如果您喜欢 TripGo，欢迎前往应用商店给我们打分！')}
+            onPress={() => toast.info('如果您喜欢 TripGo，欢迎前往应用商店给我们打分！')}
           />
 
           <SettingItem label="版本信息" value={VERSION} />

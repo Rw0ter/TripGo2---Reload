@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, Text } from 'react-native';
+import { Pressable, Text } from 'react-native';
 import { FadeInDown } from 'react-native-reanimated';
+import { toast } from '@/lib/toast';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { AuthInput } from '@/components/auth/auth-input';
@@ -23,7 +24,7 @@ export default function LoginScreen() {
   async function handleLogin() {
     const name = username.trim();
     if (!name || !password) {
-      Alert.alert('提示', '用户名和密码不能为空');
+      toast.warning('用户名和密码不能为空');
       return;
     }
     setLoading(true);
@@ -35,7 +36,7 @@ export default function LoginScreen() {
       setAuth(data.token, data.user);
       router.replace('/home');
     } catch (e) {
-      Alert.alert('登录失败', e instanceof Error ? e.message : '请重试');
+      toast.error(e instanceof Error ? e.message : '登录失败，请重试');
     } finally {
       setLoading(false);
     }
@@ -79,7 +80,7 @@ export default function LoginScreen() {
           <Text className="text-sm font-semibold text-white">账号注册</Text>
         </Pressable>
         <Pressable
-          onPress={() => Alert.alert('提示', '找回密码功能开发中')}
+          onPress={() => toast.info('找回密码功能开发中')}
           accessibilityRole="button">
           <Text className="text-sm font-semibold text-white">忘记密码</Text>
         </Pressable>
