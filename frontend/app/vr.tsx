@@ -157,8 +157,8 @@ export default function VRScreen() {
 
         <View className="px-4 pt-6">
           <View className="mb-3.5 flex-row items-center">
-            <Text className="text-[20px] font-extrabold text-[#1a1a1a]">探索场景</Text>
-            <Text className="ml-2 text-[14px] font-medium text-[#777]">共 {SCENES.length} 处</Text>
+            <Text className="text-[20px] font-extrabold text-white">探索场景</Text>
+            <Text className="ml-2 text-[14px] font-medium text-white/60">共 {SCENES.length} 处</Text>
           </View>
           <View className="flex-row flex-wrap" style={{ gap: 12 }}>
             {SCENES.map((s, i) => (
