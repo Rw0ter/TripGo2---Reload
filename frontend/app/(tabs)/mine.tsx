@@ -264,13 +264,16 @@ export default function MineScreen() {
           <Section>
             <SectionTitle
               title="我的发布"
-              onMore={() => comingSoon('我发布的故事')}
+              onMore={() => router.push('/my/stories')}
             />
             <View className="flex-row justify-around">
-              {PUBLISH.map((it) => (
+              {PUBLISH.map((it) => {
+                const pubRoutes: Record<string, string> = { '我的故事': '/my/stories', '获赞': '/my/likes' };
+                const target = pubRoutes[it.label];
+                return (
                 <Pressable
                   key={it.label}
-                  onPress={() => comingSoon(it.label)}
+                  onPress={() => target ? router.push(target as any) : comingSoon(it.label)}
                   accessibilityRole="button"
                   accessibilityLabel={it.label}
                   className="items-center py-1">
@@ -279,7 +282,8 @@ export default function MineScreen() {
                     {it.label}
                   </Text>
                 </Pressable>
-              ))}
+                );
+              })}
             </View>
           </Section>
         </Animated.View>
@@ -290,7 +294,7 @@ export default function MineScreen() {
             <SectionTitle title="更多服务" />
             <View className="flex-row flex-wrap">
               {SERVICES.map((it) => {
-                const routes: Record<string, string> = { '订单': '/orders', '活动收藏': '/collections', '我的积分': '/wallet' };
+                const routes: Record<string, string> = { '足迹': '/my/stories', '订单': '/orders', '活动收藏': '/collections', '打卡景点': '/checkin', '我的研学': '/study', '我的积分': '/wallet', '我的课程': '/study' };
                 const target = routes[it.label];
                 return (
                   <Pressable
