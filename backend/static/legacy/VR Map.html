@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VR 全景漫游</title>
+<style>
+:root {
+  --brand: #2dbf7c;
+  --text: #111;
+  --muted: #666;
+  --panel: #fff;
+  --shadow: 0 8px 24px rgba(0,0,0,.18);
+  --safe: env(safe-area-inset-bottom, 0px);
+}
+html,body{height:100%;margin:0;background:#000;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;}
+#stage{position:fixed;left:0;top:0;width:100vw;height:100vh;display:block;background:#000;z-index:0;}
+.topbar{position:fixed;left:0;right:0;top:0;height:56px;z-index:10;display:flex;align-items:center;justify-content:center;color:#fff;background:linear-gradient(to bottom,rgba(0,0,0,.45),rgba(0,0,0,0));pointer-events:none;}
+.back{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:999px;display:grid;place-items:center;background:rgba(0,0,0,.35);backdrop-filter:blur(6px);pointer-events:auto;cursor:pointer;}
+.back svg{width:18px;height:18px;fill:#fff}
+.title{font-size:17px;font-weight:600;letter-spacing:.5px;text-shadow:0 2px 12px rgba(0,0,0,.35);pointer-events:none;}
+.tools{position:fixed;right:10px;top:10px;z-index:11;display:flex;gap:8px;}
+.chip{background:rgba(0,0,0,.36);color:#fff;padding:6px 10px;border-radius:999px;font-size:12px;backdrop-filter:blur(6px);cursor:pointer;user-select:none;}
+.dock-wrap{position:fixed;left:0;right:0;bottom:0;z-index:12;display:flex;justify-content:center;align-items:flex-end;padding-bottom:max(8px,var(--safe))}
+.dock{position:relative;width:min(480px,92vw);height:72px;background:var(--panel);border-radius:24px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:space-between;padding:0 18px}
+.slot{flex:0 0 auto;width:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);font-size:12px;font-weight:600;}
+.slot .icon{width:28px;height:28px;border-radius:10px;display:grid;place-items:center;background:#eef2f5}
+.slot svg{width:16px;height:16px;fill:#3c3f44}
+.shutter{position:absolute;left:50%;transform:translateX(-50%);top:-24px;width:76px;height:76px;border-radius:999px;background:#fff;box-shadow:var(--shadow);display:grid;place-items:center;}
+.shutter .inner{width:58px;height:58px;border-radius:999px;background:var(--brand);display:grid;place-items:center;box-shadow:inset 0 0 0 4px rgba(255,255,255,.4);cursor:pointer;}
+.shutter .inner:active{transform:scale(.98)}
+.shutter svg{width:28px;height:28px;fill:#fff}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#fff;border-radius:16px 16px 0 0;padding:14px 14px calc(14px + var(--safe));box-shadow:0 -12px 32px rgba(0,0,0,.28);transform:translateY(100%);transition:.28s ease transform;}
+.sheet.show{transform:translateY(0)}
+.sheet .grab{width:44px;height:5px;border-radius:999px;background:#e8e8e8;margin:4px auto 10px;}
+.sheet h3{margin:4px 2px 10px;font-size:16px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.pill{padding:10px 14px;border:1px solid #e8e8e8;border-radius:12px;cursor:pointer;font-weight:600;background:#fafafa}
+.pill.active{background:#111;color:#fff;border-color:#111}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;border:1px solid #e8e8e8;cursor:pointer;background:#fff;font-weight:600;}
+.btn svg{width:16px;height:16px}
+.loading{position:fixed;inset:0;display:grid;place-items:center;color:#fff;background:radial-gradient(ellipse at center,rgba(0,0,0,.55),rgba(0,0,0,.85));z-index:9;pointer-events:none;opacity:0;transition:.25s ease opacity;}
+.loading.show{opacity:1}
+.spinner{width:42px;height:42px;border:3px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:999px;animation:spin 1s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;left:50%;bottom:calc(96px + var(--safe));transform:translateX(-50%);background:rgba(0,0,0,.72);color:#fff;font-size:13px;padding:10px 14px;border-radius:999px;opacity:0;pointer-events:none;transition:.25s ease opacity;}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<canvas id="stage"></canvas>
+
+<div class="topbar">
+  <div class="back" id="btnBack" title="返回">
+    <svg viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+  </div>
+  <div class="title" id="title">加载中...</div>
+</div>
+
+<div class="tools">
+  <div class="chip" id="chipSplit">分屏 关</div>
+  <div class="chip" id="chipFull">全屏</div>
+</div>
+
+<div class="dock-wrap">
+  <div class="dock">
+    <div class="slot" id="btnTime">
+      <div class="icon"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm.01 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm-.5-13h-1v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg></div>
+      <div>时光机</div>
+    </div>
+    <div class="shutter">
+      <div class="inner" id="btnShutter" title="切换分屏">
+        <svg viewBox="0 0 24 24"><path d="M20 5h-3.2l-1.6-2H8.8L7.2 5H4c-1.1 0-2 .9-2 2v11a2 2 0 0 0 2 2h16c1.1 0 2-.9 2-2V7a2 2 0 0 0-2-2zm-8 14a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-10a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>
+      </div>
+    </div>
+    <div class="slot" id="btnPortal">
+      <div class="icon"><svg viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 0 1 2 2v16h-2V4H6v16H4V4a2 2 0 0 1 2-2zm8 7h-4v2h4V9zm0 4h-4v2h4v-2z"/></svg></div>
+      <div>任意门</div>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="sheetTime" aria-hidden="true">
+  <div class="grab"></div>
+  <h3>选择时段</h3>
+  <div class="row" id="timeRow">
+    <div class="pill" data-time="day">白天</div>
+    <div class="pill" data-time="sunset">傍晚</div>
+    <div class="pill" data-time="night">夜景</div>
+  </div>
+  <h3 style="margin-top:14px">操作</h3>
+  <div class="row">
+    <div class="btn" id="btnResetView">
+      <svg viewBox="0 0 24 24"><path d="M12 6V3L8 7l4 4V8c2.76 0 5 2.24 5 5a5 5 0 0 1-5 5 5 5 0 0 1-4.58-3H6.26A7 7 0 0 0 19 13c0-3.86-3.14-7-7-7z"/></svg>
+      视角复位
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="sheetPortal" aria-hidden="true">
+  <div class="grab"></div>
+  <h3>选择目的地</h3>
+  <div class="grid" id="cityGrid"></div>
+</div>
+
+<div class="loading" id="loading">
+  <div style="display:flex;flex-direction:column;align-items:center;">
+    <div class="spinner"></div>
+    <div>全景加载中…</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="three.min.js"></script>
+<script>
+(function() {
+  /* 资源表 — 路径调整为同目录 */
+  var ASSETS = {
+    "广州":      { day:"vr-1.jpg", sunset:"vr-2.jpg", night:"vr-3.jpg" },
+    "深圳":      { day:"vr-2.jpg", sunset:"vr-1.jpg", night:"vr-3.jpg" },
+    "东莞":      { day:"vr-3.jpg", sunset:"vr-2.jpg", night:"vr-1.jpg" }
+  };
+
+  /* 根据 URL 参数决定初始城市 */
+  function getParam(name) {
+    var m = (location.search || '').match(new RegExp('[?&]' + name + '=([^&]*)'));
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  var paramCity = getParam('city');
+  var initialCity = ASSETS[paramCity] ? paramCity : '广州';
+  var currentCity = initialCity;
+  var currentTime = 'day';
+  var splitMode = false;
+
+  var canvas = document.getElementById('stage');
+  var renderer = new THREE.WebGLRenderer({ canvas:canvas, antialias:true, alpha:true, powerPreference:'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+  camera.position.set(0, 0, 0.1);
+
+  var sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(50, 64, 48),
+    new THREE.MeshBasicMaterial({ color:0xffffff })
+  );
+  sphere.geometry.scale(-1, 1, 1);
+  scene.add(sphere);
+
+  function resize() {
+    var w = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+    var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+    renderer.setSize(w, h, false);
+    renderer.domElement.style.width = '100vw';
+    renderer.domElement.style.height = '100vh';
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize, { passive:true });
+  resize();
+
+  /* 交互：拖拽看向 */
+  var dragging = false, lastX = 0, lastY = 0, yaw = 0, pitch = 0;
+  var GLOBAL_YAW_OFFSET = Math.PI;
+  sphere.rotation.y = GLOBAL_YAW_OFFSET;
+
+  function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+  function updateCameraFromYawPitch() {
+    var x = Math.cos(pitch) * Math.cos(yaw);
+    var y = Math.sin(pitch);
+    var z = Math.cos(pitch) * Math.sin(yaw);
+    camera.lookAt(new THREE.Vector3(x, y, z));
+  }
+  function resetView() { yaw = 0; pitch = 0; updateCameraFromYawPitch(); }
+  resetView();
+
+  function onDown(e) {
+    dragging = true;
+    var p = ('touches' in e) ? e.touches[0] : e;
+    lastX = p.clientX; lastY = p.clientY;
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    var p = ('touches' in e) ? e.touches[0] : e;
+    var dx = (p.clientX - lastX), dy = (p.clientY - lastY);
+    lastX = p.clientX; lastY = p.clientY;
+    yaw -= dx * 0.0025; pitch -= dy * 0.0025;
+    pitch = clamp(pitch, -Math.PI/2 + 0.02, Math.PI/2 - 0.02);
+    updateCameraFromYawPitch();
+  }
+  function onUp() { dragging = false; }
+  canvas.addEventListener('mousedown', onDown);
+  canvas.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+  canvas.addEventListener('touchstart', onDown, { passive:true });
+  canvas.addEventListener('touchmove', onMove, { passive:true });
+  canvas.addEventListener('touchend', onUp);
+
+  /* 分屏/全屏 */
+  var chipSplit = document.getElementById('chipSplit');
+  var chipFull = document.getElementById('chipFull');
+  function toggleSplit() {
+    splitMode = !splitMode;
+    chipSplit.textContent = '分屏 ' + (splitMode ? '开' : '关');
+    toast(splitMode ? '进入分屏模式' : '退出分屏模式');
+  }
+  function toggleFullscreen() {
+    var el = document.documentElement;
+    if (!document.fullscreenElement) { el.requestFullscreen && el.requestFullscreen(); }
+    else { document.exitFullscreen && document.exitFullscreen(); }
+  }
+
+  /* 资源加载 */
+  var loader = new THREE.TextureLoader();
+  loader.crossOrigin = 'anonymous';
+  var loading = document.getElementById('loading');
+  var loadingTimer = null;
+  function showLoading(show) {
+    clearTimeout(loadingTimer);
+    if (show) loading.classList.add('show');
+    else loadingTimer = setTimeout(function(){ loading.classList.remove('show'); }, 120);
+  }
+  function loadPano(url) {
+    showLoading(true);
+    return new Promise(function(resolve, reject) {
+      loader.load(url, function(tex) {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        sphere.material.map = tex;
+        sphere.material.needsUpdate = true;
+        showLoading(false);
+        resolve();
+      }, undefined, function(err) {
+        showLoading(false);
+        toast('加载失败：已回退默认全景');
+        loader.load('https://pannellum.org/images/alma.jpg', function(t) {
+          t.colorSpace = THREE.SRGBColorSpace;
+          sphere.material.map = t;
+          sphere.material.needsUpdate = true;
+        });
+        reject(err);
+      });
+    });
+  }
+  function applyScene(city, time) {
+    var pack = ASSETS[city] || ASSETS['广州'];
+    return loadPano(pack[time] || pack.day);
+  }
+
+  /* Sheet / Toast */
+  var sheetTime = document.getElementById('sheetTime');
+  var sheetPortal = document.getElementById('sheetPortal');
+  var btnTime = document.getElementById('btnTime');
+  var btnPortal = document.getElementById('btnPortal');
+  var toastEl = document.getElementById('toast');
+  function openSheet(s) { s.classList.add('show'); }
+  function closeSheet(s) { s.classList.remove('show'); }
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(function(){ toastEl.classList.remove('show'); }, 1400);
+  }
+
+  var timeRow = document.getElementById('timeRow');
+  [].forEach.call(timeRow.children, function(p) {
+    if (p.dataset.time === currentTime) p.classList.add('active');
+    p.onclick = function() {
+      [].forEach.call(timeRow.children, function(x){ x.classList.remove('active'); });
+      p.classList.add('active');
+      currentTime = p.dataset.time;
+      applyScene(currentCity, currentTime).then(function(){
+        toast('已切换：' + p.textContent.trim());
+      });
+      closeSheet(sheetTime);
+    };
+  });
+  document.getElementById('btnResetView').onclick = function() { resetView(); toast('视角已复位'); };
+
+  var cityGrid = document.getElementById('cityGrid');
+  Object.keys(ASSETS).forEach(function(name) {
+    var el = document.createElement('div');
+    el.className = 'pill';
+    el.textContent = name;
+    if (name === currentCity) el.classList.add('active');
+    el.onclick = function() {
+      [].forEach.call(cityGrid.children, function(x){ x.classList.remove('active'); });
+      el.classList.add('active');
+      currentCity = name;
+      document.getElementById('title').textContent = name;
+      applyScene(currentCity, currentTime).then(function(){
+        toast('目的地：' + name);
+      });
+      closeSheet(sheetPortal);
+    };
+    cityGrid.appendChild(el);
+  });
+
+  btnTime.onclick = function(){ openSheet(sheetTime); };
+  btnPortal.onclick = function(){ openSheet(sheetPortal); };
+  window.addEventListener('click', function(e) {
+    if (e.target === sheetTime) closeSheet(sheetTime);
+    if (e.target === sheetPortal) closeSheet(sheetPortal);
+  });
+
+  /* 返回按钮 — 通过 postMessage 通知宿主 App */
+  document.getElementById('btnBack').onclick = function() {
+    if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+      window.ReactNativeWebView.postMessage('back');
+    } else {
+      history.back();
+    }
+  };
+
+  chipSplit.onclick = function(){ toggleSplit(); };
+  chipFull.onclick = function(){ toggleFullscreen(); };
+  document.getElementById('btnShutter').onclick = function(){ toggleSplit(); };
+
+  /* 渲染循环 */
+  function render() {
+    var w = renderer.domElement.width, h = renderer.domElement.height;
+    if (splitMode) {
+      renderer.setScissorTest(true);
+      renderer.setViewport(0,0,w/2,h); renderer.setScissor(0,0,w/2,h); renderer.render(scene, camera);
+      renderer.setViewport(w/2,0,w/2,h); renderer.setScissor(w/2,0,w/2,h); renderer.render(scene, camera);
+      renderer.setScissorTest(false);
+    } else {
+      renderer.setViewport(0,0,w,h); renderer.render(scene, camera);
+    }
+    requestAnimationFrame(render);
+  }
+
+  /* 初始化 */
+  document.getElementById('title').textContent = currentCity;
+  applyScene(currentCity, currentTime).then(function(){ render(); });
+})();
+</script>
+</body>
+</html>

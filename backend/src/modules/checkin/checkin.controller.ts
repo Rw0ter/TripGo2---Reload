@@ -18,7 +18,7 @@ export class CheckinController {
   }
 
   @Post()
-  @ApiOperation({ summary: '每日签到（+10 积分）' })
+  @ApiOperation({ summary: '每日签到（+20 积分）' })
   checkin(@CurrentUser('userId') userId: string) {
     return this.svc.checkin(userId);
   }
