@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { QuizService } from './quiz.service';
 
@@ -11,5 +11,11 @@ export class QuizController {
   @ApiOperation({ summary: '知识小课堂答题卡列表' })
   findAll() {
     return this.quizService.findAll();
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: '答题卡详情（含题目）' })
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.quizService.findOne(id);
   }
 }

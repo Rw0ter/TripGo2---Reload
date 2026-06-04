@@ -25,6 +25,12 @@ export default function RootLayout() {
         <Stack.Screen name="search" options={{ headerShown: false }} />
         <Stack.Screen name="scenic/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="guide/[city]" options={{ headerShown: false }} />
+        <Stack.Screen name="checkin" options={{ headerShown: false }} />
+        <Stack.Screen name="leaderboard" options={{ headerShown: false }} />
+        <Stack.Screen name="products" options={{ headerShown: false }} />
+        <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="study" options={{ headerShown: false }} />
+        <Stack.Screen name="quiz/[id]" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
