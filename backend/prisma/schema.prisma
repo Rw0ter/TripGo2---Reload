@@ -27,6 +27,7 @@ model User {
   stories   Story[]
   comments  Comment[]
   likes     Like[]
+  checkins  Checkin[]
 }
 
 model Address {
@@ -148,4 +149,16 @@ model KnowledgeChunk {
   source    String // 来源文档标识
   content   String // 文本块内容
   createdAt DateTime @default(now())
+}
+
+// 每日签到记录。
+model Checkin {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  date      String // YYYY-MM-DD
+  points    Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date])
 }

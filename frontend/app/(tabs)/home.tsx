@@ -168,9 +168,10 @@ function SectionHeader({
 
 // 知识小课堂答题卡。
 function QuizCard({ item, width }: { item: Quiz; width: number }) {
+  const router = useRouter();
   return (
     <Pressable
-      onPress={() => comingSoon('知识小课堂')}
+      onPress={() => router.push({ pathname: '/quiz/[id]', params: { id: item.id } })}
       accessibilityRole="button"
       accessibilityLabel={item.title}
       style={{ width, boxShadow: '0px 4px 12px rgba(148,116,52,0.18)' }}
@@ -434,30 +435,38 @@ export default function HomeScreen() {
             style={{ boxShadow: '0px 4px 14px rgba(0,0,0,0.06)' }}
             className="mx-4 rounded-2xl bg-white pb-2 pt-3">
             <View className="flex-row justify-around px-2">
-              {GRID4.map((it) => (
-                <EntryItem
-                  key={it.label}
-                  icon={it.icon}
-                  label={it.label}
-                  size={40}
-                  onPress={() => comingSoon(it.label)}
-                />
-              ))}
+              {GRID4.map((it) => {
+                const routes: Record<string, string> = { '签到': '/checkin', '研学智囊团': '/study', '排行榜': '/leaderboard' };
+                const target = routes[it.label];
+                return (
+                  <EntryItem
+                    key={it.label}
+                    icon={it.icon}
+                    label={it.label}
+                    size={40}
+                    onPress={() => target ? router.push(target as any) : comingSoon(it.label)}
+                  />
+                );
+              })}
             </View>
             <View
               style={{ height: 1 }}
               className="mx-3 my-1.5 bg-[#EFEBDC]"
             />
             <View className="flex-row justify-around px-1">
-              {ENTRY5.map((it) => (
-                <EntryItem
-                  key={it.label}
-                  icon={it.icon}
-                  label={it.label}
-                  size={42}
-                  onPress={() => comingSoon(it.label)}
-                />
-              ))}
+              {ENTRY5.map((it) => {
+                const routes: Record<string, string> = { '文创产品': '/products', '旅行地图': '/map', '学习小课堂': '/study' };
+                const target = routes[it.label];
+                return (
+                  <EntryItem
+                    key={it.label}
+                    icon={it.icon}
+                    label={it.label}
+                    size={42}
+                    onPress={() => target ? router.push(target as any) : comingSoon(it.label)}
+                  />
+                );
+              })}
             </View>
           </Animated.View>
 
@@ -484,7 +493,7 @@ export default function HomeScreen() {
                 <SectionHeader
                   title="知识小课堂"
                   subtitle="答题赢积分"
-                  onMore={() => comingSoon('知识小课堂')}
+                  onMore={() => router.push('/study')}
                 />
                 <ScrollView
                   horizontal
