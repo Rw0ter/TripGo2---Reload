@@ -155,7 +155,7 @@ export default function VRScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         <Hero insets={insets.top} onExplore={() => setSelected(FEATURED)} />
 
-        <View className="px-4 pt-6">
+        <View className="px-4 pt-6" style={{ paddingBottom: 5 }}>
           <View className="mb-3.5 flex-row items-center">
             <Text className="text-[20px] font-extrabold text-white">探索场景</Text>
             <Text className="ml-2 text-[14px] font-medium text-white/60">共 {SCENES.length} 处</Text>
