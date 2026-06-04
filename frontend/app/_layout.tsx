@@ -19,7 +19,7 @@ export default function RootLayout() {
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         <Stack.Screen name="map" options={{ headerShown: false }} />
-        <Stack.Screen name="trip/create" options={{ title: '新建行程' }} />
+        <Stack.Screen name="trip/create" options={{ headerShown: false }} />
         <Stack.Screen name="post/story" options={{ title: '发布故事' }} />
         <Stack.Screen name="story/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="search" options={{ headerShown: false }} />
