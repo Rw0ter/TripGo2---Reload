@@ -32,50 +32,62 @@ interface VRScene {
 }
 
 const SCENES: VRScene[] = [
-  { id: 'gztower',  name: '广州塔',     subtitle: '600 米高空俯瞰珠江新城',  city: '广州', weather: '32°C', panoramaImage: 'vr-1.jpg', coverKey: 'jd/gz.jpg' },
-  { id: 'danxia',   name: '丹霞山',     subtitle: '世界自然遗产 · 赤壁丹崖',   city: '韶关', weather: '28°C', panoramaImage: 'vr-1.jpg', coverKey: 'jd/dxs.png' },
-  { id: 'kaiping',  name: '开平碉楼',   subtitle: '华侨故里 · 世界文化遗产',   city: '开平', weather: '31°C', panoramaImage: 'vr-2.jpg', coverKey: 'changlong.png' },
-  { id: 'zhujiang', name: '珠江夜景',   subtitle: '华灯初上 · 一江两岸璀璨',   city: '广州', weather: '29°C', panoramaImage: 'vr-1.jpg', coverKey: 'gz2.jpg' },
-  { id: 'yueju',    name: '粤剧博物馆', subtitle: '岭南建筑瑰宝 · 非遗传承',   city: '广州', weather: '30°C', panoramaImage: 'vr-2.jpg', coverKey: 'gz3.jpg' },
-  { id: 'chaozhou', name: '潮州古城',   subtitle: '千年牌坊街 · 工夫茶飘香',   city: '潮州', weather: '29°C', panoramaImage: 'vr-3.jpg', coverKey: 'xc/xc_chaozhou.jpeg' },
+  { id: 'gztower',  name: '广州塔',   subtitle: '600 米高空俯瞰珠江新城', city: '广州', weather: '32°C', panoramaImage: 'vr-1.jpg', coverKey: 'jd/gz.jpg' },
+  { id: 'danxia',   name: '丹霞山',   subtitle: '世界自然遗产 · 赤壁丹崖', city: '韶关', weather: '28°C', panoramaImage: 'vr-1.jpg', coverKey: 'jd/dxs.png' },
+  { id: 'kaiping',  name: '开平碉楼', subtitle: '华侨故里 · 世界文化遗产', city: '开平', weather: '31°C', panoramaImage: 'vr-2.jpg', coverKey: 'changlong.png' },
+  { id: 'zhujiang', name: '珠江夜景', subtitle: '华灯初上 · 一江两岸璀璨', city: '广州', weather: '29°C', panoramaImage: 'vr-1.jpg', coverKey: 'gz2.jpg' },
+  { id: 'yueju',    name: '粤剧博物馆', subtitle: '岭南建筑 · 非遗传承', city: '广州', weather: '30°C', panoramaImage: 'vr-2.jpg', coverKey: 'gz3.jpg' },
+  { id: 'chaozhou', name: '潮州古城', subtitle: '千年牌坊街 · 工夫茶', city: '潮州', weather: '29°C', panoramaImage: 'vr-3.jpg', coverKey: 'xc/xc_chaozhou.jpeg' },
 ];
 
 const FEATURED = SCENES[0];
 
-// ── 场景卡片 ────────────────────────────────────────────
-function SceneCard({ scene, width, isLarge, index, onPress }: {
-  scene: VRScene; width: number; isLarge?: boolean; index: number; onPress: () => void;
+// 用 5 层半透明 View 模拟平滑渐变 —— 不依赖任何渐变库，跨端 100% 一致
+function FadeOverlay({ height, maxAlpha = 0.7 }: { height: number; maxAlpha?: number }) {
+  const layers = 6;
+  return (
+    <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height }}>
+      {Array.from({ length: layers }, (_, i) => (
+        <View key={i} style={{
+          position: 'absolute',
+          bottom: (height / layers) * i,
+          left: 0, right: 0,
+          height: height / layers,
+          backgroundColor: `rgba(0,0,0,${((maxAlpha / layers) * (i + 1)).toFixed(3)})`,
+        }} />
+      ))}
+    </View>
+  );
+}
+
+// ── 卡片 ────────────────────────────────────────────────
+function SceneCard({ s, w, large, i, onPress }: {
+  s: VRScene; w: number; large?: boolean; i: number; onPress: () => void;
 }) {
-  const cardW = isLarge ? width - 32 : (width - 32 - 12) / 2;
-  const cardH = isLarge ? 220 : 180;
+  const cw = large ? w - 32 : (w - 32 - 12) / 2;
+  const ch = large ? 220 : 180;
 
   return (
-    <Animated.View
-      entering={FadeInDown.delay(index * 90).springify()}
-      style={{ width: cardW, height: cardH }}>
-      <Pressable onPress={onPress} style={{ flex: 1 }} className="active:scale-[0.97]">
-        {/* 封面图 */}
-        <Image source={resolveLegacyImage(scene.coverKey)}
-          style={{ width: cardW, height: cardH, borderRadius: 12, position: 'absolute' }}
+    <Animated.View entering={FadeInDown.delay(i * 80).springify()} style={{ width: cw, height: ch }}>
+      <Pressable onPress={onPress} className="active:scale-[0.97]" style={{ flex: 1 }}>
+        <Image source={resolveLegacyImage(s.coverKey)}
+          style={{ width: cw, height: ch, borderRadius: 12, position: 'absolute' }}
           resizeMode="cover" />
-        {/* 用 View 模拟渐变遮罩 —— 纯 CSS，web 端不爆炸 */}
-        <View style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0, height: cardH * 0.6,
-          borderRadius: 12,
-          backgroundColor: 'rgba(0,0,0,0.55)',
-        }} />
-        {/* 360° 标签 */}
+
+        {/* 渐变遮罩 — 分层模拟，跨端一致 */}
+        <FadeOverlay height={ch * 0.55} maxAlpha={0.72} />
+
         <View className="absolute right-2.5 top-2.5 rounded-md bg-black/40 px-2 py-0.5">
           <Text className="text-[10px] font-semibold text-white">360°</Text>
         </View>
-        {/* 底部文字 */}
+
         <View className="absolute bottom-0 left-0 right-0 p-3">
-          <Text className="text-[15px] font-bold text-white">{scene.name}</Text>
-          <Text className="mt-0.5 text-[11px] text-white/70" numberOfLines={1}>{scene.subtitle}</Text>
+          <Text className="text-[15px] font-bold text-white">{s.name}</Text>
+          <Text className="mt-0.5 text-[11px] text-white/70" numberOfLines={1}>{s.subtitle}</Text>
           <View className="mt-1.5 flex-row items-center justify-between">
             <View className="flex-row items-center gap-1">
               <Ionicons name="location-outline" size={10} color="rgba(255,255,255,0.6)" />
-              <Text className="text-[11px] text-white/60">{scene.city}</Text>
+              <Text className="text-[11px] text-white/60">{s.city}</Text>
             </View>
             <View className="flex-row items-center rounded-full bg-white/20 px-2 py-0.5">
               <Ionicons name="play" size={10} color="#fff" />
@@ -88,7 +100,7 @@ function SceneCard({ scene, width, isLarge, index, onPress }: {
   );
 }
 
-// ── Hero ─────────────────────────────────────────────────
+// ── Hero ──────────────────────────────────────────────────
 function Hero({ insets, onExplore }: { insets: number; onExplore: () => void }) {
   const { width } = useWindowDimensions();
   const scaleAnim = useRef(new RNAnimated.Value(1)).current;
@@ -101,11 +113,8 @@ function Hero({ insets, onExplore }: { insets: number; onExplore: () => void }) 
       <Image source={resolveLegacyImage(FEATURED.coverKey)}
         style={{ position: 'absolute', top: 0, left: 0, width, height: H }}
         resizeMode="cover" />
-      {/* 纯 View 遮罩替代 LinearGradient —— web 端彻底安全 */}
-      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: H * 0.6,
-        backgroundColor: 'rgba(0,0,0,0.45)' }} />
-      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: H * 0.5,
-        backgroundColor: 'rgba(0,0,0,0.55)' }} />
+
+      <FadeOverlay height={H} maxAlpha={0.55} />
 
       <ScreenHeader title="全景漫游" subtitle="广东 · 岭南风光" tint="dark" />
 
@@ -132,7 +141,7 @@ function Hero({ insets, onExplore }: { insets: number; onExplore: () => void }) 
   );
 }
 
-// ── 主屏 ─────────────────────────────────────────────────
+// ── 主屏 ──────────────────────────────────────────────────
 export default function VRScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -161,7 +170,7 @@ export default function VRScreen() {
           </View>
           <View className="flex-row flex-wrap" style={{ gap: 12 }}>
             {SCENES.map((s, i) => (
-              <SceneCard key={s.id} scene={s} width={width} isLarge={i === 0} index={i} onPress={() => setSelected(s)} />
+              <SceneCard key={s.id} s={s} w={width} large={i === 0} i={i} onPress={() => setSelected(s)} />
             ))}
           </View>
         </View>
