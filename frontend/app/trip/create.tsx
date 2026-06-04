@@ -1,140 +1,93 @@
-import { useState, useMemo, useRef } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
+  ActivityIndicator,
+  Image,
   Modal,
   Pressable,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Image,
+  ScrollView,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
 } from 'react-native';
+import { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
+
+import { Animated } from '@/components/ui/animated';
 import { apiRequest } from '@/lib/api';
+import { resolveLegacyImage } from '@/lib/legacy-images';
 
-// ── Data ──────────────────────────────────────────────────────────────────────
-
+// ── City data ──────────────────────────────────────────────
 interface City {
   name: string;
   suggest: string;
-  img: string;
+  imageKey: string; // local legacy image key
 }
 
 const CITIES: City[] = [
-  { name: '广州市', suggest: '建议游玩4天',   img: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=600&auto=format&fit=crop' },
-  { name: '深圳市', suggest: '建议游玩3天',   img: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=600&auto=format&fit=crop' },
-  { name: '珠海市', suggest: '建议游玩2天',   img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=600&auto=format&fit=crop' },
-  { name: '佛山市', suggest: '建议游玩2-3天', img: 'https://images.unsplash.com/photo-1590559899731-a382839e5549?q=80&w=600&auto=format&fit=crop' },
-  { name: '东莞市', suggest: '建议游玩2天',   img: 'https://images.unsplash.com/photo-1559131397-f94da358f7ca?q=80&w=600&auto=format&fit=crop' },
-  { name: '惠州市', suggest: '建议游玩2天',   img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=600&auto=format&fit=crop' },
-  { name: '中山市', suggest: '建议游玩2天',   img: 'https://images.unsplash.com/photo-1504198453319-5ce911bafcde?q=80&w=600&auto=format&fit=crop' },
-  { name: '江门市', suggest: '建议游玩1-2天', img: 'https://images.unsplash.com/photo-1513407030348-c983a97b98d8?q=80&w=600&auto=format&fit=crop' },
-  { name: '肇庆市', suggest: '建议游玩2天',   img: 'https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?q=80&w=600&auto=format&fit=crop' },
-  { name: '汕头市', suggest: '建议游玩2天',   img: 'https://images.unsplash.com/photo-1537531383496-f4749b88b535?q=80&w=600&auto=format&fit=crop' },
-  { name: '潮州市', suggest: '建议游玩1-2天', img: 'https://images.unsplash.com/photo-1528164344705-47542687000d?q=80&w=600&auto=format&fit=crop' },
-  { name: '韶关市', suggest: '建议游玩2天',   img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=600&auto=format&fit=crop' },
-  { name: '湛江市', suggest: '建议游玩2天',   img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&auto=format&fit=crop' },
-  { name: '茂名市', suggest: '建议游玩1-2天', img: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=600&auto=format&fit=crop' },
-  { name: '梅州市', suggest: '建议游玩2天',   img: 'https://images.unsplash.com/photo-1472396961693-142e6e269027?q=80&w=600&auto=format&fit=crop' },
-  { name: '汕尾市', suggest: '建议游玩2天',   img: 'https://images.unsplash.com/photo-1472396961693-142e6e269027?q=80&w=600&auto=format&fit=crop' },
+  { name: '广州市', suggest: '建议 4 天', imageKey: 'jd/gz.jpg' },
+  { name: '深圳市', suggest: '建议 3 天', imageKey: 'xc/xc_shenzhen.jpg' },
+  { name: '珠海市', suggest: '建议 2 天', imageKey: 'xc/xc_zhuhai.jpg' },
+  { name: '佛山市', suggest: '建议 2 天', imageKey: 'changlong.png' },
+  { name: '东莞市', suggest: '建议 2 天', imageKey: 'xc/xc_dongguan.jpg' },
+  { name: '惠州市', suggest: '建议 2 天', imageKey: 'xc/xc_huizhou.jpg' },
+  { name: '中山市', suggest: '建议 2 天', imageKey: 'dgypzzbwg.png' },
+  { name: '江门市', suggest: '建议 2 天', imageKey: 'xc/xc_jiangmen.jpg' },
+  { name: '肇庆市', suggest: '建议 2 天', imageKey: 'xc/xc_zhaoqing.jpg' },
+  { name: '汕头市', suggest: '建议 2 天', imageKey: 'xc/xc_chaozhou.jpeg' },
+  { name: '潮州市', suggest: '建议 2 天', imageKey: 'xc/xc_chaozhou.jpeg' },
+  { name: '韶关市', suggest: '建议 2 天', imageKey: 'jd/dxs.png' },
+  { name: '湛江市', suggest: '建议 2 天', imageKey: 'jd/gzcl.png' },
+  { name: '梅州市', suggest: '建议 2 天', imageKey: 'xc/xc_meizhou.jpg' },
+  { name: '汕尾市', suggest: '建议 2 天', imageKey: 'xc/xc_jieyang.jpeg' },
 ];
 
-const DAYS_OPTIONS = ['任意天数', '1天', '2天', '3天', '4天', '5天', '7天+'];
-const HOT_LIMIT = 8;
+const DAYS_OPTIONS = [
+  { label: '1 天', value: '1天' },
+  { label: '2 天', value: '2天' },
+  { label: '3 天', value: '3天' },
+  { label: '4 天', value: '4天' },
+  { label: '5 天', value: '5天' },
+  { label: '7 天', value: '7天' },
+];
 
-const CITY_NAMES = CITIES.map((c) => c.name);
-
-const HOT_CITIES = CITIES.slice(0, HOT_LIMIT).map((c) => c.name);
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-/** Highlight matched substring inside a Text tree (React Native has no <mark>). */
-function HighlightText({ text, query }: { text: string; query: string }) {
-  if (!query) return <Text className="text-sm font-bold text-gray-800">{text}</Text>;
-
-  const idx = text.toLowerCase().indexOf(query.toLowerCase());
-  if (idx < 0) return <Text className="text-sm font-bold text-gray-800">{text}</Text>;
-
-  return (
-    <Text className="text-sm font-bold text-gray-800">
-      {text.slice(0, idx)}
-      <Text className="bg-yellow-100 rounded-sm">{text.slice(idx, idx + query.length)}</Text>
-      {text.slice(idx + query.length)}
-    </Text>
-  );
-}
-
-/** Derive an Unsplash image URL for a city not in the hardcoded list. */
-function fallbackImg(name: string) {
-  return `https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=600&auto=format&fit=crop&text=${encodeURIComponent(name)}`;
-}
-
-// ── Component ─────────────────────────────────────────────────────────────────
-
+// ── Screen ─────────────────────────────────────────────────
 export default function CreateTripScreen() {
   const insets = useSafeAreaInsets();
-  const searchRef = useRef<TextInput>(null);
+  const router = useRouter();
+  const { width } = useWindowDimensions();
 
-  // ---- form state ----
+  // form
   const [departure, setDeparture] = useState('广州市');
   const [destination, setDestination] = useState<City | null>(null);
   const [days, setDays] = useState('2天');
   const [searchQuery, setSearchQuery] = useState('');
-
-  // ---- sheet state ----
-  const [sheetVisible, setSheetVisible] = useState(false);
-  const [sheetMode, setSheetMode] = useState<'departure' | 'days'>('departure');
-
-  // ---- submit state ----
   const [submitting, setSubmitting] = useState(false);
 
-  // ---- derived ----
+  // modal state
+  const [modalVisible, setModalVisible] = useState(false);
+
   const filteredCities = useMemo(() => {
     if (!searchQuery.trim()) return CITIES;
     const q = searchQuery.trim().toLowerCase();
     return CITIES.filter((c) => c.name.toLowerCase().includes(q));
   }, [searchQuery]);
 
-  const sheetOptions = sheetMode === 'departure' ? CITY_NAMES : DAYS_OPTIONS;
-  const sheetCurrent = sheetMode === 'departure' ? departure : days;
+  const canSubmit = departure !== '' && destination !== null;
 
-  const canSubmit =
-    departure !== '' && destination !== null && days !== '任意天数';
-
-  // ---- handlers ----
-  const openSheet = (mode: 'departure' | 'days') => {
-    setSheetMode(mode);
-    setSheetVisible(true);
-  };
-
-  const handleSheetSelect = (value: string) => {
-    if (sheetMode === 'departure') {
-      setDeparture(value);
-    } else {
-      setDays(value);
-    }
-    setSheetVisible(false);
-  };
-
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!canSubmit || submitting) return;
-
     setSubmitting(true);
     try {
-      const tripName = `${departure} → ${destination!.name} ${days}`;
+      const tripName = `${departure} → ${destination!.name} · ${days}`;
       const daysNum = parseInt(days) || 2;
       const tripDays = Array.from({ length: daysNum }, (_, i) => ({
         title: `第${i + 1}天`,
         notes: '',
       }));
 
-      // Try backend first; fall back to local navigation on any failure.
       await apiRequest('/trips', {
         method: 'POST',
         body: { name: tripName, days: tripDays },
@@ -142,290 +95,257 @@ export default function CreateTripScreen() {
       });
       router.replace('/(tabs)/itinerary');
     } catch {
-      // Navigate with query params as fallback (no auth / offline / backend down).
       router.replace({
         pathname: '/(tabs)/itinerary' as any,
-        params: {
-          from: departure,
-          to: destination!.name,
-          days,
-        },
+        params: { from: departure, to: destination!.name, days },
       });
     } finally {
-      // keep button disabled briefly to avoid double-tap
       setTimeout(() => setSubmitting(false), 600);
     }
-  };
+  }, [canSubmit, submitting, departure, destination, days, router]);
 
-  // ---- render ----
+  // ── render ──
   return (
-    <View className="flex-1">
-      {/* Full-screen dark-green gradient overlay (Legacy: bg.png + gradient) */}
-      <LinearGradient
-        colors={['#0f291c', '#0b1a12', '#12281d']}
-        locations={[0, 0.3, 1]}
-        className="absolute inset-0"
-      />
+    <View className="flex-1 bg-[#F4F1E4]">
+      {/* ── Header ───────────────────────────────────────── */}
+      <View style={{ paddingTop: insets.top }} className="bg-[#3E6B4F]">
+        <View className="flex-row items-center px-3 py-3">
+          <Pressable
+            onPress={() => router.back()}
+            className="mr-3 h-9 w-9 items-center justify-center rounded-full bg-white/15">
+            <Ionicons name="chevron-back" size={20} color="#fff" />
+          </Pressable>
+          <Text className="text-[18px] font-bold text-white">新建行程</Text>
+        </View>
 
-      {/* Status bar spacer */}
-      <View style={{ height: insets.top }} />
-
-      {/* ── Top bar ──────────────────────────────────────────────────────── */}
-      <View className="flex-row items-center px-4 pt-2 pb-3">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="h-10 w-10 items-center justify-center rounded-full"
-          style={{ backgroundColor: 'rgba(255,255,255,0.18)' }}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="chevron-back" size={20} color="#fff" />
-        </TouchableOpacity>
-        <Text className="ml-3 text-xl font-bold text-white">线路规划</Text>
+        {/* Trip summary pill */}
+        <View className="flex-row items-center px-5 pb-4">
+          <View className="flex-row items-center rounded-full bg-white/10 px-3 py-1">
+            <Ionicons name="location-outline" size={12} color="rgba(255,255,255,0.7)" />
+            <Text className="ml-1 text-[12px] text-white/70">
+              {departure} → {destination?.name ?? '...'} · {days}
+            </Text>
+          </View>
+        </View>
       </View>
 
-      {/* ── Body ─────────────────────────────────────────────────────────── */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      <ScrollView
         className="flex-1"
-      >
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{
-            paddingHorizontal: 16,
-            paddingBottom: insets.bottom + 20,
-          }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* ── Departure card ───────────────────────────────────────────── */}
-          <TouchableOpacity
-            onPress={() => openSheet('departure')}
-            className="mb-4 rounded-2xl bg-white px-5 py-4"
-            activeOpacity={0.7}
-          >
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 100 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
+
+        {/* ── Departure card ──────────────────────────────── */}
+        <Animated.View
+          entering={FadeInDown.delay(100).springify()}
+          className="mt-5 rounded-2xl bg-white p-5"
+          style={{
+            shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.07, shadowRadius: 12,
+          }}>
+          <Pressable onPress={() => { setSearchQuery(''); setModalVisible(true); }}>
             <View className="flex-row items-center justify-between">
-              <Text className="text-base text-gray-800">出发地</Text>
-              <View className="flex-row items-center rounded-xl bg-gray-100 px-3 py-2">
-                <Text className="mr-1 text-sm text-gray-900">{departure}</Text>
-                <Ionicons name="chevron-forward" size={14} color="#9ca3af" />
-              </View>
-            </View>
-          </TouchableOpacity>
-
-          {/* ── Destination card ─────────────────────────────────────────── */}
-          <View className="mb-4 rounded-2xl bg-white px-5 pt-4 pb-5">
-            <Text className="mb-3 text-base font-semibold text-gray-800">
-              目的地
-            </Text>
-
-            {/* Search */}
-            <View className="relative mb-3">
-              <Ionicons
-                name="search"
-                size={18}
-                color="#9ca3af"
-                style={{ position: 'absolute', left: 12, top: 12, zIndex: 1 }}
-              />
-              <TextInput
-                ref={searchRef}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholder="城市"
-                placeholderTextColor="#9ca3af"
-                className="rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-10 text-sm text-gray-900"
-                autoCorrect={false}
-                clearButtonMode="never"
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity
-                  onPress={() => setSearchQuery('')}
-                  style={{ position: 'absolute', right: 12, top: 12 }}
-                >
-                  <Ionicons name="close" size={18} color="#9ca3af" />
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {/* Chips — only visible when search is empty */}
-            {!searchQuery && (
-              <View className="mb-2">
-                <Text className="mb-2 text-xs text-gray-400">热门推荐</Text>
-                <View className="flex-row flex-wrap gap-2">
-                  {HOT_CITIES.map((city) => (
-                    <TouchableOpacity
-                      key={city}
-                      onPress={() => setSearchQuery(city)}
-                      className="rounded-full border border-gray-200 bg-gray-100 px-3 py-1.5"
-                      activeOpacity={0.7}
-                    >
-                      <Text className="text-xs text-gray-700">{city}</Text>
-                    </TouchableOpacity>
-                  ))}
+              <View className="flex-row items-center" style={{ gap: 10 }}>
+                <View className="h-10 w-10 items-center justify-center rounded-full bg-[#E8F5E9]">
+                  <Ionicons name="navigate-outline" size={20} color="#386641" />
+                </View>
+                <View>
+                  <Text className="text-[11px] font-medium uppercase tracking-wider text-[#999]">出发地</Text>
+                  <Text className="mt-0.5 text-[16px] font-semibold text-[#1a1a1a]">{departure}</Text>
                 </View>
               </View>
-            )}
+              <Ionicons name="chevron-forward" size={18} color="#ccc" />
+            </View>
+          </Pressable>
+        </Animated.View>
 
-            {/* Destination list */}
-            {filteredCities.length > 0 ? (
-              <View style={{ maxHeight: 320 }}>
-                <ScrollView
-                  nestedScrollEnabled
-                  keyboardShouldPersistTaps="handled"
-                  showsVerticalScrollIndicator={false}
-                >
-                  {filteredCities.map((city) => {
-                    const isSelected = destination?.name === city.name;
-                    return (
-                      <TouchableOpacity
-                        key={city.name}
-                        onPress={() => setDestination(city)}
-                        className={`mb-1 flex-row items-center gap-3 rounded-xl p-3 ${
-                          isSelected ? 'border border-green-200 bg-green-50' : ''
-                        }`}
-                        activeOpacity={0.7}
-                      >
-                        <Image
-                          source={{ uri: city.img || fallbackImg(city.name) }}
-                          className="h-12 w-12 rounded-xl bg-gray-200"
-                        />
-                        <View className="flex-1">
-                          <HighlightText text={city.name} query={searchQuery} />
-                          <Text className="mt-0.5 text-xs text-gray-400">
-                            {city.suggest}
-                          </Text>
-                        </View>
-                        <View
-                          className={`h-5 w-5 items-center justify-center rounded-full border-2 ${
-                            isSelected
-                              ? 'border-green-500 bg-green-500'
-                              : 'border-gray-300'
-                          }`}
-                        >
-                          {isSelected && (
-                            <Ionicons name="checkmark" size={12} color="#fff" />
-                          )}
-                        </View>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              </View>
-            ) : (
-              <View className="items-center py-5">
-                <Text className="text-sm text-gray-400">
-                  没有找到与"{searchQuery}"相关的目的地
-                </Text>
-              </View>
+        {/* ── Destination card ─────────────────────────────── */}
+        <Animated.View
+          entering={FadeInDown.delay(150).springify()}
+          className="mt-4 rounded-2xl bg-white p-5"
+          style={{
+            shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.07, shadowRadius: 12,
+          }}>
+          <View className="mb-4 flex-row items-center" style={{ gap: 10 }}>
+            <View className="h-10 w-10 items-center justify-center rounded-full bg-[#E8F5E9]">
+              <Ionicons name="flag-outline" size={20} color="#386641" />
+            </View>
+            <View>
+              <Text className="text-[11px] font-medium uppercase tracking-wider text-[#999]">目的地</Text>
+              <Text className="mt-0.5 text-[16px] font-semibold text-[#1a1a1a]">
+                {destination?.name ?? '点击选择城市'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Search */}
+          <View className="flex-row items-center rounded-xl bg-[#F2F2F2] px-3 py-2.5">
+            <Ionicons name="search" size={16} color="#999" />
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="输入城市名称筛选..."
+              placeholderTextColor="#bbb"
+              className="ml-2 flex-1 py-0 text-[14px] text-[#333]"
+              autoCorrect={false}
+            />
+            {searchQuery.length > 0 && (
+              <Pressable onPress={() => setSearchQuery('')} className="p-1">
+                <Ionicons name="close-circle" size={18} color="#ccc" />
+              </Pressable>
             )}
           </View>
 
-          {/* ── Days card ────────────────────────────────────────────────── */}
-          <TouchableOpacity
-            onPress={() => openSheet('days')}
-            className="mb-6 rounded-2xl bg-white px-5 py-4"
-            activeOpacity={0.7}
-          >
-            <View className="flex-row items-center justify-between">
-              <Text className="text-base text-gray-800">游玩天数</Text>
-              <View className="flex-row items-center rounded-xl bg-gray-100 px-3 py-2">
-                <Text className="mr-1 text-sm text-gray-900">{days}</Text>
-                <Ionicons name="chevron-forward" size={14} color="#9ca3af" />
+          {/* City list */}
+          <ScrollView
+            horizontal={false}
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            style={{ maxHeight: 280 }}
+            className="mt-3">
+            {filteredCities.length === 0 ? (
+              <Text className="py-6 text-center text-[13px] text-[#ccc]">未找到匹配城市</Text>
+            ) : (
+              <View style={{ gap: 6 }}>
+                {filteredCities.map((city) => {
+                  const selected = destination?.name === city.name;
+                  return (
+                    <Pressable
+                      key={city.name}
+                      onPress={() => setDestination(city)}
+                      className={`flex-row items-center rounded-xl p-2.5 ${selected ? 'bg-[#E8F5E9]' : 'bg-white active:bg-[#F5F5F5]'}`}
+                      style={selected ? { borderWidth: 1.5, borderColor: '#386641' } : {}}>
+                      <Image
+                        source={resolveLegacyImage(city.imageKey)}
+                        style={{ width: 52, height: 52, borderRadius: 12 }}
+                        resizeMode="cover"
+                      />
+                      <View className="ml-3 flex-1">
+                        <Text className={`text-[14px] font-bold ${selected ? 'text-[#386641]' : 'text-[#333]'}`}>
+                          {city.name}
+                        </Text>
+                        <Text className="mt-0.5 text-[12px] text-[#999]">{city.suggest}</Text>
+                      </View>
+                      <View
+                        className={`h-6 w-6 items-center justify-center rounded-full ${selected ? 'bg-[#386641]' : 'border-2 border-[#ddd]'}`}>
+                        {selected && <Ionicons name="checkmark" size={14} color="#fff" />}
+                      </View>
+                    </Pressable>
+                  );
+                })}
               </View>
+            )}
+          </ScrollView>
+        </Animated.View>
+
+        {/* ── Days selector ────────────────────────────────── */}
+        <Animated.View
+          entering={FadeInDown.delay(200).springify()}
+          className="mt-4 rounded-2xl bg-white p-5"
+          style={{
+            shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.07, shadowRadius: 12,
+          }}>
+          <View className="mb-3 flex-row items-center" style={{ gap: 10 }}>
+            <View className="h-10 w-10 items-center justify-center rounded-full bg-[#E8F5E9]">
+              <Ionicons name="calendar-outline" size={20} color="#386641" />
             </View>
-          </TouchableOpacity>
+            <View>
+              <Text className="text-[11px] font-medium uppercase tracking-wider text-[#999]">游玩天数</Text>
+              <Text className="mt-0.5 text-[16px] font-semibold text-[#1a1a1a]">{days}</Text>
+            </View>
+          </View>
 
-          {/* Spacer so content doesn't hide behind the fixed submit button */}
-          <View style={{ height: 80 }} />
-        </ScrollView>
-      </KeyboardAvoidingView>
+          {/* Day pills — inline selector, no modal needed */}
+          <View className="flex-row flex-wrap" style={{ gap: 10 }}>
+            {DAYS_OPTIONS.map((d) => {
+              const active = days === d.value;
+              return (
+                <Pressable
+                  key={d.value}
+                  onPress={() => setDays(d.value)}
+                  className={`items-center rounded-xl px-5 py-3 ${active ? 'bg-[#386641]' : 'border border-[#eee] bg-[#F9F9F9]'}`}>
+                  <Text className={`text-[15px] font-bold ${active ? 'text-white' : 'text-[#555]'}`}>
+                    {d.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </Animated.View>
+      </ScrollView>
 
-      {/* ── Submit button (fixed at bottom) ──────────────────────────────── */}
+      {/* ── Fixed bottom CTA ──────────────────────────────── */}
       <View
-        className="absolute bottom-0 left-0 right-0 px-4 pt-2 pb-3"
-        style={{ paddingBottom: insets.bottom + 12 }}
-      >
-        <TouchableOpacity
+        className="absolute bottom-0 left-0 right-0 px-4 pt-3"
+        style={{ paddingBottom: insets.bottom + 12 }}>
+        <View className="rounded-2xl bg-[#F4F1E4]/95 py-1" />
+        <Pressable
           onPress={handleSubmit}
           disabled={!canSubmit || submitting}
-          className={`w-full items-center justify-center rounded-2xl py-3.5 ${
-            canSubmit && !submitting
-              ? 'bg-green-500'
-              : 'bg-[#367D6A]'
-          }`}
-          activeOpacity={0.8}
-        >
+          className={`w-full items-center justify-center rounded-2xl py-4 ${canSubmit && !submitting ? 'bg-[#386641]' : 'bg-[#C4D4C8]'}`}
+          style={{ opacity: canSubmit && !submitting ? 1 : 0.7 }}>
           {submitting ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text className="text-base font-bold text-white">下一步</Text>
+            <View className="flex-row items-center" style={{ gap: 6 }}>
+              <Ionicons name="compass-outline" size={20} color="#fff" />
+              <Text className="text-[16px] font-bold text-white">开始规划行程</Text>
+            </View>
           )}
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
-      {/* ── Bottom sheet modal ───────────────────────────────────────────── */}
+      {/* ── Departure city picker modal ────────────────────── */}
       <Modal
-        visible={sheetVisible}
+        visible={modalVisible}
         transparent
         animationType="fade"
-        onRequestClose={() => setSheetVisible(false)}
-      >
+        onRequestClose={() => setModalVisible(false)}>
         <Pressable
           className="flex-1 justify-end bg-black/35"
-          onPress={() => setSheetVisible(false)}
-        >
+          onPress={() => setModalVisible(false)}>
           <Pressable
-            className="rounded-t-2xl bg-white px-6 pt-6"
-            style={{
-              paddingBottom: insets.bottom + 16,
-              maxHeight: Platform.OS === 'ios' ? '80%' : '75%',
-            }}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <Text className="mb-4 text-center text-lg font-semibold text-gray-900">
-              {sheetMode === 'departure' ? '选择出发地' : '选择游玩天数'}
+            className="rounded-t-3xl bg-white px-5 pt-6"
+            style={{ paddingBottom: insets.bottom + 16, maxHeight: '75%' }}
+            onPress={(e) => e.stopPropagation()}>
+            {/* Handle bar */}
+            <View className="mb-4 self-center h-1 w-10 rounded-full bg-[#E0E0E0]" />
+
+            <Text className="mb-4 text-center text-[16px] font-bold text-[#1a1a1a]">
+              选择出发城市
             </Text>
 
             <ScrollView
               bounces={false}
               showsVerticalScrollIndicator={false}
-              className="max-h-80"
-            >
-              <View className="flex-row flex-wrap gap-3">
-                {sheetOptions.map((option) => {
-                  const isActive = option === sheetCurrent;
+              contentContainerStyle={{ paddingBottom: 8 }}>
+              <View className="flex-row flex-wrap" style={{ gap: 10 }}>
+                {CITIES.map((city) => {
+                  const active = departure === city.name;
                   return (
-                    <TouchableOpacity
-                      key={option}
-                      onPress={() => handleSheetSelect(option)}
-                      className={`rounded-xl border px-4 py-3 ${
-                        isActive
-                          ? 'border-green-500 bg-green-50'
-                          : 'border-gray-200'
-                      }`}
-                      activeOpacity={0.7}
-                    >
-                      <Text
-                        className={`text-sm ${
-                          isActive
-                            ? 'font-semibold text-green-700'
-                            : 'text-gray-700'
-                        }`}
-                      >
-                        {option}
+                    <Pressable
+                      key={city.name}
+                      onPress={() => { setDeparture(city.name); setModalVisible(false); }}
+                      className={`flex-row items-center rounded-xl px-3 py-2.5 ${active ? 'bg-[#386641]' : 'border border-[#eee] bg-[#F9F9F9]'}`}>
+                      <Image
+                        source={resolveLegacyImage(city.imageKey)}
+                        style={{ width: 24, height: 24, borderRadius: 6 }}
+                        resizeMode="cover"
+                      />
+                      <Text className={`ml-2 text-[13px] font-semibold ${active ? 'text-white' : 'text-[#444]'}`}>
+                        {city.name}
                       </Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   );
                 })}
               </View>
             </ScrollView>
 
-            <TouchableOpacity
-              onPress={() => setSheetVisible(false)}
-              className="mt-4 w-full items-center rounded-xl bg-gray-900 py-3"
-              activeOpacity={0.8}
-            >
-              <Text className="text-base text-white">取消</Text>
-            </TouchableOpacity>
+            <Pressable
+              onPress={() => setModalVisible(false)}
+              className="mt-3 w-full items-center rounded-xl bg-[#F2F2F2] py-3">
+              <Text className="text-[14px] font-semibold text-[#666]">取消</Text>
+            </Pressable>
           </Pressable>
         </Pressable>
       </Modal>
