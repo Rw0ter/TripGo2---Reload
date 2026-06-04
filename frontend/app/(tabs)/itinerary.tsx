@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -37,9 +37,10 @@ const BUBBLES: {
 
 // 城市精选 POI 卡（对应 Legacy .poi-card）。
 function PoiCard({ item, width }: { item: Scenic; width: number }) {
+  const router = useRouter();
   return (
     <Pressable
-      onPress={() => comingSoon('景点详情')}
+      onPress={() => router.push({ pathname: '/scenic/[id]', params: { id: item.id } })}
       accessibilityRole="button"
       accessibilityLabel={item.name}
       style={{ width }}
@@ -209,7 +210,7 @@ export default function ItineraryScreen() {
                 东莞
               </Text>
               <Pressable
-                onPress={() => comingSoon('城市攻略')}
+                onPress={() => router.push({ pathname: '/guide/[city]', params: { city: '东莞' } })}
                 style={{ boxShadow: '0px 0px 4px #f5f5f5' }}
                 className="rounded-xl border border-[#ECECEC] bg-white px-2.5 py-1">
                 <Text className="text-[12px] text-[#000000]">攻略 &gt;</Text>

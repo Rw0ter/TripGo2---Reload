@@ -7,6 +7,7 @@ import { BannersModule } from './modules/banners/banners.module';
 import { DestinationsModule } from './modules/destinations/destinations.module';
 import { QuizModule } from './modules/quiz/quiz.module';
 import { ScenicModule } from './modules/scenic/scenic.module';
+import { SearchModule } from './modules/search/search.module';
 import { StoriesModule } from './modules/stories/stories.module';
 import { TripsModule } from './modules/trips/trips.module';
 
@@ -19,6 +20,7 @@ import { TripsModule } from './modules/trips/trips.module';
     ScenicModule,
     BannersModule,
     QuizModule,
+    SearchModule,
     StoriesModule,
     TripsModule,
     // 业务模块在此注册：OrdersModule, ...

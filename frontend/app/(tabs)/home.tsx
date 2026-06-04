@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -217,9 +218,10 @@ function QuizCard({ item, width }: { item: Quiz; width: number }) {
 
 // 热门景点大横卡。
 function HotCard({ item, width }: { item: Scenic; width: number }) {
+  const router = useRouter();
   return (
     <Pressable
-      onPress={() => comingSoon('景点详情')}
+      onPress={() => router.push({ pathname: '/scenic/[id]', params: { id: item.id } })}
       accessibilityRole="button"
       accessibilityLabel={item.name}
       style={{ width, height: 130 }}
@@ -256,9 +258,10 @@ function MasonryCard({
   width: number;
   height: number;
 }) {
+  const router = useRouter();
   return (
     <Pressable
-      onPress={() => comingSoon(`${item.name}城市精选`)}
+      onPress={() => router.push({ pathname: '/guide/[city]', params: { city: item.city || item.name } })}
       accessibilityRole="button"
       accessibilityLabel={item.name}
       style={{ width, height, boxShadow: '0px 5px 14px rgba(0,0,0,0.16)' }}
@@ -327,6 +330,7 @@ interface HomeData {
 // 热门景点 + 城市精选高低落差瀑布流，内容均走后端。
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { width } = useWindowDimensions();
   const [data, setData] = useState<HomeData | null>(null);
   const [error, setError] = useState(false);
@@ -397,7 +401,7 @@ export default function HomeScreen() {
               </Pressable>
             </View>
             <Pressable
-              onPress={() => comingSoon('搜索')}
+              onPress={() => router.push('/search')}
               accessibilityRole="search"
               style={{ boxShadow: '0px 2px 8px rgba(0,0,0,0.12)' }}
               className="mt-3 h-11 flex-row items-center rounded-full bg-white px-4">

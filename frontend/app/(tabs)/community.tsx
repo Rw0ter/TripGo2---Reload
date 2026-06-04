@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { router, useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -156,7 +156,7 @@ export default function CommunityScreen() {
           <View className="flex-row items-center justify-between">
             <Text className="text-base font-bold text-white">社区</Text>
             <Pressable
-              onPress={() => comingSoon('搜索动态')}
+              onPress={() => router.push('/search')}
               accessibilityRole="button"
               accessibilityLabel="搜索动态">
               <Ionicons name="search" size={20} color="#ffffff" />
