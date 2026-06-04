@@ -26,8 +26,11 @@ model User {
   orders    Order[]
   stories   Story[]
   comments  Comment[]
-  likes     Like[]
-  checkins  Checkin[]
+  likes        Like[]
+  checkins     Checkin[]
+  transactions Transaction[]
+  favorites    Favorite[]
+  reviews      Review[]
 }
 
 model Address {
@@ -99,15 +102,6 @@ model Like {
   @@id([storyId, userId])
 }
 
-model Destination {
-  id     Int    @id @default(autoincrement())
-  title  String
-  image  String
-  money  String
-  number String
-  type   Int
-}
-
 // 首页轮播图（对应 Legacy index1.html .top_AD）。
 model Banner {
   id       Int    @id @default(autoincrement())
@@ -161,4 +155,67 @@ model Checkin {
   createdAt DateTime @default(now())
 
   @@unique([userId, date])
+}
+
+// 钱包交易流水
+model Transaction {
+  id        Int      @id @default(autoincrement())
+  type      String   @default("out") // in / out
+  title     String
+  amount    String // "+10" / "-128.00"
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+}
+
+// 用户收藏（活动/景点/产品）
+model Favorite {
+  id       Int      @id @default(autoincrement())
+  itemType String // scenic / destination / activity
+  itemId   Int
+  title    String
+  date     String  @default("")
+  location String  @default("")
+  tag      String  @default("")
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, itemType, itemId])
+}
+
+// 产品/景点评价
+model Review {
+  id        Int      @id @default(autoincrement())
+  itemType  String // destination / scenic
+  itemId    Int
+  rating    Int      @default(5)
+  text      String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String
+  createdAt DateTime @default(now())
+}
+
+// 目的地产品（扩展）
+model Destination {
+  id          Int    @id @default(autoincrement())
+  title       String
+  image       String
+  money       String
+  number      String
+  type        Int
+  description String  @default("") // 产品详情描述
+  detail      String  @default("") // 产品规格/参数
+}
+
+// 文化内容（粤语短语/课程/学习主题/VR场景）
+model CulturalContent {
+  id       Int    @id @default(autoincrement())
+  category String // phrase / lesson / topic / vr_scene
+  title    String
+  subtitle String @default("")
+  content  String @default("") // JSON: extra fields
+  icon     String @default("")
+  color    String @default("")
+  sort     Int    @default(0)
 }
