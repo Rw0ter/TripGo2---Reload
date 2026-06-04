@@ -22,6 +22,9 @@ export default function RootLayout() {
         <Stack.Screen name="trip/create" options={{ title: '新建行程' }} />
         <Stack.Screen name="post/story" options={{ title: '发布故事' }} />
         <Stack.Screen name="story/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="search" options={{ headerShown: false }} />
+        <Stack.Screen name="scenic/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="guide/[city]" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
