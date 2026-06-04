@@ -157,22 +157,13 @@ export default function VRScreen() {
 
         <View className="px-4 pt-6">
           <View className="mb-3.5 flex-row items-center">
-            <Text className="text-[17px] font-bold text-[#111]">探索场景</Text>
-            <Text className="ml-2 text-[13px] text-[#999]">共 {SCENES.length} 处</Text>
+            <Text className="text-[20px] font-extrabold text-[#1a1a1a]">探索场景</Text>
+            <Text className="ml-2 text-[14px] font-medium text-[#777]">共 {SCENES.length} 处</Text>
           </View>
           <View className="flex-row flex-wrap" style={{ gap: 12 }}>
             {SCENES.map((s, i) => (
               <SceneCard key={s.id} s={s} w={width} large={i === 0} i={i} onPress={() => setSelected(s)} />
             ))}
-          </View>
-        </View>
-
-        <View className="mx-4 mt-6 rounded-xl bg-[#F2F2F2] p-3.5">
-          <View className="flex-row items-start gap-2">
-            <Ionicons name="information-circle-outline" size={14} color="#aaa" style={{ marginTop: 1 }} />
-            <Text className="flex-1 text-[11px] leading-4 text-[#aaa]">
-              点击场景进入 360° 全景 · 拖动旋转视角 · 双指缩放
-            </Text>
           </View>
         </View>
       </ScrollView>
