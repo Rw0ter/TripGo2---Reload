@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState, useRef } from 'react';
 import { Pressable, ScrollView, Text, View, Animated as RNAnimated } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { speak, stop } from 'expo-speech';
+import { ScreenHeader } from '@/components/ui/screen-header';
 
 // ── Phrase data ──────────────────────────────────────────────
 
@@ -154,8 +154,6 @@ function CategoryCard({
 // ── Screen ───────────────────────────────────────────────────
 
 export default function CantoneseScreen() {
-  const insets = useSafeAreaInsets();
-  const router = useRouter();
   const [playingId, setPlayingId] = useState<string | null>(null);
   const playingRef = useRef<string | null>(null);
 
@@ -191,29 +189,13 @@ export default function CantoneseScreen() {
     <View className="flex-1 bg-[#F8F5E6]">
       <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
         {/* ── Header ── */}
-        <View style={{ paddingTop: insets.top + 6 }} className="bg-[#D4522A] pb-10">
-          {/* Back row */}
-          <View className="flex-row items-center px-4">
-            <Pressable
-              onPress={() => router.back()}
-              className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-white/20"
-            >
-              <Ionicons name="chevron-back" size={22} color="#fff" />
-            </Pressable>
-            <Text className="text-[18px] font-bold text-white">粤语课堂</Text>
-          </View>
-
-          {/* Title area */}
-          <View className="mt-5 items-center">
-            <Text className="text-[48px]">🗣️</Text>
-            <Text className="mt-3 text-[28px] font-bold text-white">粤语课堂</Text>
-            <Text className="mt-2 text-[14px] text-white/80">学说广东话 · 传承岭南音</Text>
-          </View>
+        <View className="bg-[#D4522A]">
+          <ScreenHeader title="粤语课堂" subtitle="学说广东话 · 传承岭南音" tint="dark" />
         </View>
 
-        {/* ── Body (overlaps header bottom slightly) ── */}
+        {/* ── Body ── */}
         <View
-          style={{ marginTop: -20, borderTopLeftRadius: 20, borderTopRightRadius: 20 }}
+          style={{ borderTopLeftRadius: 20, borderTopRightRadius: 20 }}
           className="bg-[#F8F5E6] px-4 pt-5"
         >
           {/* ── TTS hint ── */}

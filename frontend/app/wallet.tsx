@@ -1,10 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScrollView, Text, View } from 'react-native';
 import { apiRequest } from '@/lib/api';
+import { ScreenHeader } from '@/components/ui/screen-header';
 
 interface Transaction {
   id: number;
@@ -34,8 +32,6 @@ const FALLBACK_BUDGETS: Budget[] = [
 ];
 
 export default function WalletScreen() {
-  const insets = useSafeAreaInsets();
-  const router = useRouter();
   const [txns, setTxns] = useState<Transaction[]>(FALLBACK_TXNS);
   const [budgets] = useState<Budget[]>(FALLBACK_BUDGETS);
 
@@ -66,22 +62,11 @@ export default function WalletScreen() {
         colors={['#5b8bff', '#17d7fa']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{ paddingTop: insets.top + 6 }}
         className="pb-12"
       >
-        <Pressable
-          onPress={() => router.back()}
-          className="absolute left-4 flex-row items-center"
-          style={{ top: insets.top + 6 }}
-        >
-          <Ionicons name="chevron-back" size={22} color="#fff" />
-        </Pressable>
+        <ScreenHeader title="钱包" tint="dark" />
 
-        <Text className="text-center text-[18px] font-bold tracking-wider text-white">
-          文粤积蓄
-        </Text>
-
-        <Text className="mt-5 text-center text-[40px] font-bold text-white">
+        <Text className="text-center text-[40px] font-bold text-white">
           ￥{balance.toFixed(2)}
         </Text>
 

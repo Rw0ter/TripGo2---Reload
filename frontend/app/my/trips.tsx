@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { apiRequest } from '@/lib/api';
 import { toast } from '@/lib/toast';
 
@@ -36,7 +36,6 @@ function parseTripStats(days: TripDay[]) {
 }
 
 export default function MyTripsScreen() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [trips, setTrips] = useState<TripData[] | null>(null);
   const [error, setError] = useState('');
@@ -85,26 +84,16 @@ export default function MyTripsScreen() {
 
   return (
     <View className="flex-1 bg-[#F4F1E4]">
-      {/* 绿色品牌头部，与 stories / likes 统一 */}
-      <View
-        style={{ paddingTop: insets.top + 6 }}
-        className="flex-row items-center justify-center bg-[#3E6B4F] px-4 pb-4"
-      >
-        <Pressable
-          onPress={() => router.back()}
-          className="absolute left-4"
-          style={{ top: insets.top + 6 }}
-        >
-          <Ionicons name="chevron-back" size={22} color="#fff" />
-        </Pressable>
-        <Text className="text-[17px] font-bold text-white">我的线路</Text>
-        <Pressable
-          onPress={() => router.push('/trip/create')}
-          className="absolute right-4"
-          style={{ top: insets.top + 6 }}
-        >
-          <Ionicons name="add-circle" size={24} color="#fff" />
-        </Pressable>
+      <View className="bg-[#3E6B4F]">
+        <ScreenHeader
+          title="我的线路"
+          tint="dark"
+          right={
+            <Pressable onPress={() => router.push('/trip/create')}>
+              <Ionicons name="add-circle" size={24} color="#fff" />
+            </Pressable>
+          }
+        />
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>

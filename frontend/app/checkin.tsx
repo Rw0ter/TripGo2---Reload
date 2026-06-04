@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -9,8 +8,8 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiRequest } from '@/lib/api';
+import { ScreenHeader } from '@/components/ui/screen-header';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -89,9 +88,6 @@ const DAILY_TASKS: TaskDef[] = [
 // ---------------------------------------------------------------------------
 
 export default function CheckinScreen() {
-  const insets = useSafeAreaInsets();
-  const router = useRouter();
-
   // ---- server data ------------------------------------------------
   const [checkinStatus, setCheckinStatus] = useState<CheckinStatus | null>(null);
   const [userPoints, setUserPoints] = useState(0);
@@ -173,28 +169,7 @@ export default function CheckinScreen() {
         contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* ========================================================= */}
-        {/* Top bar — matching Legacy qd.html topbar                  */}
-        {/* ========================================================= */}
-        <View
-          style={{ paddingTop: insets.top + 6 }}
-          className="flex-row items-center border-b border-[#f0ead6] bg-[#FBF7E9] px-[3.5vw] pb-3"
-        >
-          {/* Back button: round, white circle (36px) */}
-          <Pressable
-            onPress={() => router.back()}
-            className="mr-[2vw] h-[36px] w-[36px] items-center justify-center rounded-full bg-white"
-          >
-            <Ionicons name="chevron-back" size={20} color="#3c3a2b" />
-          </Pressable>
-
-          <Text className="text-[18px] font-bold text-[#3c3a2b]">
-            福利中心
-          </Text>
-          <Text className="ml-[2vw] text-[14px] text-[#b8b29a]">
-            福利商城
-          </Text>
-        </View>
+        <ScreenHeader title="福利中心" subtitle="福利商城" tint="light" />
 
         {/* ========================================================= */}
         {/* Points banner — orange-red gradient card                 */}

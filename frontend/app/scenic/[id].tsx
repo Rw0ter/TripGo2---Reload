@@ -260,9 +260,9 @@ export default function ScenicDetailScreen() {
               onPress={() => router.back()}
               accessibilityRole="button"
               accessibilityLabel="返回"
-              className="h-9 w-9 items-center justify-center rounded-full bg-black/30"
+              className="h-9 w-9 items-center justify-center"
             >
-              <Ionicons name="chevron-back" size={20} color="#fff" />
+              <Ionicons name="chevron-back" size={23} color="#fff" />
             </Pressable>
             <Pressable
               onPress={() => setFav((v) => !v)}

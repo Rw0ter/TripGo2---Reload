@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -13,6 +12,8 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { ScreenHeader } from '@/components/ui/screen-header';
 
 // ---------------------------------------------------------------------------
 // Types & Constants
@@ -370,7 +371,6 @@ function generateTripPlan(
 
 export default function AIAssistantScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
 
   // --- Mode state ---
   const [mode, setMode] = useState<Mode>('planner');
@@ -558,37 +558,12 @@ export default function AIAssistantScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: bgColor }}>
-      {/* ================================================================== */}
       {/* Header */}
-      {/* ================================================================== */}
-      <LinearGradient
-        colors={['#2D5A3D', '#3E6B4F', '#4A7C59']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={{ paddingTop: insets.top }}
-      >
-        <View className="px-4 pb-3 pt-2">
-          {/* Top row: back + title */}
-          <View className="flex-row items-center">
-            <Pressable
-              onPress={() => router.back()}
-              className="w-9 h-9 rounded-full items-center justify-center bg-white/20"
-            >
-              <Ionicons name="chevron-back" size={22} color="#fff" />
-            </Pressable>
-            <View className="flex-1 ml-3">
-              <Text className="text-[18px] font-bold text-white">文脉粤游 AI</Text>
-              <Text className="text-[12px] text-white/70">
-                智能行程规划 · 岭南文化问答
-              </Text>
-            </View>
-            <View className="bg-white/20 rounded-full px-2.5 py-1">
-              <Text className="text-[11px] text-white/90">TripGo</Text>
-            </View>
-          </View>
-
-          {/* Mode toggle */}
-          <View className="flex-row mt-3 bg-white/15 rounded-xl p-1">
+      <View className="bg-[#3E6B4F]">
+        <ScreenHeader title="智能助手" tint="dark" />
+        {/* Mode toggle */}
+        <View className="px-4 pb-3">
+          <View className="flex-row bg-white/15 rounded-xl p-1">
             <Pressable
               onPress={() => setMode('planner')}
               className={`flex-1 flex-row items-center justify-center py-2 rounded-lg ${
@@ -629,7 +604,7 @@ export default function AIAssistantScreen() {
             </Pressable>
           </View>
         </View>
-      </LinearGradient>
+      </View>
 
       {/* ================================================================== */}
       {/* Planner Mode */}
