@@ -4,8 +4,11 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AppController } from './app.controller';
 import { AuthModule } from './modules/auth/auth.module';
 import { BannersModule } from './modules/banners/banners.module';
+import { CulturalModule } from './modules/cultural/cultural.module';
 import { DestinationsModule } from './modules/destinations/destinations.module';
+import { FavoritesModule } from './modules/favorites/favorites.module';
 import { QuizModule } from './modules/quiz/quiz.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
 import { ScenicModule } from './modules/scenic/scenic.module';
 import { CheckinModule } from './modules/checkin/checkin.module';
 import { LeaderboardModule } from './modules/leaderboard/leaderboard.module';
@@ -13,6 +16,7 @@ import { MessagesModule } from './modules/messages/messages.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { SearchModule } from './modules/search/search.module';
 import { StoriesModule } from './modules/stories/stories.module';
+import { TransactionsModule } from './modules/transactions/transactions.module';
 import { TripsModule } from './modules/trips/trips.module';
 
 @Module({
@@ -20,7 +24,10 @@ import { TripsModule } from './modules/trips/trips.module';
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,
+    CulturalModule,
     DestinationsModule,
+    FavoritesModule,
+    ReviewsModule,
     ScenicModule,
     BannersModule,
     QuizModule,
@@ -30,8 +37,8 @@ import { TripsModule } from './modules/trips/trips.module';
     OrdersModule,
     SearchModule,
     StoriesModule,
+    TransactionsModule,
     TripsModule,
-    // 业务模块在此注册：...
   ],
   controllers: [AppController],
 })

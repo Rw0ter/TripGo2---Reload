@@ -226,19 +226,134 @@ async function seedCommunity() {
   return { authors: authors.length, stories: stories.length };
 }
 
+// 文化内容：粤语短语
+const cantonesePhrases = [
+  { category: 'phrase', title: '你好 (nei5 hou2)', subtitle: '你好', content: '👋', icon: '', color: '', sort: 0 },
+  { category: 'phrase', title: '多謝 (do1 ze6)', subtitle: '谢谢', content: '🙏', icon: '', color: '', sort: 1 },
+  { category: 'phrase', title: '唔該 (m4 goi1)', subtitle: '麻烦/谢谢', content: '😊', icon: '', color: '', sort: 2 },
+  { category: 'phrase', title: '早晨 (zou2 san4)', subtitle: '早上好', content: '🌅', icon: '', color: '', sort: 3 },
+  { category: 'phrase', title: '食咗飯未？(sik6 zo2 faan6 mei6)', subtitle: '吃饭了吗？', content: '🍚', icon: '', color: '', sort: 4 },
+  { category: 'phrase', title: '好靚 (hou2 leng3)', subtitle: '很漂亮', content: '✨', icon: '', color: '', sort: 5 },
+  { category: 'phrase', title: '慢慢行 (maan6 maan6 haang4)', subtitle: '慢走', content: '🚶', icon: '', color: '', sort: 6 },
+  { category: 'phrase', title: '飲茶 (jam2 caa4)', subtitle: '喝茶/吃点心', content: '🍵', icon: '', color: '', sort: 7 },
+];
+
+// 文化内容：粤语课程
+const cantoneseLessons = [
+  { category: 'lesson', title: '粤语拼音入门', subtitle: '学习粤拼基本规则', content: '{"lessons":5}', icon: 'text', color: '#D4522A', sort: 0 },
+  { category: 'lesson', title: '日常对话', subtitle: '问候、购物、出行', content: '{"lessons":10}', icon: 'chatbubbles', color: '#E0892F', sort: 1 },
+  { category: 'lesson', title: '饮食文化', subtitle: '茶楼点餐、美食表达', content: '{"lessons":6}', icon: 'restaurant', color: '#5C8A6D', sort: 2 },
+  { category: 'lesson', title: '岭南俗语', subtitle: '地道俚语和谚语', content: '{"lessons":8}', icon: 'book', color: '#7B68AE', sort: 3 },
+];
+
+// 文化内容：非遗学习主题
+const studyTopics = [
+  { category: 'topic', title: '粤剧', subtitle: '岭南文化瑰宝，世界级非遗', content: '{"quizId":1}', icon: 'musical-notes', color: '#E05C3A', sort: 0 },
+  { category: 'topic', title: '广绣', subtitle: '一针一线绣出岭南风华', content: '{"quizId":2}', icon: 'color-palette', color: '#D44A7A', sort: 1 },
+  { category: 'topic', title: '醒狮', subtitle: '威武雄壮，驱邪纳福', content: '{"quizId":3}', icon: 'paw', color: '#E0892F', sort: 2 },
+  { category: 'topic', title: '工夫茶', subtitle: '潮汕茶道，品味人生', content: '{"quizId":4}', icon: 'cafe', color: '#5C8A6D', sort: 3 },
+  { category: 'topic', title: '龙舟', subtitle: '百舸争流，奋勇争先', content: '{"quizId":5}', icon: 'boat', color: '#3B7CB6', sort: 4 },
+  { category: 'topic', title: '岭南建筑', subtitle: '镬耳山墙，骑楼连廊', content: '{}', icon: 'home', color: '#7B68AE', sort: 5 },
+  { category: 'topic', title: '广东剪纸', subtitle: '纸上生花，非遗技艺', content: '{}', icon: 'cut', color: '#C0392B', sort: 6 },
+  { category: 'topic', title: '皮影戏', subtitle: '光影故事，千年传承', content: '{}', icon: 'film', color: '#8E6B3F', sort: 7 },
+];
+
+// 文化内容：VR全景场景
+const vrScenes = [
+  { category: 'vr_scene', title: '广州塔 360°', subtitle: '珠江新城天际线', content: '{"lat":23.1065,"lng":113.3245}', icon: 'eye', color: '#E05C3A', sort: 0 },
+  { category: 'vr_scene', title: '丹霞山全景', subtitle: '世界自然遗产', content: '{"lat":25.0132,"lng":113.7387}', icon: 'mountain', color: '#5C8A6D', sort: 1 },
+  { category: 'vr_scene', title: '开平碉楼', subtitle: '世界文化遗产', content: '{"lat":22.2865,"lng":112.6991}', icon: 'home', color: '#8E6B3F', sort: 2 },
+  { category: 'vr_scene', title: '珠江夜景', subtitle: '两岸璀璨灯火', content: '{"lat":23.1134,"lng":113.2594}', icon: 'moon', color: '#3B7CB6', sort: 3 },
+  { category: 'vr_scene', title: '粤剧艺术博物馆', subtitle: '岭南园林中的非遗', content: '{"lat":23.1228,"lng":113.2485}', icon: 'business', color: '#7B68AE', sort: 4 },
+  { category: 'vr_scene', title: '潮州古城', subtitle: '千年古韵广济桥', content: '{"lat":23.6665,"lng":116.6437}', icon: 'flag', color: '#C0392B', sort: 5 },
+];
+
+const allCultural = [...cantonesePhrases, ...cantoneseLessons, ...studyTopics, ...vrScenes];
+
+// 评价种子数据 — 与 destination 产品关联
+const reviewDefs = [
+  { itemType: 'destination', itemIdx: 0, rating: 5, text: '做工非常精致，很有岭南韵味，送礼体面！', authorIdx: 0 },
+  { itemType: 'destination', itemIdx: 0, rating: 5, text: '木雕细节处理得很好，朋友收到都很喜欢。', authorIdx: 1 },
+  { itemType: 'destination', itemIdx: 6, rating: 5, text: '脸谱画得特别传神，竹扇手感也好，推荐！', authorIdx: 2 },
+  { itemType: 'destination', itemIdx: 12, rating: 5, text: '紫砂壶出水很利落，泡单丛茶特别香。', authorIdx: 3 },
+  { itemType: 'destination', itemIdx: 16, rating: 4, text: '年画颜色鲜艳，贴在门上很有年味。', authorIdx: 4 },
+  { itemType: 'destination', itemIdx: 23, rating: 5, text: '醒狮头盔做工很扎实，给孩子买了当礼物。', authorIdx: 5 },
+  { itemType: 'destination', itemIdx: 31, rating: 5, text: '凤凰单丛茶香气独特，耐泡，物超所值。', authorIdx: 6 },
+  { itemType: 'destination', itemIdx: 33, rating: 4, text: '陈皮味道很正，煲汤放一片就够味。', authorIdx: 7 },
+  { itemType: 'destination', itemIdx: 7, rating: 5, text: '光盘套装很全面，在家也能欣赏粤曲。', authorIdx: 0 },
+  { itemType: 'destination', itemIdx: 13, rating: 5, text: '摆件很精美，放在办公室很有岭南气息。', authorIdx: 1 },
+];
+
 async function main() {
   // 幂等：清空后重插，便于反复跑
   await prisma.destination.deleteMany();
   await prisma.destination.createMany({ data: destinations });
+  await prisma.culturalContent.deleteMany();
+  await prisma.culturalContent.createMany({ data: allCultural });
   await prisma.banner.deleteMany();
   await prisma.banner.createMany({ data: banners });
   await prisma.scenic.deleteMany();
   await prisma.scenic.createMany({ data: scenics });
   await prisma.quiz.deleteMany();
   await prisma.quiz.createMany({ data: quizzes });
+  await prisma.review.deleteMany();
+  await prisma.transaction.deleteMany();
+  await prisma.favorite.deleteMany();
   const community = await seedCommunity();
+
+  // 为社区作者生成交易流水
+  const allUsers = await prisma.user.findMany({ select: { id: true } });
+  const txTemplates = [
+    { type: 'in', title: '每日签到', amount: '+10' },
+    { type: 'out', title: '购买文创产品', amount: '-128.00' },
+    { type: 'in', title: '答题奖励', amount: '+10' },
+    { type: 'in', title: '签到奖励', amount: '+10' },
+    { type: 'out', title: '优惠券兑换', amount: '-50' },
+    { type: 'in', title: '注册礼包', amount: '+200' },
+    { type: 'out', title: '购买景点门票', amount: '-88.00' },
+    { type: 'in', title: '积分兑换余额', amount: '+20' },
+  ];
+  const txData: { type: string; title: string; amount: string; userId: string; createdAt: Date }[] = [];
+  allUsers.forEach((u) => {
+    txTemplates.forEach((t, i) => {
+      txData.push({ ...t, userId: u.id, createdAt: new Date(Date.now() - i * 36_000_000) });
+    });
+  });
+  await prisma.transaction.createMany({ data: txData });
+
+  // 为社区作者生成收藏
+  const favoriteDefs = [
+    { itemType: 'scenic', itemId: 1, title: '广州塔', date: '2026-06-15', location: '广州', tag: '景点' },
+    { itemType: 'scenic', itemId: 2, title: '丹霞山', date: '2026-06-20', location: '韶关', tag: '景点' },
+    { itemType: 'destination', itemId: 7, title: '粤剧脸谱竹扇', date: '', location: '', tag: '文创' },
+    { itemType: 'destination', itemId: 22, title: '广州醒狮工艺头盔', date: '', location: '', tag: '文创' },
+  ];
+  for (const fd of favoriteDefs) {
+    for (let i = 0; i < Math.min(3, allUsers.length); i++) {
+      try {
+        await prisma.favorite.create({
+          data: { userId: allUsers[i].id, itemType: fd.itemType, itemId: fd.itemId, title: fd.title, date: fd.date, location: fd.location, tag: fd.tag },
+        });
+      } catch { /* 可能重复跳过 */ }
+    }
+  }
+
+  // 为产品创建评价
+  const destRows = await prisma.destination.findMany({ orderBy: { id: 'asc' } });
+  for (const rd of reviewDefs) {
+    if (rd.itemIdx < destRows.length) {
+      const d = destRows[rd.itemIdx];
+      const author = allUsers[rd.authorIdx % allUsers.length];
+      try {
+        await prisma.review.create({
+          data: { itemType: rd.itemType, itemId: d.id, rating: rd.rating, text: rd.text, authorId: author.id },
+        });
+      } catch { /* skip */ }
+    }
+  }
+
   console.log(
-    `已 seed：文创 ${destinations.length} / 轮播 ${banners.length} / 景点 ${scenics.length} / 课堂 ${quizzes.length} / 社区作者 ${community.authors} / 动态 ${community.stories}`,
+    `已 seed：文创 ${destinations.length} / 轮播 ${banners.length} / 景点 ${scenics.length} / 课堂 ${quizzes.length} / 文化 ${allCultural.length} / 社区作者 ${community.authors} / 动态 ${community.stories} / 流水 ${txData.length} / 评价 ${reviewDefs.length}`,
   );
 }
 
