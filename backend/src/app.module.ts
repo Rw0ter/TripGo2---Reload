@@ -9,6 +9,8 @@ import { QuizModule } from './modules/quiz/quiz.module';
 import { ScenicModule } from './modules/scenic/scenic.module';
 import { CheckinModule } from './modules/checkin/checkin.module';
 import { LeaderboardModule } from './modules/leaderboard/leaderboard.module';
+import { MessagesModule } from './modules/messages/messages.module';
+import { OrdersModule } from './modules/orders/orders.module';
 import { SearchModule } from './modules/search/search.module';
 import { StoriesModule } from './modules/stories/stories.module';
 import { TripsModule } from './modules/trips/trips.module';
@@ -24,10 +26,12 @@ import { TripsModule } from './modules/trips/trips.module';
     QuizModule,
     CheckinModule,
     LeaderboardModule,
+    MessagesModule,
+    OrdersModule,
     SearchModule,
     StoriesModule,
     TripsModule,
-    // 业务模块在此注册：OrdersModule, ...
+    // 业务模块在此注册：...
   ],
   controllers: [AppController],
 })

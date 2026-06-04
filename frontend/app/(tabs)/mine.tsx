@@ -132,7 +132,7 @@ export default function MineScreen() {
               <Text className="text-base font-bold text-white">个人中心</Text>
               <View className="flex-row gap-4">
                 <Pressable
-                  onPress={() => comingSoon('消息')}
+                  onPress={() => router.push('/messages')}
                   accessibilityRole="button"
                   accessibilityLabel="消息">
                   <Ionicons
@@ -142,7 +142,7 @@ export default function MineScreen() {
                   />
                 </Pressable>
                 <Pressable
-                  onPress={() => comingSoon('设置')}
+                  onPress={() => router.push('/settings')}
                   accessibilityRole="button"
                   accessibilityLabel="设置">
                   <Ionicons name="settings-outline" size={22} color="#ffffff" />
@@ -152,7 +152,7 @@ export default function MineScreen() {
 
             {/* 资料 */}
             <Pressable
-              onPress={() => comingSoon('编辑资料')}
+              onPress={() => router.push('/profile/edit')}
               accessibilityRole="button"
               accessibilityLabel="编辑个人资料"
               className="mt-4 flex-row items-center">
@@ -209,7 +209,7 @@ export default function MineScreen() {
           {stats.map((s, i) => (
             <Pressable
               key={s.label}
-              onPress={() => comingSoon(s.label)}
+              onPress={() => router.push('/wallet')}
               accessibilityRole="button"
               accessibilityLabel={s.label}
               className="flex-1 flex-row items-center justify-center">
@@ -235,13 +235,13 @@ export default function MineScreen() {
           <Section>
             <SectionTitle
               title="我的订单"
-              onMore={() => comingSoon('全部订单')}
+              onMore={() => router.push('/orders')}
             />
             <View className="flex-row justify-between">
               {ORDERS.map((it) => (
                 <Pressable
                   key={it.label}
-                  onPress={() => comingSoon(it.label)}
+                  onPress={() => router.push('/orders')}
                   accessibilityRole="button"
                   accessibilityLabel={it.label}
                   className="items-center py-1">
@@ -289,23 +289,27 @@ export default function MineScreen() {
           <Section>
             <SectionTitle title="更多服务" />
             <View className="flex-row flex-wrap">
-              {SERVICES.map((it) => (
-                <Pressable
-                  key={it.label}
-                  onPress={() => comingSoon(it.label)}
-                  accessibilityRole="button"
-                  accessibilityLabel={it.label}
-                  className="w-1/4 items-center py-3">
-                  <Image
-                    source={it.icon}
-                    resizeMode="contain"
-                    style={{ width: 46, height: 46 }}
-                  />
-                  <Text className="mt-1.5 text-[12px] text-[#6F6756]">
-                    {it.label}
-                  </Text>
-                </Pressable>
-              ))}
+              {SERVICES.map((it) => {
+                const routes: Record<string, string> = { '订单': '/orders', '活动收藏': '/collections', '我的积分': '/wallet' };
+                const target = routes[it.label];
+                return (
+                  <Pressable
+                    key={it.label}
+                    onPress={() => target ? router.push(target as any) : comingSoon(it.label)}
+                    accessibilityRole="button"
+                    accessibilityLabel={it.label}
+                    className="w-1/4 items-center py-3">
+                    <Image
+                      source={it.icon}
+                      resizeMode="contain"
+                      style={{ width: 46, height: 46 }}
+                    />
+                    <Text className="mt-1.5 text-[12px] text-[#6F6756]">
+                      {it.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </Section>
         </Animated.View>
