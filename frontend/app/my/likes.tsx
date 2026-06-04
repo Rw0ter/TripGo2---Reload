@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { apiRequest } from '@/lib/api';
 
 interface StoryAuthor {
@@ -24,7 +24,6 @@ interface Story {
 }
 
 export default function MyLikesScreen() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [likes, setLikes] = useState<Story[] | null>(null);
   const [error, setError] = useState('');
@@ -49,22 +48,8 @@ export default function MyLikesScreen() {
 
   return (
     <View className="flex-1 bg-[#F4F1E4]">
-      {/* 绿色品牌头部，与 stories / trips 统一 */}
-      <View
-        style={{ paddingTop: insets.top + 6 }}
-        className="flex-row items-center justify-center bg-[#3E6B4F] px-4 pb-4"
-      >
-        <Pressable
-          onPress={() => router.back()}
-          className="absolute left-4"
-          style={{ top: insets.top + 6 }}
-        >
-          <Ionicons name="chevron-back" size={22} color="#fff" />
-        </Pressable>
-        <View className="flex-row items-center">
-          <Ionicons name="heart" size={18} color="#fff" />
-          <Text className="ml-1.5 text-[17px] font-bold text-white">我的点赞</Text>
-        </View>
+      <View className="bg-[#3E6B4F]">
+        <ScreenHeader title="我的点赞" tint="dark" />
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>

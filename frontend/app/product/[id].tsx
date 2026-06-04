@@ -128,9 +128,9 @@ export default function ProductDetailScreen() {
         <Pressable
           onPress={() => router.back()}
           style={{ position: 'absolute', top: insets.top + 8, left: 16 }}
-          className="h-9 w-9 items-center justify-center rounded-full bg-black/30"
+          className="h-9 w-9 items-center justify-center"
         >
-          <Ionicons name="chevron-back" size={20} color="#fff" />
+          <Ionicons name="chevron-back" size={23} color="#fff" />
         </Pressable>
 
         {/* ====== Info card — matching Legacy .card ====== */}

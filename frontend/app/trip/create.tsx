@@ -16,6 +16,7 @@ import { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Animated } from '@/components/ui/animated';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { apiRequest } from '@/lib/api';
 import { resolveLegacyImage } from '@/lib/legacy-images';
 
@@ -95,22 +96,19 @@ export default function CreateTripScreen() {
   return (
     <View className="flex-1 bg-[#F4F1E4]">
       {/* Header */}
-      <View style={{ paddingTop: insets.top }} className="bg-[#3E6B4F]">
-        <View className="flex-row items-center px-3 py-3">
-          <Pressable onPress={() => router.back()} className="mr-3 h-9 w-9 items-center justify-center rounded-full bg-white/15">
-            <Ionicons name="chevron-back" size={20} color="#fff" />
-          </Pressable>
-          <Text className="text-[18px] font-bold text-white">新建行程</Text>
-        </View>
-        <View className="flex-row items-center px-5 pb-4">
-          <View className="flex-row items-center rounded-full bg-white/10 px-3 py-1">
-            <Ionicons name="location-outline" size={12} color="rgba(255,255,255,0.7)" />
-            <Text className="ml-1 text-[12px] text-white/70">{departure} → {destination?.name ?? '...'} · {days}</Text>
-          </View>
-        </View>
+      <View className="bg-[#3E6B4F]">
+        <ScreenHeader title="新建行程" tint="dark" />
       </View>
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 100 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        {/* Trip summary pill */}
+        <View className="mt-5 flex-row justify-center">
+          <View className="flex-row items-center rounded-full bg-[#3E6B4F]/10 px-4 py-2">
+            <Ionicons name="location-outline" size={13} color="#386641" />
+            <Text className="ml-1.5 text-[13px] font-medium text-[#386641]">{departure} → {destination?.name ?? '...'} · {days}</Text>
+          </View>
+        </View>
+
         {/* Departure card */}
         <Animated.View entering={FadeInDown.delay(100).springify()} className="mt-5 rounded-2xl bg-white p-5" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.07, shadowRadius: 12 }}>
           <Pressable onPress={() => { setSearchQuery(''); setModalVisible(true); }}>

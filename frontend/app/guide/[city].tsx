@@ -69,10 +69,9 @@ export default function CityGuideScreen() {
       <View className="relative items-center justify-end bg-[#3E6B4F] pb-6" style={{ height: '20%' }}>
         <Pressable
           onPress={() => router.back()}
-          style={{ position: 'absolute', top: insets.top + 6, left: 16 }}
-          accessibilityRole="button"
-          className="z-10 h-9 w-9 items-center justify-center rounded-full bg-black/25">
-          <Ionicons name="chevron-back" size={20} color="#fff" />
+          style={{ position: 'absolute', top: insets.top + 6, left: 12 }}
+          className="z-10 h-10 w-10 items-center justify-center">
+          <Ionicons name="chevron-back" size={23} color="#fff" />
         </Pressable>
         <Text className="text-[28px] font-bold text-white">{city || '城市攻略'}</Text>
         <Text className="mt-1 text-[13px] text-white/75">发现{city}的旅行灵感</Text>

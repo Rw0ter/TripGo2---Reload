@@ -2,9 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiRequest } from '@/lib/api';
 import { resolveLegacyImage } from '@/lib/legacy-images';
+import { ScreenHeader } from '@/components/ui/screen-header';
 
 interface Product { id: number; title: string; image: string; money: string; number: string; type: number; }
 
@@ -20,7 +20,6 @@ const TYPE_LABELS: Record<number, string> = {
 };
 
 export default function ProductsScreen() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [products, setProducts] = useState<Product[] | null>(null);
@@ -58,14 +57,9 @@ export default function ProductsScreen() {
 
   return (
     <View className="flex-1 bg-[#F4F1E4]">
-      {/* Header — matching Legacy chanpin.html */}
-      <View style={{ paddingTop: insets.top + 6 }} className="bg-[#3E6B4F] pb-3">
-        <View className="flex-row items-center justify-center px-4">
-          <Pressable onPress={() => router.back()} className="absolute left-4" style={{ top: 0 }}>
-            <Ionicons name="chevron-back" size={22} color="#fff" />
-          </Pressable>
-          <Text className="text-[17px] font-medium text-white">文创产品</Text>
-        </View>
+      {/* Header */}
+      <View className="bg-[#3E6B4F]">
+        <ScreenHeader title="文创产品" tint="dark" />
       </View>
 
       {/* Category tabs — separate bar like Legacy */}

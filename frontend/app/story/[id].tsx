@@ -59,12 +59,10 @@ function BackButton({ onPress, top }: { onPress: () => void; top: number }) {
         left: 14,
         height: 36,
         width: 36,
-        borderRadius: 18,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.4)',
       }}>
-      <Ionicons name="chevron-back" size={20} color="#ffffff" />
+      <Ionicons name="chevron-back" size={23} color="#ffffff" />
     </Pressable>
   );
 }

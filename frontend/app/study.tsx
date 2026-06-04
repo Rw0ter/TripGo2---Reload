@@ -1,11 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { FadeInDown } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Animated } from '@/components/ui/animated';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { resolveLegacyImage } from '@/lib/legacy-images';
 
 // ── 数据 ──────────────────────────────────────────────
@@ -58,24 +57,15 @@ const ACTIVITIES = [
 ];
 
 export default function StudyScreen() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
 
   return (
     <View className="flex-1 bg-[#fdf8f2]">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
 
-        {/* ── Header (matches legacy .header) ── */}
-        <View style={{ paddingTop: insets.top + 8 }} className="bg-[#476647] px-4 pb-4 shadow-sm">
-          <View className="flex-row items-center">
-            <Pressable
-              onPress={() => router.back()}
-              className="mr-3 h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm"
-            >
-              <Ionicons name="chevron-back" size={16} color="#476647" />
-            </Pressable>
-            <Text className="text-[18px] font-bold text-white">学习非遗文化</Text>
-          </View>
+        {/* ── Header ── */}
+        <View className="bg-[#476647]">
+          <ScreenHeader title="学习非遗文化" subtitle="探索岭南文化瑰宝" tint="dark" />
         </View>
 
         {/* ── Welcome section (matches legacy .section) ── */}
