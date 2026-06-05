@@ -151,7 +151,7 @@ export default function VRScreen() {
   }
 
   return (
-    <View className="flex-1 bg-[#FAFAFA]">
+    <View className="flex-1 bg-black">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         <Hero insets={insets.top} onExplore={() => setSelected(FEATURED)} />
 
