@@ -21,7 +21,7 @@ export class CheckinService {
     });
     if (existing) throw new BadRequestException('今日已签到');
 
-    const points = 20; // base points per checkin
+    const points = Math.floor(Math.random() * 26) + 5; // random 5-30
     await this.prisma.checkin.create({
       data: { userId, date: today, points },
     });
