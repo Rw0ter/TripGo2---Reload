@@ -217,7 +217,7 @@ export default function CheckinScreen() {
                     disabled={loading}
                     className="items-center rounded-lg bg-white px-5 py-2.5 shadow-sm"
                   >
-                    <Text className="text-[15px] font-bold text-[#FF6F3D]">
+                    <Text className="text-[15px] font-bold text-[#386641]">
                       {loading ? '签到中...' : '立即签到'}
                     </Text>
                   </Pressable>
@@ -230,19 +230,14 @@ export default function CheckinScreen() {
         {/* ========================================================= */}
         {/* Daily tasks card ("日常活动")                              */}
         {/* ========================================================= */}
-        <View className="mx-[3.5vw] mt-[1.8vh] rounded-[9px] bg-white px-[2.8vw] py-[1.4vh] shadow-sm">
+        <View className="mx-[3.5vw] mt-[1.8vh] rounded-[9px] bg-white px-[2.8vw] py-[1.4vh]" style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }}>
           {/* Card header */}
-          <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center">
             <View className="flex-row items-center gap-2">
-              {/* dot matching legacy */}
-              <View className="h-[14px] w-[14px] rounded-full bg-[#e3dcc2]" />
+              <View className="h-[14px] w-[14px] rounded-full bg-[#386641]" />
               <Text className="text-[16px] font-extrabold text-[#3c3a2b]">
                 日常活动
               </Text>
-            </View>
-            <View className="flex-row items-center gap-1">
-              <Ionicons name="wifi-outline" size={14} color="#b3ad96" />
-              <Text className="text-[13px] text-[#b3ad96]">在线</Text>
             </View>
           </View>
 
@@ -258,8 +253,8 @@ export default function CheckinScreen() {
                 className="flex-row items-center gap-[2.8vw] border-t border-[#F0EFE8] py-[1.6vh]"
               >
                 {/* ---- Icon placeholder (40px circle, peach bg) ---- */}
-                <View className="h-[40px] w-[40px] items-center justify-center rounded-full bg-[#FFF3E9]">
-                  <Ionicons name={task.icon} size={20} color="#F39D62" />
+                <View className="h-[40px] w-[40px] items-center justify-center rounded-full bg-[#E8F5E9]">
+                  <Ionicons name={task.icon} size={20} color="#386641" />
                 </View>
 
                 {/* ---- Task info ---- */}
@@ -269,7 +264,7 @@ export default function CheckinScreen() {
                   </Text>
                   <Text className="text-[12px] text-[#b0ac96]">
                     {task.sub}
-                    <Text className="mx-0.5 font-extrabold text-[#F5A232]">
+                    <Text className="mx-0.5 font-extrabold text-[#386641]">
                       {task.coin}
                     </Text>
                     积分
@@ -284,12 +279,12 @@ export default function CheckinScreen() {
                   }}
                   disabled={isDone || (isSigninTask && loading)}
                   className={`rounded-full px-[2.6vw] py-[0.8vh] ${
-                    isDone ? 'bg-[#f4f4f4]' : 'bg-[#FFEDE4]'
+                    isDone ? 'bg-[#f4f4f4]' : 'bg-[#E8F5E9]'
                   }`}
                 >
                   <Text
                     className={`text-[13px] font-bold ${
-                      isDone ? 'text-[#999]' : 'text-[#FF7E53]'
+                      isDone ? 'text-[#999]' : 'text-[#386641]'
                     }`}
                   >
                     {isDone ? '已完成' : task.action}
@@ -303,7 +298,7 @@ export default function CheckinScreen() {
         {/* ========================================================= */}
         {/* Charity / Donate card ("积分慈爱心")                      */}
         {/* ========================================================= */}
-        <View className="mx-[3.5vw] mt-[1.8vh] rounded-[9px] bg-white px-[2.8vw] py-[1.4vh] shadow-sm">
+        <View className="mx-[3.5vw] mt-[1.8vh] rounded-[9px] bg-white px-[2.8vw] py-[1.4vh]" style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }}>
           {/* Header with collapse toggle */}
           <Pressable
             onPress={() => setDonateExpanded((v) => !v)}
@@ -320,7 +315,7 @@ export default function CheckinScreen() {
           </Pressable>
 
           {donateExpanded && (
-            <View className="mt-[1.2vh] flex-row items-center gap-[2.4vw] rounded-[9px] border border-dashed border-[#F3E2C8] bg-[#FFF8ED] px-[2.4vw] py-[1.6vh]">
+            <View className="mt-[1.2vh] flex-row items-center gap-[2.4vw] rounded-[9px] border border-dashed border-[#C8E6CD] bg-[#F3FAF5] px-[2.4vw] py-[1.6vh]">
               {/* Thumbnail placeholder */}
               <View className="h-[18vh] w-[28vw] items-center justify-center rounded-[7px] bg-[#EDEDED]">
                 <Ionicons name="book-outline" size={28} color="#8c8c8c" />
@@ -344,19 +339,8 @@ export default function CheckinScreen() {
                 onPress={doDonate}
                 disabled={donated || userPoints < 50}
                 className={`rounded-full px-[2.8vw] py-[1vh] ${
-                  donated ? 'bg-[#ffb49a]' : 'bg-[#FF8B5E]'
+                  donated ? 'bg-[#8CAA95]' : 'bg-[#386641]'
                 }`}
-                style={
-                  donated
-                    ? undefined
-                    : {
-                        shadowColor: '#FF7846',
-                        shadowOffset: { width: 0, height: 3 },
-                        shadowOpacity: 0.28,
-                        shadowRadius: 6,
-                        elevation: 4,
-                      }
-                }
               >
                 <Text className="text-[14px] font-extrabold text-white">
                   {donated ? '已捐助' : '帮助TA'}
