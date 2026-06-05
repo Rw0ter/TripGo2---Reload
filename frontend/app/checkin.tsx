@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Animated as RNAnimated,
   Image,
+  LayoutAnimation,
   Pressable,
   ScrollView,
   Text,
@@ -274,7 +275,7 @@ export default function CheckinScreen() {
         {/* ── Charity section ──────────────────────────────────── */}
         <CharitySection
           expanded={donateExpanded}
-          onToggle={() => setDonateExpanded((v) => !v)}
+          onToggle={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setDonateExpanded((v) => !v); }}
           donated={donated}
           userPoints={userPoints}
           onDonate={doDonate}
