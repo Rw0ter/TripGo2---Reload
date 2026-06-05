@@ -129,7 +129,7 @@ export default function QuizScreen() {
           </Text>
 
           {/* Score card */}
-          <View className="mt-8 w-full max-w-sm rounded-2xl bg-[#F9F9F9] p-6 shadow-sm" style={{ shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 2 } }}>
+          <View className="mt-8 w-full max-w-sm rounded-2xl bg-[#F9F9F9] p-6 shadow-sm" style={{ shadowColor: '#000', shadowOpacity: 0.41, shadowRadius: 10, shadowOffset: { width: 0, height: 2 } }}>
             <View className="flex-row items-center justify-between">
               <Text className="text-[15px] font-semibold text-[#555]">正确题数</Text>
               <Text className="text-[18px] font-bold text-[#386641]">{correctCount} / {total}</Text>
