@@ -191,7 +191,7 @@ export default function CheckinScreen() {
                   </Text>
                   <Text className="text-[14px] text-white/95">积分</Text>
                 </View>
-                <Text className="mt-0.5 text-[13px] text-white/95 underline">
+                <Text className="mt-0.5 text-[13px] text-white/95">
                   积分明细 &gt;
                 </Text>
               </View>
@@ -219,9 +219,6 @@ export default function CheckinScreen() {
                   >
                     <Text className="text-[15px] font-bold text-[#FF6F3D]">
                       {loading ? '签到中...' : '立即签到'}
-                    </Text>
-                    <Text className="mt-0.5 text-[12px] text-[#FF6F3D]/70">
-                      +20 积分
                     </Text>
                   </Pressable>
                 )}
