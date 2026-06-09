@@ -162,7 +162,8 @@ export default function ScenicDetailScreen() {
 
   // ── derived values ─────────────────────────────────────────────────
 
-  const price = useMemo(() => (data ? getDefaultPrice(data) : 0), [data]);
+  // 价格优先用后端 scenic.price，缺省（0）时回退到按类型/城市估算
+  const price = useMemo(() => (data ? data.price || getDefaultPrice(data) : 0), [data]);
   const rating = useMemo(() => {
     // Scenic 无评分字段，按景区类型给出合理默认值
     const tag = (data?.tag || '');
@@ -185,10 +186,11 @@ export default function ScenicDetailScreen() {
 
     setBooking(true);
     try {
+      // 价格由后端按 scenic.id 取 price 定价，前端不再传 price
       const order = await apiRequest<{ id: number }>('/orders', {
         method: 'POST',
         auth: true,
-        body: { title: data.name, price, destinationId: data.id },
+        body: { itemType: 'scenic', itemId: data.id },
       });
       router.push(`/orders?id=${order.id}`);
     } catch (e) {
@@ -196,7 +198,7 @@ export default function ScenicDetailScreen() {
     } finally {
       setBooking(false);
     }
-  }, [data, booking, token, price, router]);
+  }, [data, booking, token, router]);
 
   // ── loading / error states ─────────────────────────────────────────
 

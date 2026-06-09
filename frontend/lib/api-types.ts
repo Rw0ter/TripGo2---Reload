@@ -18,6 +18,7 @@ export interface Scenic {
   note: string;
   hot: boolean;
   section: string; // home 首页景点 / poi 行程城市精选
+  price: number; // 预订估算价（元），下单时服务端据此定价
   sort: number;
 }
 

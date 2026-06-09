@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -58,11 +58,6 @@ export default function ProductDetailScreen() {
     void load();
   }, [load]);
 
-  const price = useMemo(() => {
-    if (!data) return 0;
-    return parseFloat(data.money) || 0;
-  }, [data]);
-
   const handleBuy = useCallback(async () => {
     if (!data || buying) return;
     setBuyError(null);
@@ -74,10 +69,11 @@ export default function ProductDetailScreen() {
 
     setBuying(true);
     try {
+      // 价格由后端按 destinationId 取真实 money 定价，前端不再传 price
       const order = await apiRequest<{ id: number }>('/orders', {
         method: 'POST',
         auth: true,
-        body: { title: data.title, price, destinationId: data.id },
+        body: { itemType: 'destination', itemId: data.id },
       });
       router.push(`/orders?id=${order.id}`);
     } catch (e) {
@@ -85,7 +81,7 @@ export default function ProductDetailScreen() {
     } finally {
       setBuying(false);
     }
-  }, [data, buying, token, price, router]);
+  }, [data, buying, token, router]);
 
   // --- Loading state ---
   if (loading) {
