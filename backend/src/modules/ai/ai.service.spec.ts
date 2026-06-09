@@ -93,6 +93,27 @@ describe('buildPlanPrompt', () => {
   });
 });
 
+describe('AiService.translate（普通话→粤语）', () => {
+  it('无 DEEPSEEK_API_KEY → 抛 ServiceUnavailable', async () => {
+    const svc = new AiService(makeConfig({}), makeRag());
+    await expect(svc.translate('你好')).rejects.toBeInstanceOf(
+      ServiceUnavailableException,
+    );
+  });
+
+  it('有 key → 返回模型译文并 trim', async () => {
+    const svc = new AiService(makeConfig({ DEEPSEEK_API_KEY: 'k' }), makeRag());
+    const spy = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue({
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: '  食咗饭未呀  ' } }] }),
+      } as unknown as Awaited<ReturnType<typeof fetch>>);
+    await expect(svc.translate('吃饭了吗')).resolves.toBe('食咗饭未呀');
+    spy.mockRestore();
+  });
+});
+
 describe('buildSystemWithContext（RAG 注入）', () => {
   it('无知识 → 原样返回 base', () => {
     expect(buildSystemWithContext('BASE', [])).toBe('BASE');

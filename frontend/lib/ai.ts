@@ -1,4 +1,4 @@
-import { BASE_URL } from './api';
+import { apiRequest, BASE_URL } from './api';
 import { useAuthStore } from '@/stores/auth';
 
 // AI 流式客户端：对接后端 ai 模块的 SSE 接口（DeepSeek 代理）。
@@ -131,4 +131,13 @@ export function streamPlan(
   handlers: StreamHandlers,
 ): () => void {
   return streamSSE('/ai/plan', req, handlers);
+}
+
+// 普通话 → 地道粤语文字翻译（非流式，走统一信封 /ai/translate）。
+export async function translateToCantonese(text: string): Promise<string> {
+  const { cantonese } = await apiRequest<{ cantonese: string }>('/ai/translate', {
+    method: 'POST',
+    body: { text },
+  });
+  return cantonese;
 }
