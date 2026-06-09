@@ -82,7 +82,8 @@ function streamSSE(
   };
 
   xhr.onprogress = () => {
-    if (xhr.status >= 400) return; // 错误响应是 JSON 信封，交给 onload 解析
+    // status 未就绪（0）或错误响应（JSON 信封）：不按 SSE 解析，留给 onload 处理
+    if (xhr.status === 0 || xhr.status >= 400) return;
     consume();
   };
 
