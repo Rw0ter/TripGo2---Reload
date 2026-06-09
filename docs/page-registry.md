@@ -50,7 +50,7 @@
 | bianji.html | 编辑个人信息 | 表单 | Form组件 | auth | 完成 | `profile/edit.tsx`；PUT /auth/userinfo 失败有本地兜底，头像占位 |
 | search.html | 智能搜索 | 列表 | 列表组件 | search | 完成 | `search.tsx`，岭南绿改版（图片打底景点卡 + 文创真实图卡 + 缩略图排行榜 + FadeInDown），历史/建议下拉悬浮覆盖（不占高度）+ 即时建议 |
 | activity.html | 搜索结果列表 | 列表 | 列表组件 | search | 完成 | 已并入 `search.tsx` 结果区 |
-| chanpin.html | 文创产品列表 | 列表 | 列表组件 | destinations | 完成 | `products.tsx`，分类筛选；wccpImg 真实图已注册到 legacy-images.ts（不再占位图） |
+| chanpin.html | 文创产品列表 | 列表 | 列表组件 | destinations | 完成 | `products.tsx` 岭南精品改版（绿渐变 Hero「岭南匠造」+ 横滑彩色分类 chip + 真实图双列瀑布流 + type 渐变药丸/热销角标 + FadeInDown）；wccpImg 真实图已注册 |
 | wccp_info.html | 文创产品详情 | 详情 | 详情组件 | destinations, orders | 完成 | `product/[id].tsx`，下单 POST /orders（评论/详情部分硬编码） |
 | xq.html | 景点详情 | 详情 | 详情组件 | scenic, orders | 完成 | `scenic/[id].tsx`（价格/天气等本地派生） |
 | hotTrip.html | 城市攻略 / 景点列表 | 详情 | 详情组件 | scenic | 完成 | `guide/[city].tsx`，接 GET /scenic?city= |
