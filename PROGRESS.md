@@ -97,3 +97,4 @@
 - **2026-06-09（续）** orders 改 `itemType+itemId` 服务端定价：移除客户端 price（杜绝 0 元下单），在 `$transaction` 内校验余额 → 扣 `User.balance` → 建订单 → 写 `Transaction` 流水；并给 `Scenic` 加 `price` 字段（支持景点预订定价）。
 - **2026-06-09（续）** quiz `GET /quiz/:id` 剥离 answer + 新增 `/check`（逐题）`/submit`（服务端判分发积分），杜绝前端读答案作弊。
 - **2026-06-09（续）** 占位屏真实化策略：cultural/reviews/favorites/transactions 后端已就绪的优先接已有接口；messages/profile/trip-edit/scenic 大扩/天气(需外部 key)/checkin 任务/budget 需新建后端模型，作为后续分批。
+- **2026-06-09（续）** 搜索页（`search.tsx`）UI 改版：旧版青/薄荷渐变 + 粉价 + 直角文本卡与全 App 岭南风脱节（被判"太丑"），重做对齐 `home.tsx` 设计语言（森林绿渐变 Hero `#3E6B4F→#5C8A6D` + 米白 `#F4F1E4` + 暖金 `#D4A76A` + 圆角卡 + `FadeInDown`）。景点结果用 `resolveLegacyImage` 图片打底双列瀑布流；文创结果因 `wccpImg/*` 图未登记到 `legacy-images.ts`（会回退占位图），改暖色渐变 + 按 type 语义图标卡（不堆占位图）；排行榜加缩略图 + 金/银/铜奖牌。功能契约（自动聚焦 / 200ms 防抖建议 / 历史持久化+清空 / 猜你想搜 / 评分榜 / 结果跳转 / 空·载入态）全保留，并把 `saveHistory` 改函数式 `setState` 修掉连续搜索丢历史的闭包隐患。tsc + lint 绿；`expo export -p web` 后实测空闲态与搜索态 0 console 报错。设计经"三方案竞稿→评审→合成"产出。
