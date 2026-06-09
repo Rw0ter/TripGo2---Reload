@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ToggleFavoriteDto } from './dto/toggle-favorite.dto';
 
 @Injectable()
 export class FavoritesService {
@@ -12,16 +13,30 @@ export class FavoritesService {
     });
   }
 
-  async toggle(userId: string, itemType: string, itemId: number, title: string, date?: string, location?: string, tag?: string) {
+  async toggle(userId: string, dto: ToggleFavoriteDto) {
     const existing = await this.prisma.favorite.findUnique({
-      where: { userId_itemType_itemId: { userId, itemType, itemId } },
+      where: {
+        userId_itemType_itemId: {
+          userId,
+          itemType: dto.itemType,
+          itemId: dto.itemId,
+        },
+      },
     });
     if (existing) {
       await this.prisma.favorite.delete({ where: { id: existing.id } });
       return { favorited: false };
     }
     await this.prisma.favorite.create({
-      data: { userId, itemType, itemId, title, date: date ?? '', location: location ?? '', tag: tag ?? '' },
+      data: {
+        userId,
+        itemType: dto.itemType,
+        itemId: dto.itemId,
+        title: dto.title,
+        date: dto.date ?? '',
+        location: dto.location ?? '',
+        tag: dto.tag ?? '',
+      },
     });
     return { favorited: true };
   }

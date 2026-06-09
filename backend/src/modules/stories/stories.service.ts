@@ -53,6 +53,75 @@ export class StoriesService {
     }));
   }
 
+  // 我的发布：当前用户的动态，按时间倒序（结构同 findAll）。
+  async findMine(userId: string) {
+    const rows = await this.prisma.story.findMany({
+      where: { authorId: userId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        images: true,
+        createdAt: true,
+        author: { select: { username: true, avatar: true } },
+        _count: { select: { likes: true, comments: true } },
+      },
+    });
+    const liked = await this.likedStoryIds(
+      userId,
+      rows.map((r) => r.id),
+    );
+    return rows.map((s) => ({
+      id: s.id,
+      title: s.title,
+      content: s.content,
+      images: s.images,
+      createdAt: s.createdAt,
+      author: s.author,
+      likeCount: s._count.likes,
+      commentCount: s._count.comments,
+      liked: liked.has(s.id),
+    }));
+  }
+
+  // 我点赞过的动态：按点赞时间倒序，liked 恒为 true。
+  async findLiked(userId: string) {
+    const likes = await this.prisma.like.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      select: { storyId: true },
+    });
+    const ids = likes.map((l) => l.storyId);
+    if (ids.length === 0) return [];
+    const rows = await this.prisma.story.findMany({
+      where: { id: { in: ids } },
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        images: true,
+        createdAt: true,
+        author: { select: { username: true, avatar: true } },
+        _count: { select: { likes: true, comments: true } },
+      },
+    });
+    // story.findMany 不保证顺序，按点赞时间（ids 顺序）重排
+    const order = new Map(ids.map((id, i) => [id, i] as const));
+    rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+    return rows.map((s) => ({
+      id: s.id,
+      title: s.title,
+      content: s.content,
+      images: s.images,
+      createdAt: s.createdAt,
+      author: s.author,
+      likeCount: s._count.likes,
+      commentCount: s._count.comments,
+      liked: true,
+    }));
+  }
+
   // 动态详情：含作者、点赞 / 评论数、评论列表与当前用户是否已点赞。
   async findOne(id: number, userId?: string) {
     const s = await this.prisma.story.findUnique({

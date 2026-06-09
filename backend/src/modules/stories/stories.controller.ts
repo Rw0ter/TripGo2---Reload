@@ -33,6 +33,23 @@ export class StoriesController {
     return this.storiesService.findAll(userId);
   }
 
+  // 'mine' / 'liked' 静态路由必须声明在 ':id' 之前，否则被 ParseIntPipe 吞成 id。
+  @Get('mine')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '我的发布（当前用户的动态，按时间倒序）' })
+  findMine(@CurrentUser('userId') userId: string) {
+    return this.storiesService.findMine(userId);
+  }
+
+  @Get('liked')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '我点赞过的动态（按点赞时间倒序）' })
+  findLiked(@CurrentUser('userId') userId: string) {
+    return this.storiesService.findLiked(userId);
+  }
+
   @Get(':id')
   @UseGuards(OptionalJwtAuthGuard)
   @ApiBearerAuth()

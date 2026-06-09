@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -40,5 +41,14 @@ export class TripsController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.trips.findOne(id, userId);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: '删除行程（仅本人，越权或不存在统一 404）' })
+  remove(
+    @CurrentUser('userId') userId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.trips.remove(id, userId);
   }
 }

@@ -5,7 +5,6 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-nati
 
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { apiRequest } from '@/lib/api';
-import { useAuthStore } from '@/stores/auth';
 
 interface StoryAuthor {
   username: string;
@@ -26,17 +25,15 @@ interface Story {
 
 export default function MyStoriesScreen() {
   const router = useRouter();
-  const user = useAuthStore((s) => s.user);
   const [stories, setStories] = useState<Story[] | null>(null);
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
     setError('');
     try {
-      const all = await apiRequest<Story[]>('/stories', { auth: true });
-      // 后端暂无 /stories/mine，取全量后按当前用户作者名客户端过滤。
-      const username = useAuthStore.getState().user?.username;
-      setStories(all.filter((s) => s.author.username === username));
+      // 后端按 userId 直接返回本人动态，无需前端拉全量再过滤。
+      const mine = await apiRequest<Story[]>('/stories/mine', { auth: true });
+      setStories(mine);
     } catch {
       setStories(null);
       setError('加载失败，请下拉重试');
