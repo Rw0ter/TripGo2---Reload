@@ -11,6 +11,15 @@ interface Transaction {
   amount: number;
 }
 
+// 后端 GET /transactions 返回形状（amount 为带符号字符串，时间为 createdAt）
+interface ApiTransaction {
+  id: number;
+  type: string;
+  title: string;
+  amount: string;
+  createdAt: string;
+}
+
 interface Budget {
   name: string;
   spent: number;
@@ -38,10 +47,21 @@ export default function WalletScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const data = await apiRequest<Transaction[]>('/wallet/transactions', { auth: true });
-        if (data && data.length > 0) setTxns(data);
+        // 后端真实流水：GET /transactions（按 userId 隔离）。
+        // 之前误写成 /wallet/transactions（不存在）→ 永远走假数据；这里修正并映射字段。
+        const data = await apiRequest<ApiTransaction[]>('/transactions', { auth: true });
+        if (data && data.length > 0) {
+          setTxns(
+            data.map((t) => ({
+              id: t.id,
+              title: t.title,
+              time: t.createdAt.slice(5, 16).replace('T', ' '),
+              amount: parseFloat(t.amount) || 0,
+            })),
+          );
+        }
       } catch {
-        /* keep fallback */
+        /* 网络异常时保留兜底展示 */
       }
     })();
   }, []);

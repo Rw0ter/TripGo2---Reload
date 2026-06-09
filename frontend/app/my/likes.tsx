@@ -31,9 +31,9 @@ export default function MyLikesScreen() {
   const load = useCallback(async () => {
     setError('');
     try {
-      const all = await apiRequest<Story[]>('/stories', { auth: true });
-      // 后端暂无 /stories/liked 端点，取全量后按 liked 字段客户端过滤。
-      setLikes(all.filter((s) => s.liked));
+      // 后端按 userId 返回本人点赞过的动态（按点赞时间倒序），无需前端过滤。
+      const liked = await apiRequest<Story[]>('/stories/liked', { auth: true });
+      setLikes(liked);
     } catch {
       setLikes(null);
       setError('加载失败，请下拉重试');
