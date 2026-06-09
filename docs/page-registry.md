@@ -23,7 +23,7 @@
 | 线路规划 | xlgh / xlgh-xq / trip_moreinfo | ⛔ 待开始 |
 | 景点 | hotTrip.html | ✅ `scenic` 模块 |
 | 酒店 | hotel.html | ⛔ 待开始 |
-| 翻译 + 语音 TTS | HK.html / Translate.html | 部分：cantonese 用 `expo-speech` 本地 TTS；后端翻译接口待开始 |
+| 翻译 + 语音 TTS | HK.html / Translate.html | 完成：cantonese 翻译器（文字/原生语音输入→粤语→TTS），后端 POST /ai/translate（DeepSeek）|
 | **AI 对话 / 规划** | MCP / offline-ai / help | ✅ `ai` 模块（POST /ai/chat、/ai/plan，DeepSeek 代理 + SSE） |
 
 ## 高风险屏（W1 必须 spike）
@@ -103,7 +103,7 @@
 | create_addr.html | 添加新地址 | 表单 | Form组件 | 新增:地址 | 待开始 | |
 | wlxx.html | 地址管理列表 | 列表 | 列表组件 | 新增:地址 | 待开始 | |
 | hotel.html | 酒店预订表单 | 表单 | Form组件 | 新增:酒店 | 待开始 | |
-| HK.html | 粤语学习 / 翻译 / 语音 | AI | 单独实现 | cultural | 完成 | `cantonese.tsx`，短语/课程接 GET /cultural?category=phrase\|lesson（#72）；本地 TTS；翻译未做 |
+| HK.html | 粤语课堂（翻译器）| AI | 单独实现 | ai, cultural | 完成 | `cantonese.tsx` 重设计：核心=普通话→粤语翻译器（文字 / 原生语音输入 STT → POST /ai/translate → 粤语文字 + expo-speech TTS）；常用粤语短语点读。原生语音需 expo dev build |
 | Translate.html | 中译英翻译 | AI | 单独实现 | 新增:翻译 | 待开始 | 可接 ai 模块 |
 | VR Map.html | VR 全景浏览 | 地图VR | 单独实现 | 无 | 完成 | `vr.tsx`，自研 Three.js 全景（非 WebView） |
 

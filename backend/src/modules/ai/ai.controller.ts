@@ -4,6 +4,7 @@ import type { Response } from 'express';
 import { AiService } from './ai.service';
 import { ChatDto } from './dto/chat.dto';
 import { PlanDto } from './dto/plan.dto';
+import { TranslateDto } from './dto/translate.dto';
 
 @ApiTags('ai')
 @Controller('ai')
@@ -31,5 +32,12 @@ export class AiController {
   })
   async plan(@Body() dto: PlanDto, @Res() res: Response): Promise<void> {
     await this.ai.plan(dto, res);
+  }
+
+  // 普通话→粤语文字翻译（非流式，走统一信封）。粤语课堂用。
+  @Post('translate')
+  @ApiOperation({ summary: '普通话→粤语文字翻译（DeepSeek，非流式）' })
+  async translate(@Body() dto: TranslateDto): Promise<{ cantonese: string }> {
+    return { cantonese: await this.ai.translate(dto.text) };
   }
 }

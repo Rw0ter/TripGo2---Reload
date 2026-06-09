@@ -1,19 +1,35 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
+import { speak, stop } from 'expo-speech';
+import {
+  ExpoSpeechRecognitionModule,
+  useSpeechRecognitionEvent,
+} from 'expo-speech-recognition';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
-  Animated as RNAnimated,
   Pressable,
   ScrollView,
   Text,
+  TextInput,
   View,
 } from 'react-native';
-import { speak, stop } from 'expo-speech';
+import { FadeInDown } from 'react-native-reanimated';
+
+import { Animated } from '@/components/ui/animated';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { apiRequest } from '@/lib/api';
+import { translateToCantonese } from '@/lib/ai';
 
-// 后端 GET /cultural?category=phrase|lesson 返回结构
+// ── 岭南绿主题（与 App 同源）──
+const PRIMARY = '#386641';
+const GOLD = '#D4A76A';
+const BG = '#F4F1E4';
+const INK = '#2f3a30';
+const MUTE = '#9a9382';
+
+// 后端 GET /cultural?category=phrase 返回结构
 interface CulturalItem {
   id: number;
   title: string;
@@ -22,13 +38,11 @@ interface CulturalItem {
   icon: string;
   color: string;
 }
-
 interface Phrase {
   id: number;
   canto: string;
   jyutping: string;
   meaning: string;
-  emoji: string;
 }
 
 // cultural phrase 的 title 形如「你好 (nei5 hou2)」，拆出粤语词与 jyutping。
@@ -39,190 +53,266 @@ function parsePhrase(item: CulturalItem): Phrase {
     canto: m ? m[1].trim() : item.title,
     jyutping: m ? m[2].trim() : '',
     meaning: item.subtitle,
-    emoji: item.content || '🗣️',
   };
 }
 
-function lessonCount(content: string): number {
-  try {
-    return JSON.parse(content)?.lessons ?? 0;
-  } catch {
-    return 0;
-  }
-}
-
-// ── Play-button ──────────────────────────────────────────
-function PlayButton({ onPress, isPlaying }: { onPress: () => void; isPlaying: boolean }) {
-  const pulseAnim = useRef(new RNAnimated.Value(1)).current;
-  function handlePress() {
-    RNAnimated.sequence([
-      RNAnimated.timing(pulseAnim, { toValue: 1.2, duration: 80, useNativeDriver: true }),
-      RNAnimated.timing(pulseAnim, { toValue: 1, duration: 80, useNativeDriver: true }),
-    ]).start();
-    onPress();
-  }
-  return (
-    <Pressable
-      onPress={handlePress}
-      className={`h-10 w-10 items-center justify-center rounded-full ${isPlaying ? 'bg-[#D4522A]' : 'bg-[#D4522A]/10'}`}
-    >
-      <RNAnimated.View style={{ transform: [{ scale: pulseAnim }] }}>
-        <Ionicons
-          name={isPlaying ? 'volume-high' : 'volume-medium-outline'}
-          size={20}
-          color={isPlaying ? '#fff' : '#D4522A'}
-        />
-      </RNAnimated.View>
-    </Pressable>
-  );
-}
-
-// ── Phrase row ───────────────────────────────────────────
-function PhraseRow({ phrase, isPlaying, onPlay }: { phrase: Phrase; isPlaying: boolean; onPlay: () => void }) {
-  function handlePlay() {
-    onPlay();
-    speak(phrase.canto, { language: 'zh-HK', rate: 0.8 });
-  }
-  return (
-    <Pressable
-      onPress={handlePlay}
-      className="mb-2 flex-row items-center rounded-xl bg-white px-3 py-3 shadow-sm active:bg-[#F5F5F5]"
-      style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 1 }}
-    >
-      <Text className="text-[26px]">{phrase.emoji}</Text>
-      <View className="ml-3 flex-1">
-        <Text className="text-[16px] font-bold text-[#333]">{phrase.canto}</Text>
-        {phrase.jyutping ? (
-          <Text className="mt-0.5 text-[13px] font-medium text-[#D4522A]">{phrase.jyutping}</Text>
-        ) : null}
-        <Text className="mt-0.5 text-[12px] text-[#999]">{phrase.meaning}</Text>
-      </View>
-      <PlayButton onPress={handlePlay} isPlaying={isPlaying} />
-    </Pressable>
-  );
-}
-
-// ── Screen ───────────────────────────────────────────────
 export default function CantoneseScreen() {
-  const [phrases, setPhrases] = useState<Phrase[] | null>(null);
-  const [lessons, setLessons] = useState<CulturalItem[] | null>(null);
-  const [error, setError] = useState(false);
-  const [playingId, setPlayingId] = useState<string | null>(null);
-  const playingRef = useRef<string | null>(null);
+  const [input, setInput] = useState('');
+  const [result, setResult] = useState('');
+  const [translating, setTranslating] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [hint, setHint] = useState('');
+  const [speakingId, setSpeakingId] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setError(false);
+  const [phrases, setPhrases] = useState<Phrase[] | null>(null);
+  const [phraseErr, setPhraseErr] = useState(false);
+
+  // ── 原生语音识别事件（Web 走浏览器 Web Speech API；原生需 dev build）──
+  useSpeechRecognitionEvent('result', (e) => {
+    const t = e.results?.[0]?.transcript;
+    if (typeof t === 'string') setInput(t);
+  });
+  useSpeechRecognitionEvent('end', () => setRecording(false));
+  useSpeechRecognitionEvent('error', (e) => {
+    setRecording(false);
+    setHint(`语音识别失败（${e.error ?? '未知'}），可改用文字输入`);
+  });
+
+  // ── 常用短语 ──
+  const loadPhrases = useCallback(async () => {
     try {
-      const [ph, ls] = await Promise.all([
-        apiRequest<CulturalItem[]>('/cultural?category=phrase'),
-        apiRequest<CulturalItem[]>('/cultural?category=lesson'),
-      ]);
+      const ph = await apiRequest<CulturalItem[]>('/cultural?category=phrase');
       setPhrases(ph.map(parsePhrase));
-      setLessons(ls);
+      setPhraseErr(false);
     } catch {
-      setError(true);
-      setPhrases(null);
-      setLessons(null);
+      setPhraseErr(true);
     }
   }, []);
-
   useFocusEffect(
     useCallback(() => {
-      void load();
-    }, [load]),
+      void loadPhrases();
+    }, [loadPhrases]),
   );
 
-  function handlePlay(phraseId: string) {
-    if (playingRef.current) stop();
-    playingRef.current = phraseId;
-    setPlayingId(phraseId);
-    speak(phraseId, {
+  // 麦克风：开始 / 停止语音输入。
+  async function onMic() {
+    setHint('');
+    if (recording) {
+      ExpoSpeechRecognitionModule.stop();
+      setRecording(false);
+      return;
+    }
+    try {
+      const perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      if (!perm.granted) {
+        setHint('未授予麦克风 / 语音识别权限，可改用文字输入');
+        return;
+      }
+      setResult('');
+      ExpoSpeechRecognitionModule.start({
+        lang: 'cmn-Hans-CN', // 说普通话 → 识别为中文，再译成粤语
+        interimResults: true,
+        continuous: false,
+      });
+      setRecording(true);
+    } catch {
+      setHint('当前环境不支持语音输入，请用文字输入');
+      setRecording(false);
+    }
+  }
+
+  // 译成粤语。
+  async function onTranslate() {
+    const t = input.trim();
+    if (!t || translating) return;
+    if (recording) {
+      ExpoSpeechRecognitionModule.stop();
+      setRecording(false);
+    }
+    setHint('');
+    setTranslating(true);
+    setResult('');
+    try {
+      setResult(await translateToCantonese(t));
+    } catch {
+      setHint('翻译失败，请稍后重试');
+    } finally {
+      setTranslating(false);
+    }
+  }
+
+  // TTS 朗读（粤语 zh-HK）。
+  function onSpeak(text: string, id: string) {
+    if (!text) return;
+    stop();
+    setSpeakingId(id);
+    speak(text, {
       language: 'zh-HK',
-      rate: 0.8,
-      onDone: () => { playingRef.current = null; setPlayingId(null); },
-      onError: () => { playingRef.current = null; setPlayingId(null); },
-      onStopped: () => { playingRef.current = null; setPlayingId(null); },
+      rate: 0.85,
+      onDone: () => setSpeakingId(null),
+      onStopped: () => setSpeakingId(null),
+      onError: () => setSpeakingId(null),
     });
   }
 
-  const loading = !phrases && !lessons && !error;
-
   return (
-    <View className="flex-1 bg-[#F8F5E6]">
-      <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
-        <View className="bg-[#D4522A]">
-          <ScreenHeader title="粤语课堂" subtitle="学说广东话 · 传承岭南音" tint="dark" />
-        </View>
+    <View className="flex-1" style={{ backgroundColor: BG }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
+        {/* ── 绿色 Hero ── */}
+        <LinearGradient colors={['#3E6B4F', '#5C8A6D']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+          <ScreenHeader title="粤语课堂" subtitle="一句普通话，译成地道粤语" tint="dark" />
+        </LinearGradient>
 
-        <View style={{ borderTopLeftRadius: 20, borderTopRightRadius: 20 }} className="bg-[#F8F5E6] px-4 pt-5">
-          <View className="mx-1 mb-4 flex-row items-center rounded-lg bg-[#D4522A]/8 px-3 py-2.5">
-            <Ionicons name="bulb-outline" size={18} color="#D4522A" />
-            <Text className="ml-2 flex-1 text-[12px] text-[#D4522A]/80">
-              点击任意短语或喇叭按钮，即可听到粤语真人发音
-            </Text>
-          </View>
-
-          {loading ? (
-            <View className="items-center py-16">
-              <ActivityIndicator color="#D4522A" />
+        {/* ── 主体 ── */}
+        <View className="-mt-3 rounded-t-[24px] px-4 pt-5" style={{ backgroundColor: BG }}>
+          {/* 翻译器卡片 */}
+          <Animated.View
+            entering={FadeInDown.duration(420)}
+            className="overflow-hidden rounded-2xl bg-white p-4"
+            style={{ boxShadow: '0px 4px 16px rgba(0,0,0,0.07)' }}>
+            {/* 输入区 */}
+            <View className="flex-row items-center justify-between">
+              <Text className="text-[12px] font-semibold uppercase tracking-widest" style={{ color: MUTE }}>普通话</Text>
+              {input.length > 0 ? (
+                <Pressable onPress={() => { setInput(''); setResult(''); setHint(''); }} hitSlop={8}>
+                  <Text className="text-[12px]" style={{ color: MUTE }}>清空</Text>
+                </Pressable>
+              ) : null}
             </View>
-          ) : error ? (
-            <View className="items-center py-16">
-              <Ionicons name="cloud-offline-outline" size={44} color="#ccc" />
-              <Text className="mt-2 text-[14px] text-[#999]">加载失败</Text>
-              <Pressable onPress={() => load()} className="mt-3 rounded-full bg-[#D4522A] px-6 py-2">
-                <Text className="text-[13px] font-bold text-white">重试</Text>
+            <TextInput
+              value={input}
+              onChangeText={setInput}
+              placeholder="输入，或点麦克风说一句普通话…"
+              placeholderTextColor="#bcb6a8"
+              multiline
+              className="mt-1.5 text-[17px] leading-7"
+              style={{ color: INK, minHeight: 56, textAlignVertical: 'top' }}
+            />
+
+            {/* 操作行：麦克风 + 译成粤语 */}
+            <View className="mt-2 flex-row items-center" style={{ gap: 10 }}>
+              <Pressable
+                onPress={onMic}
+                accessibilityRole="button"
+                accessibilityLabel={recording ? '停止语音输入' : '语音输入'}
+                style={({ pressed }) => ({
+                  height: 46,
+                  width: 46,
+                  borderRadius: 23,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: recording ? '#C0392B' : '#EAF1EB',
+                  transform: pressed ? [{ scale: 0.94 }] : [],
+                })}>
+                <Ionicons name={recording ? 'stop' : 'mic'} size={22} color={recording ? '#fff' : PRIMARY} />
+              </Pressable>
+              <Pressable
+                onPress={onTranslate}
+                disabled={!input.trim() || translating}
+                accessibilityRole="button"
+                accessibilityLabel="译成粤语"
+                style={({ pressed }) => ({ flex: 1, transform: pressed ? [{ scale: 0.98 }] : [], opacity: !input.trim() ? 0.5 : 1 })}
+                className="overflow-hidden rounded-2xl">
+                <LinearGradient
+                  colors={['#386641', '#5C8A6D']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{ height: 46 }}
+                  className="flex-row items-center justify-center">
+                  {translating ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <>
+                      <Ionicons name="language" size={17} color="#fff" />
+                      <Text className="ml-1.5 text-[15px] font-bold text-white">译成粤语</Text>
+                    </>
+                  )}
+                </LinearGradient>
               </Pressable>
             </View>
-          ) : (
-            <>
-              {/* 常用粤语短语（GET /cultural?category=phrase） */}
-              {phrases && phrases.length > 0 && (
-                <View
-                  className="mb-4 overflow-hidden rounded-xl bg-white"
-                  style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 }}
-                >
-                  <View className="flex-row items-center border-b border-[#F0EDE5] px-4 py-3">
-                    <Ionicons name="chatbubble-ellipses-outline" size={20} color="#D4522A" />
-                    <Text className="ml-2 text-[15px] font-bold text-[#D4522A]">常用粤语短语</Text>
-                  </View>
-                  <View className="px-4 py-2">
-                    {phrases.map((p) => (
-                      <PhraseRow
-                        key={p.id}
-                        phrase={p}
-                        isPlaying={playingId === p.canto}
-                        onPlay={() => handlePlay(p.canto)}
-                      />
-                    ))}
-                  </View>
-                </View>
-              )}
 
-              {/* 课程内容（GET /cultural?category=lesson） */}
-              <Text className="mb-3 mt-2 text-[16px] font-bold text-[#333]">课程内容</Text>
-              {(lessons ?? []).map((l) => (
-                <View
-                  key={l.id}
-                  className="mb-2 flex-row items-center rounded-xl bg-white p-3.5"
-                  style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 1 }}
-                >
-                  <View
-                    className="h-[42px] w-[42px] items-center justify-center rounded-xl"
-                    style={{ backgroundColor: (l.color || '#D4522A') + '1A' }}
-                  >
-                    <Ionicons name={(l.icon as any) || 'book-outline'} size={22} color={l.color || '#D4522A'} />
-                  </View>
-                  <View className="ml-3 flex-1">
-                    <Text className="text-[14px] font-bold text-[#333]">{l.title}</Text>
-                    <Text className="mt-0.5 text-[12px] text-[#999]">
-                      {l.subtitle} · {lessonCount(l.content)} 课时
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </>
-          )}
+            {recording ? (
+              <Text className="mt-2 text-[12px]" style={{ color: '#C0392B' }}>● 正在聆听…再次点击停止</Text>
+            ) : null}
+            {hint ? <Text className="mt-2 text-[12px]" style={{ color: '#B0703A' }}>{hint}</Text> : null}
+
+            {/* 译文区 */}
+            <View className="mt-4 rounded-2xl px-4 py-3.5" style={{ backgroundColor: '#F4F8F4' }}>
+              <View className="flex-row items-center justify-between">
+                <Text className="text-[12px] font-semibold uppercase tracking-widest" style={{ color: PRIMARY }}>粤语</Text>
+                {result ? (
+                  <Pressable
+                    onPress={() => onSpeak(result, 'result')}
+                    accessibilityRole="button"
+                    accessibilityLabel="朗读粤语译文"
+                    className="flex-row items-center rounded-full px-2.5 py-1"
+                    style={{ backgroundColor: speakingId === 'result' ? PRIMARY : '#E3EEE4' }}>
+                    <Ionicons
+                      name={speakingId === 'result' ? 'volume-high' : 'volume-medium-outline'}
+                      size={14}
+                      color={speakingId === 'result' ? '#fff' : PRIMARY}
+                    />
+                    <Text className="ml-1 text-[12px] font-semibold" style={{ color: speakingId === 'result' ? '#fff' : PRIMARY }}>朗读</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+              <Text className="mt-1.5 text-[19px] font-semibold leading-8" style={{ color: result ? INK : '#c2bcae' }}>
+                {result || '译文会显示在这里'}
+              </Text>
+            </View>
+          </Animated.View>
+
+          {/* 常用粤语 */}
+          <Animated.View entering={FadeInDown.delay(120).duration(420)} className="mt-6">
+            <View className="mb-3 flex-row items-center px-1">
+              <View style={{ width: 4, height: 17, borderRadius: 2, backgroundColor: PRIMARY }} />
+              <Ionicons name="chatbubbles" size={15} color={PRIMARY} style={{ marginLeft: 7 }} />
+              <Text className="ml-2 text-[16px] font-extrabold" style={{ color: INK }}>常用粤语</Text>
+              <Text className="ml-2 text-[11px]" style={{ color: MUTE }}>点一点，听发音</Text>
+            </View>
+
+            {!phrases && !phraseErr ? (
+              <View className="items-center py-8"><ActivityIndicator color={PRIMARY} /></View>
+            ) : phraseErr ? (
+              <Pressable onPress={() => void loadPhrases()} className="items-center py-8">
+                <Ionicons name="cloud-offline-outline" size={32} color={MUTE} />
+                <Text className="mt-2 text-[13px]" style={{ color: MUTE }}>加载失败，点此重试</Text>
+              </Pressable>
+            ) : (
+              (phrases ?? []).map((p) => {
+                const id = `p-${p.id}`;
+                const playing = speakingId === id;
+                return (
+                  <Pressable
+                    key={p.id}
+                    onPress={() => onSpeak(p.canto, id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`朗读 ${p.canto}`}
+                    style={({ pressed }) => ({ backgroundColor: pressed ? '#F7F4EA' : '#fff', boxShadow: '0px 2px 8px rgba(0,0,0,0.05)' })}
+                    className="mb-2.5 flex-row items-center rounded-2xl px-3.5 py-3">
+                    <View className="flex-1">
+                      <Text className="text-[16px] font-bold" style={{ color: INK }}>{p.canto}</Text>
+                      {p.jyutping ? (
+                        <Text className="mt-0.5 text-[12.5px] font-medium" style={{ color: GOLD }}>{p.jyutping}</Text>
+                      ) : null}
+                      {p.meaning ? (
+                        <Text className="mt-0.5 text-[12px]" style={{ color: MUTE }}>{p.meaning}</Text>
+                      ) : null}
+                    </View>
+                    <View
+                      className="h-10 w-10 items-center justify-center rounded-full"
+                      style={{ backgroundColor: playing ? PRIMARY : '#EAF1EB' }}>
+                      <Ionicons
+                        name={playing ? 'volume-high' : 'volume-medium-outline'}
+                        size={19}
+                        color={playing ? '#fff' : PRIMARY}
+                      />
+                    </View>
+                  </Pressable>
+                );
+              })
+            )}
+          </Animated.View>
         </View>
       </ScrollView>
     </View>

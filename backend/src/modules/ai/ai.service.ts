@@ -37,6 +37,12 @@ export const PLAN_SYSTEM_PROMPT =
   '用 Markdown 输出：先写一行用 > 引用的概览；再按「### 第 N 天」分天（每天含上午 / 午餐 / 下午 / 晚上，首日含来程、末日含返程）；' +
   '然后给「### 💰 预算明细」表格；最后给「### 📝 行前贴士」列表。景点与美食贴合目的地真实情况，只输出 Markdown 行程、不要寒暄。';
 
+// 普通话/任意中文 → 地道粤语文字翻译的系统提示（粤语课堂用）。
+export const TRANSLATE_PROMPT =
+  '你是粤语翻译助手。把用户输入的内容翻译成地道的粤语口语，使用粤语用字' +
+  '（如 係 / 喺 / 嘅 / 咗 / 唔 / 嗰 / 啲 / 乜嘢 等）。' +
+  '只输出粤语译文本身（一行即可）；不要解释、不要注音、不要加引号或多余说明。';
+
 // 把规划表单拼成发给模型的用户消息。导出为纯函数便于单测。
 export function buildPlanPrompt(dto: PlanInput): string {
   const tags = dto.tags && dto.tags.length > 0 ? dto.tags.join('、') : '综合体验';
@@ -112,6 +118,53 @@ export class AiService {
       { role: 'user', content: buildPlanPrompt(input) },
     ];
     await this.streamChat(messages, res);
+  }
+
+  // 普通话 → 地道粤语文字翻译（非流式，走统一信封）。供粤语课堂调用，返回单行粤语译文。
+  async translate(text: string): Promise<string> {
+    const apiKey = this.config.get<string>('DEEPSEEK_API_KEY');
+    if (!apiKey) {
+      throw new ServiceUnavailableException(
+        'AI 服务未配置：后端缺少 DEEPSEEK_API_KEY',
+      );
+    }
+    const baseUrl =
+      this.config.get<string>('DEEPSEEK_BASE_URL') ?? 'https://api.deepseek.com';
+    const model = this.config.get<string>('DEEPSEEK_MODEL') ?? 'deepseek-chat';
+
+    let res: Awaited<ReturnType<typeof fetch>>;
+    try {
+      res = await fetch(`${baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          stream: false,
+          temperature: 0.3,
+          messages: [
+            { role: 'system', content: TRANSLATE_PROMPT },
+            { role: 'user', content: text },
+          ],
+        }),
+      });
+    } catch (err) {
+      this.logger.error(`DeepSeek 翻译请求失败: ${String(err)}`);
+      throw new ServiceUnavailableException('AI 翻译服务暂时不可用，请稍后再试');
+    }
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      this.logger.error(
+        `DeepSeek 翻译响应异常 ${res.status}: ${detail.slice(0, 200)}`,
+      );
+      throw new ServiceUnavailableException(`AI 翻译服务返回错误（${res.status}）`);
+    }
+    const json = (await res.json()) as {
+      choices?: { message?: { content?: string } }[];
+    };
+    return json?.choices?.[0]?.message?.content?.trim() ?? '';
   }
 
   // 把一段对话转发给 DeepSeek 的流式补全接口，并把增量 token 以 SSE 写回 res。
