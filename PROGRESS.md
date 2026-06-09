@@ -104,3 +104,4 @@
   ② **故事收藏真实入库**（T9）：`Favorite` 通用表加 `itemType='story'`（DTO 放行）；`stories.findOne` 回填 `favorited`（按 userId+story 复合键查）；`story/[id].tsx` 收藏按钮接 `POST /favorites`（乐观更新 + 失败回滚），详情加载回填、可见态切换。E2E 实测：toggle→favorited:true 入库（/favorites 出现 story 行）→ reload 仍 true → toggle→false。collections.tsx（活动收藏静态 mock，数据形态不同）本次不动。
   ③ **AI 回复 markdown 渲染**（T4）：引入 `react-native-markdown-display`，`assistant.tsx` 对话气泡与行程结果改用其渲染（替换原手写 split 解析），统一岭南绿 markdown 样式。expo web 静态导出通过（含 SSR 预渲染）。
   > 附带：`ai.service.ts` 含一处既有本地改动（CHAT_SYSTEM_PROMPT 去掉「可适当使用 emoji」、「只回答」→「默认回答」），随本提交一并带上。
+- **2026-06-09（续）** 文创产品页 `products.tsx` 精品改版（PR：redesign-products，T8b）：旧版「demo 破烂」（干文字 tab + 朴素瀑布）重做对齐 home/search 岭南风——绿渐变 Hero +「岭南匠造」标题区 + 横滑彩色分类 chip（图标胶囊、选中翻白底）+ 真实文创图双列高低落差瀑布流卡（type 渐变药丸、已售≥100 热销 flame 角标、¥红价）+ FadeInDown/按压微交互 + 错误重试态。功能契约全保留（分类切换重拉 /destinations?type=N、/product/[id] 跳转、空·载入态、响应式列宽、resolveLegacyImage 真实图）。三方案竞稿→评审→合成产出；tsc+lint 绿、expo web 导出通过。
