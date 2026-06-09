@@ -1,84 +1,62 @@
 # PROGRESS.md — TripGo 项目进展
 
-> 项目的"活文档"。每个 AI 会话**开始时读它、结束时更新它**（用法见 CLAUDE.md 第 12 节）。
-> "已完成 / 进行中 / 下一步"三段要定期剪枝，别让文档越长越没人读。
+> 项目的"活文档"。每个 AI 会话**开始时读它、结束时更新它**（用法见 CLAUDE.md 第 12 / 14 节）。
+> **真相来源是代码 + `git log`**，不是本文件的叙述。发现不一致，以代码为准并立刻订正这里。
+> "已完成 / 进行中 / 下一步"三段定期剪枝：已完成的老条目合并成概述。
 
-**最后更新：2026-06-04**
+**最后更新：2026-06-09**（对账重写，见下方"对账说明"）
 
 ## 当前阶段
 
-W3。19 个二级页面 + VR 全景页面全部重构完成 —— PR #42 已开（含追加 VR commit），待 review 合并。VR 页采用自研 Three.js 全景引擎 + 电影级场景选择 UI。TypeScript 零错误。下一步：review 反馈修复、合并后推进静态页面批量铺开（协议/隐私/非遗介绍等 14 个 StaticPage）。
+主体功能已大面积落地：后端 **17 个业务模块**、前端约 **37 个路由屏**均已存在并接入真实数据。本次（2026-06-09）补做三件硬骨头并修复了文档失真：① 后端真正实现 `ai` 模块（DeepSeek 代理 + SSE 流式），前端 AI 助手接真后端、删除假回复；② 签到改用 UTC+8 判定当天；③ 建立 Jest 测试 + CI/CD 双门禁 + pre-commit 提交门禁，并顺手修复了 master 已破损的后端构建（缺 `@types/bcryptjs`）。下一步推进 RAG、支付/线路/酒店等剩余接口、长尾静态页批量铺开。
 
-## 已完成
+## 对账说明（2026-06-09，为何本文件此前不可信）
 
-- 项目约定文档 `CLAUDE.md`（含会话纪律）
-- 后端 NestJS + Prisma 骨架：`main.ts` / `app.module` / 全局 `PrismaModule` / 全局异常过滤器 + 响应拦截器 / `/health` 接口 / Swagger
-- Prisma schema：User / Address / Trip / Order / Story / Comment / Like / Destination / KnowledgeChunk
-- `.gitignore`（已排除 Legacy 文件夹、node_modules、.env、*.db）
-- 文档体系：`PROGRESS.md` / `README.md` / `docs/page-registry.md`
-- 页面盘点：67 页全部分析完毕 → 62 屏需重写（主线 26 / 长尾 36）+ 5 废弃草稿，详见 `docs/page-registry.md`
-- 后端依赖安装完成（NestJS 11 / Prisma 6，432 包）
-- Prisma 迁移完成：`dev.db` + 首个 migration `init`
-- auth 模块完成并验证：`register` / `login` / `me` + `JwtAuthGuard` + `@CurrentUser`
-- auth 模块经子代理 code review 并修复（3 阻断 + 6 建议项）：鉴权基础设施抽到 `common/`、JwtModule 全局化、注册改用 P2002 兜底防竞态、对外字段用白名单 select
-- GitHub Actions CI 流水线（`.github/workflows/ci.yml`）：后端构建门禁
-- Expo 前端工程初始化：create-expo-app 脚手架 + NativeWind v4 + Zustand + 5-tab 底部导航 + 4 个共享组件骨架（StaticPage / List / Detail / Form）
-- 方案 A：「添加」tab 改为创建动作菜单（PR #3，子代理 review + CI 通过）
-- sqlite-vec 风险 spike 通过：扩展加载 + vec0 写入 + top-k 检索全部正常（better-sqlite3 12 + sqlite-vec 0.1.9）
-- 后端 destinations 文创产品模块（PR #5）+ `prisma/seed.ts` 迁移 Legacy 文创数据
-- 前端 API 层（`frontend/api/`，后端地址走配置不硬编码）
-- auth store 接入持久化：Zustand `persist` + `expo-secure-store`（token 落地）
-- 登录 / 注册 / hello 三屏：先功能版（PR #6/#7）后按 Legacy 像素级复刻（PR #9）—— beijing 背景、渐变胶囊按钮、白色圆角输入框、对应图标
-- 复用组件 `components/auth/`：auth-screen-layout / auth-input / auth-button；颜色单一来源 `constants/colors.ts`
-- Legacy 图片资源迁移到 `frontend/assets/legacy/img/`（~460 文件，全打包进 App）；非遗视频改由后端静态服务（`backend/static/`，`/static/` 前缀）
-- 启动路由：`/` 重定向到 hello 引导页（PR #10）；首页 tab 路由从 `index` 改名 `home`
-- web 预览修复（PR #11）：`babel-preset-expo` 加 `unstable_transformImportMeta`，转译 Expo SDK 54 web 产物里的 `import.meta`，消除浏览器白屏
-- auth 三屏 web 布局修复（PR #12）：NativeWind 不给非核心组件启用 className —— 新增 `components/ui/animated.ts`（cssInterop 包装 reanimated 的 Animated.*），屏幕改从此处取 `Animated`；`<Image>` 尺寸改走 `style` prop；修正被错误迁移覆盖的 `beijing.png`/`dingwei.png`。三屏已在浏览器实测渲染正确
-- 首启引导流程（PR #13）：① 登录页问候语柔光 + 去输入框聚焦描边；② hello 隐私协议页卡片式重构 + 滚动到底才可同意；③ 新增 `app/login1.tsx` 复刻 Legacy 启动动画；④ 新增 `stores/onboarding.ts` 跨端持久化引导标记，`/` 引导感知路由 —— 首启 hello→login1→login，完成后直达 login，hello/login1 仅首启各展示一次。全流程浏览器实测通过
-- index1 首页复刻（PR #14）：`app/(tabs)/home.tsx` 按 Legacy 还原——分段控件 + 搜索 + 轮播 + 四宫格/五入口 + 知识小课堂答题卡 + 景点大横卡 + 景点瀑布流，区块带进场动画。入口目标页未建，先「敬请期待」占位
-- login1 裁剪溢出修复（PR #15）；底部导航栏复刻（PR #16）：新增 `components/legacy-tab-bar.tsx` 自定义 tabBar 100% 复刻 Legacy `.mui-bar-tab`（白底 + PNG 图标 + 激活态 _ac 图/绿字/呼吸），`animation:'shift'` 实现 tab 切换横向过渡
-- mine1 我的 + itinerary 行程 两个核心 Tab 复刻（PR #17）：`(tabs)/mine.tsx`（资料卡接 useAuthStore + 钱包券包 + 订单 + 更多服务）、`(tabs)/itinerary.tsx`（智能行程入口 + 线路规划地图 + 城市精选 POI）。新增 `lib/coming-soon.ts` 统一占位提示
-- 三个核心 Tab 接真后端（PR #18/#19/#20）：新增后端只读模块 `banners` / `scenic` / `quiz`；schema 加 `Banner.title/subtitle`、`Scenic.section`、`User.balance/couponCount`；`prisma/seed.ts` 灌入轮播 / 景点 / 知识课堂演示数据；前端 home / itinerary / mine 三屏改为 `apiRequest` 拉真实数据，图片字段存"本地资源 key"由 `lib/legacy-images.ts` 解析。PR #20 顺带修复 web 登录崩溃 —— 新增 `lib/persist-storage.ts` 跨端存储（web=localStorage / 原生=SecureStore），`auth` store 切到此存储
-- 首页改版（PR #21）：绿渐变头部 + 高清广东城市轮播（4 图，4s 自动轮播 + 翻页 + 动画圆点）+ 卡片化入口宫格 + 知识小课堂 / 热门景点横滑 + 高低落差双列瀑布流（按较矮列优先分配 `MASONRY_HEIGHTS`）；精简 `lib/legacy-images.ts` 注册表至在用 key
-- 个人中心改版（PR #22）：渐变 hero 头部（右上角图标换 `Ionicons` 的 `notifications-outline` / `settings-outline`）+ 等级徽章 + 成长值进度条 + 钱包 / 券 / 积分资产卡（上浮压渐变）+ 卡片化「我的订单」「更多服务」+ 退出登录按钮
-- 图标与路由收尾（PR #23/#24/#25）：首页入口图标 + 个人中心更多服务图标做透明底处理（边界 flood-fill 抠图）、智能助手换矢量机器人、个人中心加「我的发布」分区；修复非首 tab 深链接误跳登录（`index.tsx` 改用 `useFocusEffect`）、注册在 web 走不通（`Alert` 在 web 不渲染 → 改行内错误 + 直接跳转）
-- 社区动态流（PR #26）：后端新增 `stories` 只读模块（`GET /stories`，按时间倒序含作者与点赞/评论数）；`seed.ts` 灌入 8 位社区作者（upsert）+ 8 条岭南旅途动态 + 错开的点赞/评论/时间；前端 `community.tsx` 从占位页改为真实动态流——渐变头 + 动态卡（字母头像 / 配图 / 点赞本地乐观切换）
-- 社区功能完整打通（PR #27/#28）：后端 `stories` 模块补全 `GET /stories/:id` 详情、`POST /stories` 发布、`POST /stories/:id/like` 点赞切换、`POST /stories/:id/comments` 评论（写接口走 `JwtAuthGuard`），`seed.ts` 改写为非遗文化传承主题（粤剧/广绣/醒狮/工夫茶/龙舟等）；前端 `community.tsx` 改固定绿色头 + 两栏高低落差瀑布流 + 非遗文案，新增 `app/story/[id].tsx` 故事详情（点赞 / 评论接真）与 `app/post/story.tsx` 发布表单（标题 + 正文 + 精选配图），底部「+」→ 发布故事流程贯通；新增共享 `lib/story-format.ts`
-- 旅行地图屏（PR #29，对应 Legacy `map.html`）：路由 `/map`，itinerary 的「旅游地图」「开始规划」入口接入。**在线**用腾讯地图 JavaScript API GL 封装成跨端 React 组件（`components/map/`，web=iframe srcDoc / 原生=react-native-webview，共用一份内嵌 HTML + postMessage 桥）——定位 / 搜索 / 路线规划全部走 GL SDK 的 `service` 库在客户端直接完成，**彻底去掉旧版后端 WebService 代理**；定位做三级兜底（浏览器 GPS → 腾讯 IP 定位 → 默认广州中心）；导航时地图随设备罗盘方向实时旋转（web=DeviceOrientation / 原生=expo-sensors 磁力计 → `map.setRotation`）。**离线**用 `components/map/offline-map.tsx`：随 App 内置腾讯真实地图瓦片（**多级：z9 概览 + z10 细节**，225 块，`scripts/fetch-offline-tiles.js` 下载到 `assets/offline-map/`），按缩放切换级别；16 个广东景点 POI 走 Web 墨卡托投影精确落点、标注随缩放反向补偿保持恒定屏幕尺寸；可定位当前位置（`lib/locate.*`）并以「我的位置」为起点做离线路线规划（haversine 直线距离 + 出行方式时长估算，`lib/geo.ts`）。在线地图加载失败 / 超时 15s 自动切离线，顶栏可手动切换。新增依赖 `react-native-webview`、`expo-sensors`、`expo-location`
-- 社区点赞按用户回填 + 自动登录（PR #30/#31）：新增 `OptionalJwtAuthGuard`（可选鉴权守卫，有 token 则识别用户、无 token 也放行）+ `CurrentUserIdOptional` 装饰器，`GET /stories`、`/stories/:id` 据此返回当前用户 `liked`，前端动态卡 / 详情红心回填（一人一赞本由 `Like` 复合主键 `@@id([storyId,userId])` 保证）；`auth` store 仿 `onboarding` 加 `hydrated` 标志，`index.tsx` 等 onboarding 与 auth 两个 store 都恢复完再路由——已登录直接进 `/home`，实现自动登录
-- token 过期 / 被判废的边界处理（PR #32）：`apiRequest` 加全局 401 拦截——带 token 的请求若返回 `code 401`，清本地登录态并跳回 `/login`（`if(stale)` 守卫防并发重复跳转，网络错误更早抛出不误判）；`index.tsx` 自动登录时附带静默 `GET /auth/me` 校验，token 已死即弹回登录页，消除「僵尸会话」
+此前 `PROGRESS.md` 内容停在 ~PR #42、`docs/page-registry.md` 停在 2026-05-22，而代码已到 **PR #65 / 135 commits**；且"AI 走后端代理 + RAG"在 CLAUDE.md / README 写着、后端却**没有** `ai` 模块（前端是纯假 AI）。本次按代码 + git 全面对账重写，并在 CLAUDE.md §12 / §14 加入**强制**的文档与测试门禁，防止再次漂移。
+
+## 已完成（概述）
+
+**基础设施 / 工程**
+- 后端 NestJS + Prisma + SQLite 骨架：全局 PrismaModule、ValidationPipe、AllExceptionsFilter、TransformInterceptor（对 SSE/已发头响应放行）、Swagger `/docs`、`/health`；统一信封 `{code,message,data}`。
+- 鉴权：JWT（JwtModule 全局），`common/` 提供 `JwtAuthGuard` / `OptionalJwtAuthGuard` / `@CurrentUser` / `@CurrentUserIdOptional`。
+- **测试 + CI/CD（2026-06-09 新增）**：后端 Jest（`npm test` / `npm run verify`），GitHub Actions 双门禁（后端 build+test、前端 tsc+lint），master push 增 CD 产物 job（后端 dist + 前端 web export），`.githooks/pre-commit` 本地强制门禁。
+- 文档体系：本文件 / README / `docs/page-registry.md`（67 页清单）。
+- 前端 Expo + Expo Router + NativeWind + Zustand 骨架：跨端持久化（auth/onboarding，web=localStorage / 原生=SecureStore）、统一 `apiRequest`（解信封 + 401 自动登出）、**跨端 SSE 客户端 `lib/ai.ts`（新增）**、cssInterop Animated、legacy 图片打包解析、共享模板（StaticPage/List/Detail/Form）、自定义 LegacyTabBar。
+
+**后端模块（17）**：auth、**ai（DeepSeek 代理 + SSE，新增）**、banners、scenic、quiz、destinations（文创）、orders、transactions、search、stories（社区，含可选鉴权点赞回填）、reviews、favorites、checkin（UTC+8）、leaderboard、messages、cultural、trips。
+
+**前端屏（~37）**：启动/引导（index、hello、login1）、认证（login、register）、五 Tab（home、itinerary、community、mine + add 动作菜单）、search、scenic/[id]、guide/[city]、products、product/[id]、checkin、leaderboard、study、quiz/[id]、messages、settings、profile/edit、wallet、orders、collections、my/{trips,stories,likes}、trip/create、map（腾讯 GL + 离线兜底）、vr（Three.js 全景）、**ai/assistant（本次接真后端）**、cantonese、story/[id]、post/story。
+
+**本次会话变更（2026-06-09）**
+- `fix`：补 `@types/bcryptjs`，修复 master 后端 `npm run build` 失败（PR #65 换 bcryptjs 遗留）。
+- `feat(ai)`：`backend/src/modules/ai`（`POST /ai/chat`、`POST /ai/plan`，SSE 流式代理 DeepSeek，密钥仅后端、无 key 优雅 503）；前端 `lib/ai.ts`（XMLHttpRequest 增量读 SSE）、`assistant.tsx` 改流式接真后端，**删除 `generateReply` / `generatePlan` 假逻辑**。
+- `feat(checkin)`：`beijingDateKey()` 以 UTC+8 计算当天。
+- `chore`：Jest + `jest.config.js`、CI 双门禁 + CD 产物、`.githooks/pre-commit`。
+- `docs`：本文件 + page-registry 对账重写、CLAUDE.md §12/§14 硬条款。
 
 ## 进行中
-
 > 格式：`[负责人] 模块/任务 — 起始时间`。开工前在此登记，防止多人多会话撞车。
 
-- 暂无
+- 暂无。
 
 ## 下一步（按优先级）
-
-1. frontend：`trip/create` 新建行程表单（「+」动作菜单的另一半，目前仍是占位）；itinerary 的「添加行程」日历子页
-2. backend：按 auth 模板推进 trips / orders 等模块（配合前端垂直切片）
-3. frontend：协议 / 隐私 / 非遗介绍等长尾屏套共享组件批量铺
-4. RAG 模块：基于已验证的 sqlite-vec 方案搭建（后续）
+1. **配置 `DEEPSEEK_API_KEY`**（后端 `.env`）端到端联调 AI 对话 / 规划——当前无 key 时 `/ai/chat`、`/ai/plan` 返回 503，前端显示"AI 服务未配置"。
+2. **RAG 模块**：基于已验证的 sqlite-vec spike（独立 better-sqlite3 连接），为 `ai` 模块加检索增强。
+3. 后端剩余接口：线路规划、酒店、地址、翻译 + TTS（见 page-registry"需新增接口"表）。
+4. 前端长尾静态屏（协议 / 隐私 / 非遗介绍等 ~14 屏）套 `StaticPage` 批量铺。
+5. 补业务缺口：orders（价格信任客户端、未写流水/扣余额）、messages（假数据 → Prisma）、reviews/favorites（补 DTO 校验）。
 
 ## 已知问题 / 坑
 
-- Prisma 的 SQLite 引擎无法加载扩展，sqlite-vec 必须走独立 `better-sqlite3` 连接（CLAUDE.md 第 7 节）。
-- `VR Map` / `zhifu` / `offline-ai` 计划用 WebView 套旧版页面兜底，方案尚未验证。（`map` 已不走此方案——见下条与「关键决策」）
-- 旅行地图的腾讯 Key：GL JS Key 必然随客户端下发（非机密），走 `EXPO_PUBLIC_TENCENT_MAP_KEY`，缺省回退到内置 Key（已换成有 6000+ 日额度 / 并发 5 的正式 Key，搜索 / 路线实测可用）。换用自有 Key 时在 lbs.qq.com 申请并配域名白名单。离线地图（真实瓦片 + 本地路线估算）完全不依赖网络与 Key，是稳定可演示的兜底。
-- 离线地图瓦片随 App 打包（`assets/offline-map/` 225 块，约 2MB）：腾讯地图栅格瓦片，两级（z9 概览 + z10 细节），由 `scripts/fetch-offline-tiles.js` 一次性下载、生成 `lib/offline-tiles.ts` 注册表。改范围 / 缩放级别须改脚本 `LEVELS` 常量后重跑。注意换瓦片命名后须 `expo start --clear` 清 Metro 缓存，否则报「Unable to resolve module」。
-- 腾讯 GL JS 地图仅在 `viewMode:'3D'` 下支持 `setRotation` 旋转（`'2D'` 模式旋转恒为 0）。导航随罗盘转向依赖它，故地图建在 3D 模式、`pitch:0`（视觉仍是平面俯视）。
-- 旧版 11 屏未接后端、用假数据，重写需新增接口：消息 / 收藏 / 钱包 / 线路 / 景点 / 酒店 / 翻译+TTS（见 `docs/page-registry.md`）。
-- `npm install` 报告 2 个 high severity 漏洞，位于 bcrypt 的旧 node-pre-gyp 依赖链；暂不阻塞，后续可评估改用纯 JS 的 bcryptjs。
-- sqlite-vec 写 vec0 表时 rowid 必须用 `BigInt` 传入：better-sqlite3 会把普通 JS number 绑成浮点，sqlite-vec 拒绝非整数主键（spike 已踩，参考 `backend/scripts/sqlite-vec-spike.js`）。
-- web 端 `import.meta` 报错（已修，PR #11）：Expo SDK 54 web 产物多处用 `import.meta`，浏览器 classic script 不支持 → 整页白屏。修法是 `babel.config.js` 给 `babel-preset-expo` 加 `unstable_transformImportMeta: true`。注意项目 `babel.config.js` 的 `plugins` 不作用于 node_modules，所以 `babel-plugin-transform-import-meta` 那条路走不通。
-- NativeWind 只给 RN 核心组件启用 className（已修，PR #12）：`Animated.View`（reanimated）/`SafeAreaView` 等第三方组件的 className 被静默丢弃。约定见 CLAUDE.md §9——动画组件从 `@/components/ui/animated` 取。`cssInterop` 全局副作用注册**不能**让内联 `<Animated.View>` 生效，必须用 `cssInterop` 的**返回值**组件。
-- `<Image>` 用 className 设宽高在 web 失效（已修，PR #12）：react-native-web 用图片原始尺寸的内联 style 覆盖 className。宽高一律走 `style` prop（CLAUDE.md §9）。
-- Legacy 图片迁移曾有错配（已修，PR #12）：迁移时 `tripgo-backend/resources/img/` 覆盖了 `public/img/`，`beijing.png`/`dingwei.png` 被换错。`public/img/` 才是前端图片的唯一来源，已重新同步并核对一致。
-- web 登录崩溃 `setValueWithKeyAsync is not a function`（已修，PR #20）：`auth` store 直接用 `expo-secure-store`，该库不支持 web。修法是新增 `lib/persist-storage.ts` 跨端存储（web=localStorage / 原生=SecureStore）。
-- 非首个 tab 的深链接会被拦截跳登录（已修，PR #25）：深链接非首 tab 时，`index.tsx` 作为根 Stack 锚点被挂载，其 `<Redirect>` 在 mount 时即触发跳转。修法是改用 `useFocusEffect`——只在 `index` 自身被聚焦时才跳转。
-- `Alert.alert` 在 react-native-web 上不渲染（已修，PR #25）：注册成功后的跳转写在 `Alert` 按钮的 `onPress` 里，web 端 Alert 是 no-op → 注册"走不通"。约定：auth 等关键反馈不能依赖 `Alert`，用行内错误/直接跳转。`comingSoon` 仍用 Alert，web 端同样静默——后续可统一换成跨端轻提示。
-- NativeWind 的 `className` 与**函数式** `style` 不能在同一组件上混用（已踩，PR #33）：NativeWind 把 className 样式与 `style` 并进数组 `[cnStyle, style]`，若 `style` 是函数（如 `Pressable` 的 `({pressed})=>({...})`），数组里的函数会被丢弃 → 该函数里的样式（如 `position:'absolute'`）全部失效。需要函数式 `style` 时，该组件就别挂 className，全部走纯 `style`。
+> 已修旧条目已移除：bcrypt 高危依赖已于 #65 换 bcryptjs；后端构建缺类型已于本次修复。
+
+- **AI 需配 `DEEPSEEK_API_KEY`**（后端 `.env`）才能真正对话；缺失时接口 503、前端提示"AI 服务未配置"。RAG / sqlite-vec 仍只是 spike，未建模块。
+- 业务缺口（非阻塞、演示可用）：orders 价格由客户端传入且不校验商品、下单不写 Transaction / 不扣余额；messages 返回硬编码 DEMO 列表且非按用户；reviews / favorites 的 POST 用内联类型未走 DTO 校验；quiz 详情下发正确答案；my/stories、my/likes 前端全量过滤（后端无 `/stories/mine`、`/stories/liked`）；study / cantonese / collections / vr 场景为静态数据。
+- Prisma 的 SQLite 引擎无法加载扩展，sqlite-vec 必须独立 better-sqlite3 连接（CLAUDE.md §7）；写 vec0 表 rowid 须用 `BigInt`。
+- 地图腾讯 GL JS Key 为公开客户端 key（内置 demo key 兜底）；离线瓦片随 App 打包，改范围需重跑 `scripts/fetch-offline-tiles.js` 并 `expo start --clear`；GL 旋转需 3D viewMode。
+- 前端既有 ~14 条 lint warnings（unused / require / hook-deps，非本次引入）；CI lint 不因 warning 失败，逐步清理。
+- 前端 `expo-image-picker` 未装，发布故事只能选预置图。
+- 历史 web 坑均已修（import.meta / NativeWind className / Image 尺寸 / Alert 不渲染 / SecureStore web / 深链接误跳），详见关键决策与 git 历史。
 
 ## 关键决策记录
 
@@ -89,26 +67,27 @@ W3。19 个二级页面 + VR 全景页面全部重构完成 —— PR #42 已开
 - **2026-05-20** 向量检索不走 Prisma：Prisma 的 SQLite 引擎不能加载扩展，改用独立 better-sqlite3 连接，与 Prisma 共用同一 `.db` 文件。
 - **2026-05-20** 统一返回格式：成功 `{code:0,message:'ok',data}`，失败 `{code:<HTTP码>,message,data:null}`；SSE 流式接口不经过响应拦截器。
 - **2026-05-20** 67 个页面"只多不能少"：数量锁死，打磨度作为变量——演示主线 ~12 屏深做，长尾 ~40 屏功能级即可。
-- **2026-05-20** VR / 地图 / 支付等硬骨头屏：用 `react-native-webview` 套旧版 HTML 兜底，保计数、不沉成本。
-- **2026-05-20** 团队 4 人、无专职后端、全栈、AI 24h：W1 由组长搭后端地基，之后按"垂直切片"（一个功能的前后端由同一人一起做）推进。
-- **2026-05-20** 5 个废弃草稿/测试页（index / itinerary2 / mine / top / wzfdemo）确认不重写：前三者是被 index1/itinerary/mine1 取代的设计草稿，后两者是 CSS 演示页和空白测试页，均非功能。重写范围锁定 62 屏。
-- **2026-05-20** 确立模块合并流程：feat 分支 → 子代理 code review → PR → CI 门禁 → 合并（见 CLAUDE.md 第 13 节），每个模块/页面都重复。
-- **2026-05-20** 鉴权基础设施（JwtAuthGuard / @CurrentUser）放 `common/`、JwtModule 全局化：让后续模块零 import 即可 `@UseGuards(JwtAuthGuard)`，避免被复制十几次时产生跨模块耦合。
+- **2026-05-20** VR / 地图 / 支付等硬骨头屏：用 `react-native-webview` 套旧版 HTML 兜底，保计数、不沉成本。（注：map、VR 后续改为自研重写，见 05-22 条。）
+- **2026-05-20** 团队 4 人、无专职后端、全栈、AI 24h：W1 由组长搭后端地基，之后按"垂直切片"推进。
+- **2026-05-20** 5 个废弃草稿/测试页（index / itinerary2 / mine / top / wzfdemo）确认不重写，重写范围锁定 62 屏。
+- **2026-05-20** 确立模块合并流程：feat 分支 → 子代理 code review → PR → CI 门禁 → 合并（见 CLAUDE.md 第 13 节）。
+- **2026-05-20** 鉴权基础设施（JwtAuthGuard / @CurrentUser）放 `common/`、JwtModule 全局化：让后续模块零 import 即可用。
 - **2026-05-20** 前端工程放 `frontend/`（非 `app/`）：避免与 Expo Router 自身的 `app/` 路由目录嵌成 `app/app/`。
-- **2026-05-20** auth store 暂不做持久化（token 内存态）：待登录屏接入时用 `expo-secure-store` 加，属简单优先的有意推迟，非未完成。
-- **2026-05-20** sqlite-vec spike 通过：扩展加载 / vec0 写入 / top-k 检索均 OK，RAG 技术路线确认可行，最大风险点解除。
-- **2026-05-21** 前端页面"全部像素级复刻 Legacy"：62 屏的布局 / 样式 / 图标照 Legacy 还原，允许用 React/RN 特性做动画 / 性能 / 响应式优化。质量基线"只能比去年更好不能更差"。
-- **2026-05-21** Legacy 资源迁移：图片全打包进 App（`frontend/assets/legacy/img/`），视频体积大改由后端静态服务。
-- **2026-05-21** 开发与非正规演示均走 web，运行优先级：虚拟机（Android 模拟器）第一、web 第二；项目不会在真机或评委机上跑。故 web 预览必须可用，不能用 Expo Go 兜底。
-- **2026-05-21** auth store 启用持久化：用 `expo-secure-store` 落地 token（兑现 2026-05-20"待登录屏接入时再加"的推迟项）。
-- **2026-05-21** 第三方组件用 className 统一走 `cssInterop` 返回值：reanimated `Animated.*` 等不在 NativeWind 白名单内，全局副作用注册无效，必须导出包装后的组件（`@/components/ui/animated`）。后续 60 屏都走这个 `Animated`，避免每屏踩坑。
-- **2026-05-21** 前端用浏览器实测验收，不只 `tsc`/`expo export`：本次布局错乱 tsc 与 export 全过，问题只在运行时可见。屏级改动应起 dev server 截图核对。
-- **2026-05-21** 启动流程定为 `/` → 首启 hello → login1 → login、完成后 `/` 直达 login：hello（隐私协议）与 login1（启动动画）仅首启各展示一次，用 `stores/onboarding.ts` 的 `done` 标记控制，在 hello 点「同意」时落库。
-- **2026-05-21** 引导标记用跨端存储（web=localStorage，原生=SecureStore）：`expo-secure-store` 不支持 web，而本项目开发/演示走 web，必须保证 web 端也能持久化。注：现有 `auth.ts` 仍纯用 SecureStore，web 端登录态不持久化——后续可同样切到跨端存储。
-- **2026-05-21** `auth` store 切到跨端存储：兑现上一条"后续切跨端"的推迟项——`expo-secure-store` 在 web 直接崩溃（`setValueWithKeyAsync is not a function`），把跨端逻辑统一抽到 `lib/persist-storage.ts`，`auth` 与 `onboarding` 两个 store 共用，web 端登录态自此持久化。
-- **2026-05-21** 三个核心 Tab 接真后端：home / itinerary / mine 全部改为拉后端数据（PR #18-20），后端新增 `banners` / `scenic` / `quiz` 三个只读模块，演示数据走 `prisma/seed.ts`。前端图片字段存"本地资源 key"，由 `lib/legacy-images.ts` 的 `resolveLegacyImage` 解析为打包资源——图片不走网络，避免后端托管大量图。
-- **2026-05-21** 首页 / 个人中心在像素级复刻基础上做改版升级（PR #21/#22）：质量基线"只能比去年更好"，故在 Legacy 结构上重做配色分层、高清城市轮播、高低落差瀑布流、渐变 hero 等——属允许范围内的 RN 增强，不算偏离复刻。
-- **2026-05-22** 社区在初版只读流上打通完整闭环（PR #27/#28）：`stories` 补发布 / 详情 / 点赞 / 评论接口，社区列表改两栏瀑布流、绿色头固定、文案统一为非遗文化传承主题。点赞态**不做**服务端按用户回填——`GET /stories` 与 `/stories/:id` 保持公开、不加可选鉴权，详情页 `liked` 初始 false 按切换处理，属简单优先的有意取舍；代价是已点赞动态重进详情时红心不回填，可接受。
-- **2026-05-22** 发布配图用「精选本地素材多选」而非真图上传：项目无图片上传/存储后端，`Story.images` 存本地资源 key，发布表单从一组岭南/非遗素材里多选——保持「图片随 App 打包、不走网络」的既定方案一致。
-- **2026-05-22** 旅行地图（`map.html`）放弃"WebView 套旧版 HTML"兜底方案，改为重写成真正的 React 屏：① 旧版地图是 GL JS（渲染）+ 后端 Express 代理腾讯 WebService（搜索 / 路线 / IP 定位）两套；新版用腾讯 GL JS 的 `service` 附加库（`TMap.service.Search/Driving/Walking/Bicycling/Geocoder`）在客户端直接完成搜索与路线规划，**去掉后端代理**——这就是需求里"web service api 改成 React 原生 API"的落点。② 跨端方案：腾讯无 Expo 兼容的原生 RN 地图 SDK，且项目硬约束"web 预览必须可用"，故把 GL JS 文档封装成一份内嵌 HTML，web 用 `<iframe srcDoc>`、原生用 `react-native-webview`，经 postMessage 桥与 React 层通信（`tencent-map.web.tsx` / `tencent-map.tsx` 按平台后缀解析）。③ 离线方案：预下载腾讯真实地图栅格瓦片（z9，广东范围）随 App 打包，离线地图按瓦片网格渲染 + Web 墨卡托投影标注 POI + 本地 haversine 路线估算，作为断网兜底；在线地图 fatal / 超时即自动切入。
-- **2026-05-22** 旅行地图增补（同 PR #29）：① 离线地图从"自绘示意图"升级为"腾讯真实瓦片网格"——示意图无法对齐真实地理，改下载真瓦片；② 定位补三级兜底链（GPS→IP→默认），原来 GPS 失败只弹提示、不可用；③ 导航接入设备罗盘 → 地图实时转向（GL JS 旋转要求 3D viewMode）。
+- **2026-05-20** auth store 暂不做持久化（后改），sqlite-vec spike 通过，RAG 技术路线确认可行。
+- **2026-05-21** 前端页面"全部像素级复刻 Legacy"，允许用 React/RN 做动画 / 性能 / 响应式优化；质量基线"只能比去年更好"。
+- **2026-05-21** Legacy 资源迁移：图片全打包进 App，视频改由后端静态服务（`/static/`）。
+- **2026-05-21** 开发 / 演示走 web（优先级：Android 模拟器 > web），不靠 Expo Go；web 预览必须可用。
+- **2026-05-21** auth store 启用持久化（expo-secure-store → 后切跨端 `lib/persist-storage.ts`）。
+- **2026-05-21** 第三方组件 className 统一走 `cssInterop` 返回值（`@/components/ui/animated`）。
+- **2026-05-21** 前端用浏览器实测验收，不只 `tsc`/`expo export`。
+- **2026-05-21** 启动流程：`/` → 首启 hello → login1 → login，完成后直达 login（`stores/onboarding`）。
+- **2026-05-21** 引导/登录态用跨端存储（web=localStorage、原生=SecureStore）。
+- **2026-05-21** 三个核心 Tab 接真后端（banners/scenic/quiz），图片字段存"本地资源 key"由 `lib/legacy-images.ts` 解析。
+- **2026-05-21** 首页 / 个人中心在像素级复刻基础上做改版升级（属允许范围内的 RN 增强）。
+- **2026-05-22** 社区打通完整闭环（stories 发布/详情/点赞/评论），后续加可选鉴权点赞回填。
+- **2026-05-22** 发布配图用"精选本地素材多选"而非真图上传（无图片存储后端）。
+- **2026-05-22** 旅行地图放弃"WebView 套旧版"，重写为真 React 屏：腾讯 GL JS + service 库客户端直连（去后端代理）+ 离线真瓦片兜底 + 罗盘旋转（3D viewMode）。
+- **2026-06-09** **AI 落地为后端 `ai` 模块（DeepSeek 代理 + SSE）**：兑现 CLAUDE.md §8 与 page-registry 的"AI 收口后端、密钥不上前端"。`POST /ai/chat`（注入岭南旅游 system prompt）/ `POST /ai/plan`（行程规划），用 `@Res()` 手写 SSE 直透 DeepSeek 流、绕开 TransformInterceptor（拦截器对 event-stream/已发头响应放行）。前端弃 fetch 流（RN 不支持流式读），改用 XMLHttpRequest 增量读 SSE（跨端、无新依赖）；删除 `generateReply`/`generatePlan` 假 AI；无 key 时 503 优雅降级。
+- **2026-06-09** **签到日界改 UTC+8**：`beijingDateKey()` 基于 epoch+8h 取 UTC 日期，与服务器时区无关，修正北京 0–8 点签到落到前一天的 bug。
+- **2026-06-09** **建立测试 + CI/CD 门禁防回归**：后端引入 Jest（同目录 `*.spec.ts`），CI 升级为后端 build+test、前端 tsc+lint 双门禁，master push 增 CD 产物 job；新增 `.githooks/pre-commit` 本地强制门禁。起因：发现 master 构建已破损（缺 `@types/bcryptjs`）却被合并，旧 CI 没拦住。
+- **2026-06-09** **文档强制同步**：CLAUDE.md §12/§14 把"会话结束更新 PROGRESS/page-registry"与"提交前跑通构建+测试、改代码必须配套测试"列为**硬性阻断**要求，根治文档落后代码的历史问题。
