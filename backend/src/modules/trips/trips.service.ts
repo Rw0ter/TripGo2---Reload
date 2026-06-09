@@ -56,4 +56,17 @@ export class TripsService {
     const { userId: _ownerId, ...rest } = row;
     return rest;
   }
+
+  // 删除行程；仅本人可删，越权 / 不存在统一抛 404（不泄露存在性）。
+  async remove(id: string, userId: string) {
+    const row = await this.prisma.trip.findUnique({
+      where: { id },
+      select: { userId: true },
+    });
+    if (!row || row.userId !== userId) {
+      throw new NotFoundException('行程不存在');
+    }
+    await this.prisma.trip.delete({ where: { id } });
+    return { id };
+  }
 }

@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { FavoritesService } from './favorites.service';
+import { ToggleFavoriteDto } from './dto/toggle-favorite.dto';
 
 @ApiTags('favorites')
 @Controller('favorites')
@@ -21,8 +22,8 @@ export class FavoritesController {
   @ApiOperation({ summary: '收藏/取消收藏（切换）' })
   toggle(
     @CurrentUser('userId') userId: string,
-    @Body() body: { itemType: string; itemId: number; title: string; date?: string; location?: string; tag?: string },
+    @Body() dto: ToggleFavoriteDto,
   ) {
-    return this.svc.toggle(userId, body.itemType, body.itemId, body.title, body.date, body.location, body.tag);
+    return this.svc.toggle(userId, dto);
   }
 }
