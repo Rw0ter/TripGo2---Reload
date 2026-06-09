@@ -75,6 +75,15 @@ function Carousel({
     setIndex(i);
   }
 
+  // 手动滑动时实时更新指示器：onMomentumScrollEnd 只在惯性结束时触发，跟手性差。
+  function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
+    const i = Math.round(e.nativeEvent.contentOffset.x / pageWidth);
+    if (i !== indexRef.current) {
+      indexRef.current = i;
+      setIndex(i);
+    }
+  }
+
   return (
     <View>
       <ScrollView
@@ -82,6 +91,8 @@ function Carousel({
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={onScroll}
         onMomentumScrollEnd={onMomentumEnd}>
         {banners.map((b) => (
           <View key={b.id} style={{ width: pageWidth }} className="items-center">
