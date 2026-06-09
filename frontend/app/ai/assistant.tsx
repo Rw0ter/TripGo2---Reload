@@ -7,16 +7,54 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
 import { FadeInDown, FadeIn, FadeInRight, FadeInLeft } from 'react-native-reanimated';
+import Markdown from 'react-native-markdown-display';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Animated } from '@/components/ui/animated';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { streamChat, streamPlan, type ChatMessage } from '@/lib/ai';
+
+// AI 回答用 Markdown 渲染（标题 / 列表 / 加粗 / 引用 / 表格 / 代码）。岭南绿配色，
+// 聊天气泡与行程结果共用一套样式。
+const MD_STYLES = StyleSheet.create({
+  body: { color: '#222', fontSize: 15, lineHeight: 24 },
+  heading1: { fontSize: 19, fontWeight: '800', color: '#111', marginTop: 8, marginBottom: 4 },
+  heading2: { fontSize: 17, fontWeight: '800', color: '#111', marginTop: 8, marginBottom: 4 },
+  heading3: { fontSize: 15.5, fontWeight: '700', color: '#2D6A4F', marginTop: 8, marginBottom: 2 },
+  strong: { fontWeight: '700', color: '#111' },
+  em: { fontStyle: 'italic' },
+  bullet_list: { marginVertical: 2 },
+  ordered_list: { marginVertical: 2 },
+  list_item: { marginVertical: 1, flexDirection: 'row' },
+  blockquote: {
+    backgroundColor: '#F3FAF5',
+    borderLeftColor: '#2D6A4F',
+    borderLeftWidth: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    marginVertical: 6,
+  },
+  code_inline: {
+    backgroundColor: '#F0F0F0',
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  fence: { backgroundColor: '#F6F6F6', borderRadius: 8, padding: 10, borderWidth: 0 },
+  code_block: { backgroundColor: '#F6F6F6', borderRadius: 8, padding: 10, borderWidth: 0 },
+  link: { color: '#2D6A4F', textDecorationLine: 'underline' },
+  table: { borderColor: '#E8E8E8', borderWidth: 1, borderRadius: 10, marginVertical: 6 },
+  th: { padding: 7, fontWeight: '700' },
+  td: { padding: 7 },
+  hr: { backgroundColor: '#EFEFEF', height: 1, marginVertical: 8 },
+});
 
 // ── Types ──────────────────────────────────────────────────
 type Mode = 'planner' | 'chat';
@@ -68,9 +106,12 @@ function ChatBubble({ msg, index }: { msg: Message; index: number }) {
             : 'rounded-tl-md border border-[#EBEBEB] bg-white'
         }`}
         style={!isUser ? { shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } } : {}}>
-        <Text className={`text-[15px] leading-6 ${isUser ? 'text-white' : 'text-[#222]'}`}>
-          {msg.text}
-        </Text>
+        {isUser ? (
+          <Text className="text-[15px] leading-6 text-white">{msg.text}</Text>
+        ) : (
+          // 助手回复按 Markdown 渲染；流式过程中文本可能是半截 markdown，渲染器能容错。
+          <Markdown style={MD_STYLES}>{msg.text}</Markdown>
+        )}
       </View>
     </Animated.View>
   );
@@ -217,7 +258,6 @@ function PlannerForm({
 
 // ── Plan Result ────────────────────────────────────────────
 function PlanResult({ text }: { text: string }) {
-  const lines = text.split('\n');
   return (
     <Animated.View entering={FadeInDown.delay(200).springify()} className="mx-4 mt-4 rounded-2xl border border-[#EBEBEB] bg-white p-5"
       style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
@@ -228,43 +268,8 @@ function PlanResult({ text }: { text: string }) {
         </View>
       </View>
       <View className="h-px bg-[#F0F0F0] mb-4" />
-      {lines.map((raw, i) => {
-        const t = raw.trim();
-        const k = `r-${i}`;
-        if (!t) return <View key={k} className="h-2.5" />;
-        if (t.startsWith('## ')) return <Text key={k} className="mt-4 mb-1 text-[18px] font-extrabold text-[#111]">{t.slice(3)}</Text>;
-        if (t.startsWith('### ')) return <Text key={k} className="mt-3 mb-1 text-[16px] font-bold text-[#2D6A4F]">{t.slice(4)}</Text>;
-        if (t.startsWith('> ')) return <View key={k} className="my-1.5 rounded-xl border-l-4 border-[#2D6A4F] bg-[#F3FAF5] px-4 py-2.5"><Text className="text-[13px] italic leading-5 text-[#555]">{t.slice(2)}</Text></View>;
-        if (t.startsWith('|')) {
-          const cells = t.split('|').filter(c => c.trim()).map(c => c.trim());
-          if (cells.length === 2 && !t.includes('---'))
-            return <View key={k} className="flex-row justify-between px-2 py-1"><Text className="text-[14px] text-[#888]">{cells[0]}</Text><Text className="text-[14px] font-semibold text-[#333]">{cells[1]}</Text></View>;
-          if (t.includes('---')) return <View key={k} className="h-px bg-[#F0F0F0] my-1" />;
-          return null;
-        }
-        if (t.startsWith('- ')) {
-          const boldMatch = t.match(/\*\*(.+?)\*\*/);
-          const content = t.slice(2);
-          if (boldMatch) {
-            const parts = content.split(/\*\*(.+?)\*\*/);
-            return (
-              <View key={k} className="ml-1 mt-1 flex-row">
-                <Text className="mr-2 mt-0.5 text-[#2D6A4F]">•</Text>
-                <Text className="flex-1 text-[14px] leading-6 text-[#444]">
-                  {parts.map((p, j) => j % 2 === 1 ? <Text key={j} className="font-semibold text-[#333]">{p}</Text> : <Text key={j}>{p}</Text>)}
-                </Text>
-              </View>
-            );
-          }
-          return (
-            <View key={k} className="ml-1 mt-1 flex-row">
-              <Text className="mr-2 mt-0.5 text-[#2D6A4F]">•</Text>
-              <Text className="flex-1 text-[14px] leading-6 text-[#444]">{content}</Text>
-            </View>
-          );
-        }
-        return <Text key={k} className="mt-1 text-[14px] leading-6 text-[#444]">{t}</Text>;
-      })}
+      {/* 行程为 Markdown（概览引用 / 分天标题 / 预算表格 / 贴士列表），统一交给渲染器 */}
+      <Markdown style={MD_STYLES}>{text}</Markdown>
     </Animated.View>
   );
 }

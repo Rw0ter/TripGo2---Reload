@@ -68,7 +68,7 @@ describe('extractDeltas（DeepSeek SSE 解析）', () => {
 });
 
 describe('buildPlanPrompt', () => {
-  it('包含全部字段', () => {
+  it('以目的地为行程主语，出发地仅作来回交通（回归点：曾把出发地当成游览城市）', () => {
     const p = buildPlanPrompt({
       from: '广州',
       to: '潮州',
@@ -77,8 +77,14 @@ describe('buildPlanPrompt', () => {
       tags: ['美食之旅', '非遗体验'],
       notes: '带老人',
     });
-    expect(p).toContain('目的地：潮州');
+    // 目的地是行程主语，全部游览都在目的地
+    expect(p).toContain('【潮州】');
+    expect(p).toContain('都必须安排在 潮州');
+    // 出发地只用于第一天来程 / 最后一天返程，不在出发地安排游览
+    expect(p).toContain('从 广州 到 潮州');
+    expect(p).toContain('除交通外不要在 广州 安排游览');
     expect(p).toContain('旅行偏好：美食之旅、非遗体验');
+    expect(p).toContain('带老人');
   });
   it('无 tags / notes 用默认占位', () => {
     const p = buildPlanPrompt({ from: '深圳', to: '珠海', budget: 1000, days: 2 });

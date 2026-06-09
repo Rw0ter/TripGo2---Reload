@@ -12,11 +12,11 @@ import {
 
 export class ToggleFavoriteDto {
   @ApiProperty({
-    enum: ['scenic', 'destination', 'activity'],
+    enum: ['scenic', 'destination', 'activity', 'story'],
     description: '收藏对象类型',
   })
-  @IsIn(['scenic', 'destination', 'activity'])
-  itemType: 'scenic' | 'destination' | 'activity';
+  @IsIn(['scenic', 'destination', 'activity', 'story'])
+  itemType: 'scenic' | 'destination' | 'activity' | 'story';
 
   @ApiProperty({ description: '对象 id' })
   @Type(() => Number)

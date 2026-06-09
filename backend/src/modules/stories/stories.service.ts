@@ -7,6 +7,21 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 export class StoriesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // 当前用户是否已收藏该动态（未登录返回 false）。收藏走通用 Favorite 表，itemType='story'。
+  private async isStoryFavorited(
+    userId: string | undefined,
+    storyId: number,
+  ): Promise<boolean> {
+    if (!userId) return false;
+    const fav = await this.prisma.favorite.findUnique({
+      where: {
+        userId_itemType_itemId: { userId, itemType: 'story', itemId: storyId },
+      },
+      select: { id: true },
+    });
+    return fav !== null;
+  }
+
   // 取 userId 在给定动态里点过赞的 id 集合（未登录返回空集）。
   private async likedStoryIds(
     userId: string | undefined,
@@ -149,6 +164,7 @@ export class StoriesService {
       throw new NotFoundException('动态不存在');
     }
     const liked = await this.likedStoryIds(userId, [id]);
+    const favorited = await this.isStoryFavorited(userId, id);
     return {
       id: s.id,
       title: s.title,
@@ -159,6 +175,7 @@ export class StoriesService {
       likeCount: s._count.likes,
       commentCount: s._count.comments,
       liked: liked.has(id),
+      favorited,
       comments: s.comments,
     };
   }

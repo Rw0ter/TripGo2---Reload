@@ -25,25 +25,28 @@ export interface PlanInput {
 export const CHAT_SYSTEM_PROMPT =
   '你是「文脉粤游」App 的智能旅行助手，专注广东 / 岭南文化旅游：非遗（粤剧、醒狮、广绣、工夫茶等）、' +
   '美食（广府菜、潮汕菜、顺德菜、客家菜）、景点与行程规划。回答务必准确、简洁、实用，' +
-  '使用 Markdown 排版（标题、列表、加粗），可适当使用 emoji。只回答与广东旅游和文化相关的问题，' +
-  '遇到无关问题礼貌地引导回旅游主题。';
+  '使用 Markdown 排版（标题、列表、加粗）。默认回答与广东旅游和文化相关的问题，';
 
+// 注意：开头沿用 CHAT_SYSTEM_PROMPT 同款「智能旅行助手」框架——实测该框架下模型会忠实
+// follow 用户消息里的目的地；而换成「岭南行程规划师 + ①②③④ 固定模板」的重措辞会触发
+// 模型的「广州样板行程」先验，时而把目的地（如潮州）改写成广州甚至无关城市。结构要求放轻、
+// 让目的地主语（在用户消息里）主导。
 export const PLAN_SYSTEM_PROMPT =
-  '你是「文脉粤游」的岭南旅行行程规划师。根据用户给出的出发地、目的地、天数、人均预算和偏好，' +
-  '生成一份结构清晰、可执行的 Markdown 行程，必须包含：① 一行行程概览（用 > 引用）；' +
-  '② 按「### 第 N 天」分天安排，每天含上午 / 午餐 / 下午 / 晚上；③ 一个「### 💰 预算明细」的 Markdown 表格；' +
-  '④ 一个「### 📝 行前贴士」列表。景点与美食要贴合目的地真实情况。只输出 Markdown 行程，不要寒暄或多余说明。';
+  '你是「文脉粤游」App 的智能旅行助手，专注广东 / 岭南文化旅游。请严格按用户消息中明确指定的目的地与出发地生成行程：' +
+  '目的地是唯一安排游览（景点、美食、住宿）的城市，出发地只用于第一天的来程交通与最后一天的返程交通，除交通外不要在出发地安排游览。' +
+  '用 Markdown 输出：先写一行用 > 引用的概览；再按「### 第 N 天」分天（每天含上午 / 午餐 / 下午 / 晚上，首日含来程、末日含返程）；' +
+  '然后给「### 💰 预算明细」表格；最后给「### 📝 行前贴士」列表。景点与美食贴合目的地真实情况，只输出 Markdown 行程、不要寒暄。';
 
 // 把规划表单拼成发给模型的用户消息。导出为纯函数便于单测。
 export function buildPlanPrompt(dto: PlanInput): string {
   const tags = dto.tags && dto.tags.length > 0 ? dto.tags.join('、') : '综合体验';
+  // 把目的地作为请求主语（模仿用户自然提问），出发地仅作来回交通——
+  // 否则模型会锚定「出发地」当成游览城市（实测 from=广州 时整份行程被写成广州）。
   return [
-    `出发地：${dto.from}`,
-    `目的地：${dto.to}`,
-    `天数：${dto.days} 天`,
-    `人均预算：¥${dto.budget}`,
-    `旅行偏好：${tags}`,
-    `补充说明：${dto.notes?.trim() || '无'}`,
+    `请为我规划一份【${dto.to}】的 ${dto.days} 天旅行行程。`,
+    `这是一趟「${dto.to}」之旅：全部景点、餐饮、住宿、活动都必须安排在 ${dto.to}，不要写成其它城市的行程。`,
+    `我从 ${dto.from} 出发——请在第 1 天安排「从 ${dto.from} 到 ${dto.to}」的来程交通、最后一天安排返回 ${dto.from} 的返程交通；除交通外不要在 ${dto.from} 安排游览。`,
+    `人均预算：¥${dto.budget}；旅行偏好：${tags}；补充说明：${dto.notes?.trim() || '无'}。`,
   ].join('\n');
 }
 
@@ -99,12 +102,13 @@ export class AiService {
     await this.streamChat(messages, res);
   }
 
-  // AI 行程规划：按目的地检索知识增强，SSE 写回 Markdown。
+  // AI 行程规划：只依据用户表单（出发地 / 目的地 / 天数 / 预算 / 偏好），不注入 RAG 知识。
+  // 原因（实测 bug）：知识库以广州 / 深圳为主，按目的地向量检索常召回他城条目，且系统提示
+  // 要求「优先采用检索资料」，导致模型围绕召回的广深内容生成行程、无视用户真正的目的地
+  // （如「北京→潮州」被规划成「深圳→广州」）。规划要忠于用户输入，故此处不走 RAG。
   async plan(input: PlanInput, res: Response): Promise<void> {
-    const tags = input.tags?.join(' ') ?? '';
-    const context = await this.rag.search(`${input.to} 旅游 ${tags}`.trim(), 5);
     const messages: ChatMessage[] = [
-      { role: 'system', content: buildSystemWithContext(PLAN_SYSTEM_PROMPT, context) },
+      { role: 'system', content: PLAN_SYSTEM_PROMPT },
       { role: 'user', content: buildPlanPrompt(input) },
     ];
     await this.streamChat(messages, res);

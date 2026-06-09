@@ -54,8 +54,8 @@
 | wccp_info.html | 文创产品详情 | 详情 | 详情组件 | destinations, orders | 完成 | `product/[id].tsx`，下单 POST /orders（评论/详情部分硬编码） |
 | xq.html | 景点详情 | 详情 | 详情组件 | scenic, orders | 完成 | `scenic/[id].tsx`（价格/天气等本地派生） |
 | hotTrip.html | 城市攻略 / 景点列表 | 详情 | 详情组件 | scenic | 完成 | `guide/[city].tsx`，接 GET /scenic?city= |
-| MCP.html | AI 智能行程规划 | AI | 单独实现 | ai | 完成 | `ai/assistant.tsx` 规划模式，POST /ai/plan（SSE） |
-| offline-ai.html | AI 研学对话 | AI | 单独实现 | ai | 完成 | 并入 `ai/assistant.tsx` 对话模式，POST /ai/chat（SSE） |
+| MCP.html | AI 智能行程规划 | AI | 单独实现 | ai | 完成 | `ai/assistant.tsx` 规划模式，POST /ai/plan（SSE）；行程以目的地为主语（修出发地被当成游览城市的 bug），结果用 markdown 渲染 |
+| offline-ai.html | AI 研学对话 | AI | 单独实现 | ai | 完成 | 并入 `ai/assistant.tsx` 对话模式，POST /ai/chat（SSE）；回复用 react-native-markdown-display 渲染 |
 | map.html | 旅行地图 | 地图VR | 单独实现 | 腾讯GL SDK | 完成 | `map.tsx`，在线 GL + 离线兜底 |
 | ksgh.html | 线路规划表单 | 表单 | Form组件 | trips | 部分 | `trip/create.tsx` 提供新建行程；完整线路规划待做 |
 | xlgh.html | 线路规划结果列表 | 列表 | 列表组件 | 新增:线路 | 待开始 | |
@@ -90,7 +90,7 @@
 | study.html | 学习非遗聚合页 | 列表 | 列表组件 | cultural | 完成 | `study.tsx`，精选项目接 GET /cultural?category=topic（#72） |
 | fyxq.html | 非遗研学工坊详情 | 详情 | 详情组件 | 无 | 待开始 | |
 | community.html | 社区动态流 | 复杂屏 | 单独实现 | stories | 完成 | `(tabs)/community.tsx` |
-| Trip_Story.html | 社区故事详情 | 详情 | 单独实现 | stories, auth | 完成 | `story/[id].tsx`，点赞 + 评论 |
+| Trip_Story.html | 社区故事详情 | 详情 | 单独实现 | stories, auth, favorites | 完成 | `story/[id].tsx`，点赞 + 评论 + 收藏（真实入库：POST /favorites itemType=story，详情回填 favorited） |
 | add.html | 发布社区动态 | 表单 | 单独实现 | stories, auth | 完成 | `post/story.tsx`（仅预置图） |
 | message.html | 消息中心 | 列表 | 列表组件 | messages | 完成 | `messages.tsx`（DEMO 数据，非按用户） |
 | my_star.html | 收藏列表 | 列表 | 列表组件 | favorites | 完成 | `collections.tsx`（活动收藏，当前静态） |
