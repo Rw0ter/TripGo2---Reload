@@ -1,8 +1,18 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
+interface QuizQuestion {
+  q: string;
+  options: string[];
+  answer: number;
+}
+
 // 岭南文化题库（按 quiz tag 匹配对应题目组）
-const QUESTION_BANK: Record<string, { q: string; options: string[]; answer: number }[]> = {
+const QUESTION_BANK: Record<string, QuizQuestion[]> = {
   '粤剧': [
     { q: '粤剧被列入联合国教科文组织人类非物质文化遗产代表作名录是在哪一年？', options: ['2006年', '2009年', '2012年', '2015年'], answer: 1 },
     { q: '粤剧的表演语言主要是？', options: ['普通话', '英语', '粤语', '客家话'], answer: 2 },
@@ -30,6 +40,14 @@ const QUESTION_BANK: Record<string, { q: string; options: string[]; answer: numb
   ],
 };
 
+function fallbackQuestions(title: string): QuizQuestion[] {
+  return [
+    { q: `${title}是岭南文化的瑰宝，以下哪项描述最准确？`, options: ['一种传统艺术形式', '一种美食', '一种建筑风格', '一种方言'], answer: 0 },
+    { q: `关于${title}，以下说法正确的是？`, options: ['它起源于明清时期', '它是近代才出现的', '它源自北方地区', '它已被遗忘'], answer: 0 },
+    { q: `保护${title}这类非物质文化遗产的意义在于？`, options: ['仅仅为了旅游', '传承中华优秀传统文化', '只是为了赚钱', '没有实际意义'], answer: 1 },
+  ];
+}
+
 @Injectable()
 export class QuizService {
   constructor(private readonly prisma: PrismaService) {}
@@ -38,14 +56,47 @@ export class QuizService {
     return this.prisma.quiz.findMany({ orderBy: { sort: 'asc' } });
   }
 
-  async findOne(id: number) {
+  // 取 quiz 及其题目（含正确答案，仅服务端内部使用）。
+  private async getQuizWithAnswers(id: number) {
     const quiz = await this.prisma.quiz.findUnique({ where: { id } });
     if (!quiz) throw new NotFoundException('答题卡不存在');
-    const questions = QUESTION_BANK[quiz.tag] ?? [
-      { q: `${quiz.title}是岭南文化的瑰宝，以下哪项描述最准确？`, options: ['一种传统艺术形式', '一种美食', '一种建筑风格', '一种方言'], answer: 0 },
-      { q: `关于${quiz.title}，以下说法正确的是？`, options: ['它起源于明清时期', '它是近代才出现的', '它源自北方地区', '它已被遗忘'], answer: 0 },
-      { q: `保护${quiz.title}这类非物质文化遗产的意义在于？`, options: ['仅仅为了旅游', '传承中华优秀传统文化', '只是为了赚钱', '没有实际意义'], answer: 1 },
-    ];
-    return { ...quiz, questions };
+    const questions = QUESTION_BANK[quiz.tag] ?? fallbackQuestions(quiz.title);
+    return { quiz, questions };
+  }
+
+  // 答题卡详情：下发题目时剥离 answer，避免前端直接拿到答案作弊。
+  async findOne(id: number) {
+    const { quiz, questions } = await this.getQuizWithAnswers(id);
+    return {
+      ...quiz,
+      questions: questions.map(({ answer: _answer, ...rest }) => rest),
+    };
+  }
+
+  // 逐题校验：返回该题是否答对 + 正确答案（供 UI 即时高亮）。
+  async check(id: number, questionIndex: number, choice: number) {
+    const { questions } = await this.getQuizWithAnswers(id);
+    if (questionIndex < 0 || questionIndex >= questions.length) {
+      throw new BadRequestException('题目序号越界');
+    }
+    const answer = questions[questionIndex].answer;
+    return { correct: choice === answer, answer };
+  }
+
+  // 提交全部答案：服务端权威判分 + 按答对数发积分（每题 10 分）。
+  async submit(id: number, userId: string, answers: number[]) {
+    const { questions } = await this.getQuizWithAnswers(id);
+    let correct = 0;
+    questions.forEach((qst, i) => {
+      if (answers[i] === qst.answer) correct += 1;
+    });
+    const score = correct * 10;
+    if (score > 0) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { points: { increment: score } },
+      });
+    }
+    return { total: questions.length, correct, score };
   }
 }
