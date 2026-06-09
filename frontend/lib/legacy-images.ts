@@ -35,6 +35,12 @@ export const legacyImages: Record<string, ImageSourcePropType> = {
   'fyxx/piyingfm.png': require('../assets/legacy/img/fyxx/piyingfm.png'),
   'fyxx/syhd.jpg': require('../assets/legacy/img/fyxx/syhd.jpg'),
   'fyxx/sywhz.png': require('../assets/legacy/img/fyxx/sywhz.png'),
+  'fyxx/yx.jpg': require('../assets/legacy/img/fyxx/yx.jpg'), // 醒狮
+  // 非遗 study 主题配图：缺 Legacy 图的题材联网补（Wikimedia，见 PROGRESS）
+  'study/guangxiu.jpeg': require('../assets/legacy/img/study/guangxiu.jpeg'), // 广绣
+  'study/gongfucha.jpg': require('../assets/legacy/img/study/gongfucha.jpg'), // 工夫茶
+  'study/longzhou.jpg': require('../assets/legacy/img/study/longzhou.jpg'), // 龙舟
+  'study/lnjz.jpg': require('../assets/legacy/img/study/lnjz.jpg'), // 岭南建筑
   // 景点详情页轮播兜底图（与旧版 xq.html 一致）
   'gz.jpg': require('../assets/legacy/img/gz.jpg'),
   'gz2.jpg': require('../assets/legacy/img/gz2.jpg'),

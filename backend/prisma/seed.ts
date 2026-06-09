@@ -256,17 +256,35 @@ const cantoneseLessons = [
   { category: 'lesson', title: '岭南俗语', subtitle: '地道俚语和谚语', content: '{"lessons":8}', icon: 'book', color: '#7B68AE', sort: 3 },
 ];
 
-// 文化内容：非遗学习主题
-const studyTopics = [
-  { category: 'topic', title: '粤剧', subtitle: '岭南文化瑰宝，世界级非遗', content: '{"quizId":1}', icon: 'musical-notes', color: '#E05C3A', sort: 0 },
-  { category: 'topic', title: '广绣', subtitle: '一针一线绣出岭南风华', content: '{"quizId":2}', icon: 'color-palette', color: '#D44A7A', sort: 1 },
-  { category: 'topic', title: '醒狮', subtitle: '威武雄壮，驱邪纳福', content: '{"quizId":3}', icon: 'paw', color: '#E0892F', sort: 2 },
-  { category: 'topic', title: '工夫茶', subtitle: '潮汕茶道，品味人生', content: '{"quizId":4}', icon: 'cafe', color: '#5C8A6D', sort: 3 },
-  { category: 'topic', title: '龙舟', subtitle: '百舸争流，奋勇争先', content: '{"quizId":5}', icon: 'boat', color: '#3B7CB6', sort: 4 },
-  { category: 'topic', title: '岭南建筑', subtitle: '镬耳山墙，骑楼连廊', content: '{}', icon: 'home', color: '#7B68AE', sort: 5 },
-  { category: 'topic', title: '广东剪纸', subtitle: '纸上生花，非遗技艺', content: '{}', icon: 'cut', color: '#C0392B', sort: 6 },
-  { category: 'topic', title: '皮影戏', subtitle: '光影故事，千年传承', content: '{}', icon: 'film', color: '#8E6B3F', sort: 7 },
+// 文化内容：非遗学习主题。content 为 JSON：{ quizId, image(前端 legacy 资源 key), intro(详情页正文) }。
+// image 优先用 Legacy 真实非遗照片（fyxx/*），缺图题材用联网补的 study/*（见前端 legacy-images.ts）。
+const studyTopicSeed = [
+  { title: '粤剧', subtitle: '岭南文化瑰宝，世界级非遗', quizId: 1, image: 'fyxx/yuejufm.jpg', icon: 'musical-notes', color: '#C8161D', sort: 0,
+    intro: '粤剧又称广东大戏，明清时期形成于珠江三角洲，融合梆子、二黄等声腔，唱念做打俱全，行当与脸谱十分讲究。2009 年被联合国教科文组织列入人类非物质文化遗产代表作名录，是岭南文化的标志性瑰宝。' },
+  { title: '广绣', subtitle: '一针一线绣出岭南风华', quizId: 2, image: 'study/guangxiu.jpeg', icon: 'color-palette', color: '#B01E2E', sort: 1,
+    intro: '广绣是中国四大名绣中粤绣的重要分支，以构图饱满、色彩富丽、纹理清晰、针法多变著称。常以百鸟朝凤、荔枝木棉等岭南题材入绣，金银线垫绣立体生动，是广府工艺的代表。' },
+  { title: '醒狮', subtitle: '威武雄壮，驱邪纳福', quizId: 3, image: 'fyxx/yx.jpg', icon: 'paw', color: '#D4453A', sort: 2,
+    intro: '醒狮属南狮，集武术、舞蹈、音乐于一体，狮头威武、眼帘灵动。逢年过节、开张庆典常以采青助兴，鼓点铿锵、腾挪跳跃，寓意驱邪纳福、生意兴隆，是岭南最具人气的民俗表演。' },
+  { title: '工夫茶', subtitle: '潮汕茶道，品味人生', quizId: 4, image: 'study/gongfucha.jpg', icon: 'cafe', color: '#A52A2A', sort: 3,
+    intro: '工夫茶流行于潮汕一带，以凤凰单丛等乌龙茶为主，讲究茶具、水温与冲泡章法，关公巡城、韩信点兵皆有门道。一壶三杯、先敬长者，既是日常饮品，更是待客之礼与生活美学。' },
+  { title: '龙舟', subtitle: '百舸争流，奋勇争先', quizId: 5, image: 'study/longzhou.jpg', icon: 'boat', color: '#C0392B', sort: 4,
+    intro: '扒龙舟是端午节的重要习俗，在珠江三角洲尤为兴盛。龙舟修长、龙头高昂，桡手随鼓点齐桨并进，百舸争流、鼓声震天，既竞速亦竞神，凝聚着乡里同心、奋勇争先的精神。' },
+  { title: '岭南建筑', subtitle: '镬耳山墙，骑楼连廊', quizId: 1, image: 'study/lnjz.jpg', icon: 'home', color: '#9E1B32', sort: 5,
+    intro: '岭南建筑因地制宜、兼容中西，镬耳山墙、骑楼连廊、满洲窗、灰塑砖雕各具特色。通透轻盈、防潮遮阳，适应岭南湿热多雨的气候，于广府、潮汕、客家三大民系中各显风貌。' },
+  { title: '广东剪纸', subtitle: '纸上生花，非遗技艺', quizId: 1, image: 'fyxx/jianzhifm1.jpg', icon: 'cut', color: '#C8102E', sort: 6,
+    intro: '广东剪纸以佛山剪纸为代表，独创铜凿料与金箔衬色相结合的工艺，金碧辉煌、玲珑剔透。题材多取吉祥纹样与岭南风物，广泛用于节庆、婚嫁与祭祀装饰，喜气盈门。' },
+  { title: '皮影戏', subtitle: '光影故事，千年传承', quizId: 1, image: 'fyxx/piyingfm.png', icon: 'film', color: '#8E3B2F', sort: 7,
+    intro: '皮影戏以兽皮或纸板雕刻人物，借灯光将剪影投于幕布，艺人一边操纵一边唱念，一口道尽千古事，双手对舞百万兵。岭南陆丰皮影历史悠久，造型精巧、唱腔独特。' },
 ];
+const studyTopics = studyTopicSeed.map((t) => ({
+  category: 'topic',
+  title: t.title,
+  subtitle: t.subtitle,
+  content: JSON.stringify({ quizId: t.quizId, image: t.image, intro: t.intro }),
+  icon: t.icon,
+  color: t.color,
+  sort: t.sort,
+}));
 
 // 文化内容：VR全景场景
 const vrScenes = [

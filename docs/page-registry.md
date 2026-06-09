@@ -87,8 +87,8 @@
 | mjms.html | 广东传统美术介绍 | 静态文本 | StaticPage组件 | 无 | 待开始 | 内嵌视频 |
 | yueju.html | 粤剧非遗详情 | 静态文本 | StaticPage组件 | 无 | 待开始 | |
 | zhenjiu.html | 岭南针灸非遗详情 | 静态文本 | StaticPage组件 | 无 | 待开始 | |
-| study.html | 学习非遗聚合页 | 列表 | 列表组件 | cultural | 完成 | `study.tsx`，精选项目接 GET /cultural?category=topic（#72） |
-| fyxq.html | 非遗研学工坊详情 | 详情 | 详情组件 | 无 | 待开始 | |
+| study.html | 学习非遗聚合页 | 列表 | 列表组件 | cultural | 完成 | `study.tsx` 中国红改版（真实非遗图卡 + 去 emoji，卡片→非遗详情），接 GET /cultural?category=topic |
+| fyxq.html | 非遗详情 | 详情 | 详情组件 | cultural | 完成 | `study/[id].tsx` 非遗详情（真实图 hero + 后端简介 + 开始答题 CTA），GET /cultural/:id；topic content 扩 image/intro |
 | community.html | 社区动态流 | 复杂屏 | 单独实现 | stories | 完成 | `(tabs)/community.tsx` |
 | Trip_Story.html | 社区故事详情 | 详情 | 单独实现 | stories, auth, favorites | 完成 | `story/[id].tsx`，点赞 + 评论 + 收藏（真实入库：POST /favorites itemType=story，详情回填 favorited） |
 | add.html | 发布社区动态 | 表单 | 单独实现 | stories, auth | 完成 | `post/story.tsx`（仅预置图） |
