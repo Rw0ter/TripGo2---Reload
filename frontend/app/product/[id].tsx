@@ -22,6 +22,16 @@ interface Product {
   money: string;
   number: string;
   type: number;
+  description?: string;
+  detail?: string;
+}
+
+interface Review {
+  id: number;
+  rating: number;
+  text: string;
+  createdAt: string;
+  author: { username: string };
 }
 
 const TYPE_LABELS = ['全部', '古筝', '曲艺', '技艺', '美术', '民俗', '特产'];
@@ -57,6 +67,15 @@ export default function ProductDetailScreen() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // 评价列表（接已有 reviews 模块，按 destination + id 查）
+  const [reviews, setReviews] = useState<Review[]>([]);
+  useEffect(() => {
+    if (!id) return;
+    apiRequest<Review[]>(`/reviews?itemType=destination&itemId=${id}`)
+      .then(setReviews)
+      .catch(() => setReviews([]));
+  }, [id]);
 
   const handleBuy = useCallback(async () => {
     if (!data || buying) return;
@@ -238,13 +257,9 @@ export default function ProductDetailScreen() {
               </Text>
             </View>
             <Text className="text-[14px] leading-6 text-[#666]">
-              这是一件精美的岭南非遗文创作品，由非遗传承人纯手工制作。
-              每一件都承载着匠人的心血与岭南文化的独特韵味。
-              {'\n\n'}
-              {'•'} 材质：天然环保材料{'\n'}
-              {'•'} 工艺：传统非遗手工艺{'\n'}
-              {'•'} 产地：广东{'\n'}
-              {'•'} 适用场景：家居装饰、送礼佳品、文化收藏
+              {data.description?.trim()
+                ? data.description
+                : '这是一件精美的岭南非遗文创作品，由非遗传承人纯手工制作，承载着匠人的心血与岭南文化的独特韵味。'}
             </Text>
           </View>
         </View>
@@ -270,59 +285,37 @@ export default function ProductDetailScreen() {
               }}
             />
             <Text className="text-[15px] font-semibold text-[#333]">
-              用户评价 ({data.number})
+              用户评价 ({reviews.length})
             </Text>
           </View>
 
-          {[
-            {
-              name: '岭南行者',
-              text: '做工非常精致，很有岭南韵味，送礼体面！',
-              stars: 5,
-            },
-            {
-              name: '文化爱好者',
-              text: '很喜欢这个设计，融入了广东非遗元素，值得收藏。',
-              stars: 5,
-            },
-            {
-              name: '广州街坊',
-              text: '包装很用心，打开就有惊喜感，强烈推荐！',
-              stars: 4,
-            },
-          ].map((r, i) => (
-            <View
-              key={i}
-              className="border-b border-[#f5f5f5] py-3"
-              style={i === 0 ? { borderTopWidth: 0 } : undefined}
-            >
-              <View className="flex-row items-center">
-                <View
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 14,
-                    backgroundColor: '#0da884',
-                  }}
-                  className="items-center justify-center"
-                >
-                  <Text className="text-[11px] font-bold text-white">
-                    {r.name[0]}
+          {reviews.length === 0 ? (
+            <Text className="py-3 text-[13px] text-[#999]">还没有评价，快来抢沙发～</Text>
+          ) : (
+            reviews.map((r) => (
+              <View key={r.id} className="border-b border-[#f5f5f5] py-3">
+                <View className="flex-row items-center">
+                  <View
+                    style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: '#0da884' }}
+                    className="items-center justify-center"
+                  >
+                    <Text className="text-[11px] font-bold text-white">
+                      {r.author.username.slice(0, 1)}
+                    </Text>
+                  </View>
+                  <Text className="ml-2 text-[13px] font-semibold text-[#333]">
+                    {r.author.username}
                   </Text>
+                  <Text className="ml-2 text-[12px] text-[#ff9800]">
+                    {'★'.repeat(r.rating)}
+                    {'☆'.repeat(5 - r.rating)}
+                  </Text>
+                  <Text className="ml-auto text-[11px] text-[#bbb]">{r.createdAt.slice(0, 10)}</Text>
                 </View>
-                <Text className="ml-2 text-[13px] font-semibold text-[#333]">
-                  {r.name}
-                </Text>
-                <Text className="ml-2 text-[12px] text-[#ff9800]">
-                  {'★'.repeat(r.stars)}
-                  {'☆'.repeat(5 - r.stars)}
-                </Text>
+                <Text className="ml-10 mt-1 text-[13px] text-[#666]">{r.text}</Text>
               </View>
-              <Text className="ml-10 mt-1 text-[13px] text-[#666]">
-                {r.text}
-              </Text>
-            </View>
-          ))}
+            ))
+          )}
         </View>
       </ScrollView>
 
