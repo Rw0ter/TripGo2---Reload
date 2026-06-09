@@ -41,6 +41,24 @@ export const legacyImages: Record<string, ImageSourcePropType> = {
   'study/gongfucha.jpg': require('../assets/legacy/img/study/gongfucha.jpg'), // 工夫茶
   'study/longzhou.jpg': require('../assets/legacy/img/study/longzhou.jpg'), // 龙舟
   'study/lnjz.jpg': require('../assets/legacy/img/study/lnjz.jpg'), // 岭南建筑
+  // 非遗详情页画廊：Legacy fyxx 多图 + 联网补图（Wikimedia）
+  'fyxx/yueju1.jpg': require('../assets/legacy/img/fyxx/yueju1.jpg'),
+  'fyxx/yueju2.jpg': require('../assets/legacy/img/fyxx/yueju2.jpg'),
+  'fyxx/yueju3.jpg': require('../assets/legacy/img/fyxx/yueju3.jpg'),
+  'fyxx/yx1.jpg': require('../assets/legacy/img/fyxx/yx1.jpg'),
+  'fyxx/yx2.jpg': require('../assets/legacy/img/fyxx/yx2.jpg'),
+  'fyxx/jianzhi1.jpg': require('../assets/legacy/img/fyxx/jianzhi1.jpg'),
+  'fyxx/jianzhi2.jpg': require('../assets/legacy/img/fyxx/jianzhi2.jpg'),
+  'fyxx/jianzhi3.jpg': require('../assets/legacy/img/fyxx/jianzhi3.jpg'),
+  'fyxx/pyxzs.jpg': require('../assets/legacy/img/fyxx/pyxzs.jpg'),
+  'fyxx/pyxzs1.jpg': require('../assets/legacy/img/fyxx/pyxzs1.jpg'),
+  'fyxx/pyxzs2.jpg': require('../assets/legacy/img/fyxx/pyxzs2.jpg'),
+  'study/guangxiu_1.jpg': require('../assets/legacy/img/study/guangxiu_1.jpg'),
+  'study/gongfucha_1.jpg': require('../assets/legacy/img/study/gongfucha_1.jpg'),
+  'study/longzhou_1.jpg': require('../assets/legacy/img/study/longzhou_1.jpg'),
+  'study/longzhou_2.jpg': require('../assets/legacy/img/study/longzhou_2.jpg'),
+  'study/lnjz_1.jpg': require('../assets/legacy/img/study/lnjz_1.jpg'),
+  'study/lnjz_2.jpg': require('../assets/legacy/img/study/lnjz_2.jpg'),
   // 景点详情页轮播兜底图（与旧版 xq.html 一致）
   'gz.jpg': require('../assets/legacy/img/gz.jpg'),
   'gz2.jpg': require('../assets/legacy/img/gz2.jpg'),
