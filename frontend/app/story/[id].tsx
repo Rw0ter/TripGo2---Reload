@@ -105,9 +105,10 @@ export default function StoryDetailScreen() {
 
   const [story, setStory] = useState<StoryDetail | null>(null);
   const [error, setError] = useState(false);
-  // liked 由详情接口按当前用户回填（见 load）；加载完成前先 false。
+  // liked / favorited 由详情接口按当前用户回填（见 load）；加载完成前先 false。
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
+  const [favorited, setFavorited] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
@@ -122,6 +123,7 @@ export default function StoryDetailScreen() {
       setStory(d);
       setLiked(d.liked);
       setLikeCount(d.likeCount);
+      setFavorited(d.favorited);
       setComments(d.comments);
     } catch {
       setError(true);
@@ -154,6 +156,27 @@ export default function StoryDetailScreen() {
       setLikeCount(r.likeCount);
     } catch {
       // 忽略，保持原状态
+    }
+  }
+
+  // 收藏 / 取消收藏：走通用 /favorites（itemType='story'），后端切换并入库；详情加载时回填状态。
+  async function onToggleFavorite() {
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+    if (!story) return;
+    const prev = favorited;
+    setFavorited(!prev); // 乐观更新
+    try {
+      const r = await apiRequest<{ favorited: boolean }>('/favorites', {
+        method: 'POST',
+        auth: true,
+        body: { itemType: 'story', itemId: storyId, title: story.title },
+      });
+      setFavorited(r.favorited);
+    } catch {
+      setFavorited(prev); // 失败回滚
     }
   }
 
@@ -323,10 +346,11 @@ export default function StoryDetailScreen() {
                 a11y="评论数"
               />
               <ActionItem
-                icon="bookmark-outline"
-                color="#8C836D"
-                label="收藏"
-                onPress={() => comingSoon('收藏')}
+                icon={favorited ? 'bookmark' : 'bookmark-outline'}
+                color={favorited ? '#C0584B' : '#8C836D'}
+                label={favorited ? '已收藏' : '收藏'}
+                a11y="收藏"
+                onPress={onToggleFavorite}
               />
               <ActionItem
                 icon="share-social-outline"

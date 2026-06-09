@@ -57,5 +57,6 @@ export interface Comment {
 
 // 动态详情：在列表字段基础上附评论列表，对应 GET /stories/:id。
 export interface StoryDetail extends Story {
+  favorited: boolean; // 当前用户是否已收藏（未登录恒 false）
   comments: Comment[];
 }

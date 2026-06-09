@@ -14,8 +14,9 @@ function story(id: number) {
 
 function mockPrisma() {
   return {
-    story: { findMany: jest.fn() },
+    story: { findMany: jest.fn(), findUnique: jest.fn() },
     like: { findMany: jest.fn() },
+    favorite: { findUnique: jest.fn() },
   } as any;
 }
 
@@ -59,5 +60,36 @@ describe('StoriesService.findLiked', () => {
     const res = await svc.findLiked('u1');
     expect(res.map((r) => r.id)).toEqual([3, 1]);
     expect(res.every((r) => r.liked === true)).toBe(true);
+  });
+});
+
+describe('StoriesService.findOne 收藏回填', () => {
+  const detailRow = (id: number) => ({ ...story(id), comments: [] });
+
+  it('登录且已收藏 → favorited:true（按 story 复合键查 Favorite）', async () => {
+    const prisma = mockPrisma();
+    prisma.story.findUnique.mockResolvedValue(detailRow(11));
+    prisma.like.findMany.mockResolvedValue([]);
+    prisma.favorite.findUnique.mockResolvedValue({ id: 99 });
+    const svc = new StoriesService(prisma);
+    const res = await svc.findOne(11, 'u1');
+    expect(prisma.favorite.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          userId_itemType_itemId: { userId: 'u1', itemType: 'story', itemId: 11 },
+        },
+      }),
+    );
+    expect(res.favorited).toBe(true);
+  });
+
+  it('未登录 → favorited:false，且不查 Favorite', async () => {
+    const prisma = mockPrisma();
+    prisma.story.findUnique.mockResolvedValue(detailRow(11));
+    prisma.like.findMany.mockResolvedValue([]);
+    const svc = new StoriesService(prisma);
+    const res = await svc.findOne(11);
+    expect(res.favorited).toBe(false);
+    expect(prisma.favorite.findUnique).not.toHaveBeenCalled();
   });
 });
