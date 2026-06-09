@@ -1,19 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsIn, IsInt, Min } from 'class-validator';
 
 export class CreateOrderDto {
-  @ApiProperty({ example: '广绣文创摆件', description: '订单标题' })
-  @IsString()
-  @IsNotEmpty()
-  title: string;
+  @ApiProperty({
+    enum: ['destination', 'scenic'],
+    description: '下单对象类型：文创产品 / 景点预订',
+  })
+  @IsIn(['destination', 'scenic'])
+  itemType: 'destination' | 'scenic';
 
-  @ApiProperty({ example: 128, description: '实付金额' })
-  @IsNumber()
-  @Min(0)
-  price: number;
-
-  @ApiProperty({ example: 1, description: '关联的文创产品 id' })
+  @ApiProperty({ example: 1, description: '对象 id（destination 或 scenic 的 id）' })
+  @Type(() => Number)
   @IsInt()
   @Min(1)
-  destinationId: number;
+  itemId: number;
 }

@@ -122,6 +122,7 @@ model Scenic {
   note    String  @default("") // 附注，如「16 个上榜项」
   hot     Boolean @default(false) // true=人气榜（首页大横卡），仅 section=home 用
   section String  @default("home") // home=首页景点 / poi=行程城市精选
+  price   Int     @default(0) // 预订估算价（元），下单时服务端按此定价
   sort    Int     @default(0)
 }
 

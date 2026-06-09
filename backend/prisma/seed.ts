@@ -78,6 +78,16 @@ const scenics = [
   { name: '山谷古村落', image: 'gysgjslgy.png', city: '东莞', summary: '隐秘山谷里的古村落，周末走走…', tag: '文史口碑馆', note: '📷 12 个上榜项', hot: false, section: 'poi', sort: 2 },
 ];
 
+// 景点预订估算价（元）：按城市给一个合理价，下单时服务端按此定价。
+function scenicPrice(city: string): number {
+  const map: Record<string, number> = {
+    广州: 200, 深圳: 380, 珠海: 520, 东莞: 320, 佛山: 350, 惠州: 400,
+    汕头: 300, 潮州: 280, 梅州: 260, 韶关: 350, 肇庆: 380, 江门: 320,
+    河源: 340, 清远: 420, 揭阳: 290,
+  };
+  return map[city] ?? 380;
+}
+
 // 首页知识小课堂答题卡。
 const quizzes = [
   { tag: '积分翻倍场', title: '非遗文化挑战', desc: '限时答题赢最高 88 积分，适合新手快速上分', btn: '立即开始挑战', sort: 0 },
@@ -293,7 +303,9 @@ async function main() {
   await prisma.banner.deleteMany();
   await prisma.banner.createMany({ data: banners });
   await prisma.scenic.deleteMany();
-  await prisma.scenic.createMany({ data: scenics });
+  await prisma.scenic.createMany({
+    data: scenics.map((s) => ({ ...s, price: scenicPrice(s.city) })),
+  });
   await prisma.quiz.deleteMany();
   await prisma.quiz.createMany({ data: quizzes });
   await prisma.review.deleteMany();
