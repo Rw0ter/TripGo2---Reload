@@ -20,7 +20,6 @@ export default function RootLayout() {
           <Stack.Screen name="hello" options={{ headerShown: false }} />
           <Stack.Screen name="login1" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
           <Stack.Screen name="map" options={{ headerShown: false }} />
           <Stack.Screen name="trip/create" options={{ headerShown: false }} />
           <Stack.Screen name="post/story" options={{ headerShown: false }} />
@@ -46,6 +45,11 @@ export default function RootLayout() {
           <Stack.Screen name="my/trips" options={{ headerShown: false }} />
           <Stack.Screen name="my/stories" options={{ headerShown: false }} />
           <Stack.Screen name="my/likes" options={{ headerShown: false }} />
+          <Stack.Screen name="yinsizhengce" options={{ headerShown: false }} />
+          <Stack.Screen name="yonghuxieyi" options={{ headerShown: false }} />
+          <Stack.Screen name="permissions" options={{ headerShown: false }} />
+          <Stack.Screen name="shequguifan" options={{ headerShown: false }} />
+          <Stack.Screen name="about_us" options={{ headerShown: false }} />
         </Stack>
         <ToastContainer />
       </View>

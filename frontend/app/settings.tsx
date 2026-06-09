@@ -187,19 +187,19 @@ export default function SettingsScreen() {
           <SettingItem
             label="隐私政策"
             showChevron
-            onPress={() => router.push('/yinsizhengce' as any)}
+            onPress={() => router.push('/yinsizhengce')}
           />
 
           <SettingItem
             label="用户协议"
             showChevron
-            onPress={() => router.push('/yonghuxieyi' as any)}
+            onPress={() => router.push('/yonghuxieyi')}
           />
 
           <SettingItem
             label="应用权限说明"
             showChevron
-            onPress={() => router.push('/permissions' as any)}
+            onPress={() => router.push('/permissions')}
           />
 
           <SettingItem
@@ -213,13 +213,13 @@ export default function SettingsScreen() {
           <SettingItem
             label="社区规范"
             showChevron
-            onPress={() => router.push('/shequguifan' as any)}
+            onPress={() => router.push('/shequguifan')}
           />
 
           <SettingItem
             label="关于我们"
             showChevron
-            onPress={() => router.push('/about_us' as any)}
+            onPress={() => router.push('/about_us')}
           />
         </View>
 
