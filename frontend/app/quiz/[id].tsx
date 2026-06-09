@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Animated as RNAnimated,
@@ -10,7 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { FadeInDown, FadeIn } from 'react-native-reanimated';
+import { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Animated } from '@/components/ui/animated';
@@ -18,7 +17,8 @@ import { ScreenHeader } from '@/components/ui/screen-header';
 import { apiRequest } from '@/lib/api';
 
 // ── Types ─────────────────────────────────────────────────
-interface Question { q: string; options: string[]; answer: number; }
+// answer 仅离线题库本地携带；在线题目由后端剥离，判分走 /quiz/:id/check|submit。
+interface Question { q: string; options: string[]; answer?: number; }
 interface QuizDetail { id: number; tag: string; title: string; desc: string; questions: Question[]; }
 
 // ── Offline fallback ──────────────────────────────────────
@@ -52,9 +52,12 @@ export default function QuizScreen() {
   const [qIdx, setQIdx] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [revealed, setRevealed] = useState<Record<number, number>>({}); // qIdx -> 正确答案
+  const [answers, setAnswers] = useState<number[]>([]); // qIdx -> 所选
   const [score, setScore] = useState(0);
+  const [correctTotal, setCorrectTotal] = useState(0); // 服务端权威答对数
   const [done, setDone] = useState(false);
-  const awardedRef = useRef(false);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -68,13 +71,6 @@ export default function QuizScreen() {
   }, [id]);
 
   useEffect(() => { void load(); }, [load]);
-
-  // Award points on completion
-  useEffect(() => {
-    if (!done || awardedRef.current) return;
-    awardedRef.current = true;
-    apiRequest('/checkin/quiz', { method: 'POST', auth: true, body: { points: score } }).catch(() => {});
-  }, [done, score]);
 
   // ── Loading ───────────────────────────────────────────
   if (!data) {
@@ -92,23 +88,71 @@ export default function QuizScreen() {
   const pct = ((qIdx + 1) / total) * 100;
 
   const handleSelect = (i: number) => { if (!submitted) setSelected(i); };
-  const handleSubmit = () => {
-    if (selected === null || submitted) return;
-    setSubmitted(true);
-    if (selected === q.answer) setScore((s) => s + 10);
+
+  // 提交单题：在线走后端逐题校验，离线本地判分。
+  const handleSubmit = async () => {
+    if (selected === null || submitted || submitting) return;
+    const choice = selected;
+    setAnswers((a) => { const c = a.slice(); c[qIdx] = choice; return c; });
+
+    if (offline) {
+      const ans = q.answer ?? 0;
+      setRevealed((r) => ({ ...r, [qIdx]: ans }));
+      if (choice === ans) setScore((s) => s + 10);
+      setSubmitted(true);
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await apiRequest<{ correct: boolean; answer: number }>(
+        `/quiz/${data.id}/check`,
+        { method: 'POST', body: { questionIndex: qIdx, choice } },
+      );
+      setRevealed((r) => ({ ...r, [qIdx]: res.answer }));
+      if (res.correct) setScore((s) => s + 10);
+    } catch {
+      // 校验失败：仅标记已提交，不显示对错（answer 缺省）
+    } finally {
+      setSubmitted(true);
+      setSubmitting(false);
+    }
   };
+
+  // 完成：在线提交全部答案由服务端权威判分 + 发积分；离线用本地分数。
+  const finish = async () => {
+    if (offline) {
+      setCorrectTotal(score / 10);
+      setDone(true);
+      return;
+    }
+    try {
+      const res = await apiRequest<{ total: number; correct: number; score: number }>(
+        `/quiz/${data.id}/submit`,
+        { method: 'POST', auth: true, body: { answers } },
+      );
+      setScore(res.score);
+      setCorrectTotal(res.correct);
+    } catch {
+      setCorrectTotal(score / 10); // 兜底用本地累计
+    }
+    setDone(true);
+  };
+
   const handleNext = () => {
-    if (isLast) { setDone(true); } else { setQIdx((n) => n + 1); setSelected(null); setSubmitted(false); }
+    if (isLast) { void finish(); }
+    else { setQIdx((n) => n + 1); setSelected(null); setSubmitted(false); }
   };
+
   const handleRestart = () => {
-    awardedRef.current = false;
-    setQIdx(0); setSelected(null); setSubmitted(false); setScore(0); setDone(false);
+    setQIdx(0); setSelected(null); setSubmitted(false); setSubmitting(false);
+    setRevealed({}); setAnswers([]); setScore(0); setCorrectTotal(0); setDone(false);
     if (offline) setData((prev) => prev ? { ...prev, questions: pickOfflineQuestions() } : null);
   };
 
   // ── Completion screen ──────────────────────────────────
   if (done) {
-    const correctCount = score / 10;
+    const correctCount = correctTotal;
     const passed = correctCount >= total / 2;
 
     return (
@@ -116,7 +160,6 @@ export default function QuizScreen() {
         <ScreenHeader title="答题结果" tint="light" />
 
         <View className="flex-1 items-center justify-center px-6" style={{ paddingBottom: insets.bottom + 40 }}>
-          {/* Trophy */}
           <RNAnimated.View>
             <View className="mb-6 h-24 w-24 items-center justify-center rounded-full bg-[#E8F5E9]">
               <Ionicons name={passed ? 'trophy' : 'school'} size={48} color="#386641" />
@@ -128,7 +171,6 @@ export default function QuizScreen() {
             {passed ? '你对岭南文化的了解非常扎实！' : '多了解一些非遗知识，下次一定能通过～'}
           </Text>
 
-          {/* Score card */}
           <View className="mt-8 w-full max-w-sm rounded-2xl bg-[#F9F9F9] p-6 shadow-sm" style={{ shadowColor: '#000', shadowOpacity: 0.41, shadowRadius: 10, shadowOffset: { width: 0, height: 2 } }}>
             <View className="flex-row items-center justify-between">
               <Text className="text-[15px] font-semibold text-[#555]">正确题数</Text>
@@ -141,7 +183,6 @@ export default function QuizScreen() {
             </View>
           </View>
 
-          {/* Actions */}
           <View className="mt-8 flex-row gap-3">
             <Pressable onPress={handleRestart} className="rounded-xl bg-[#386641] px-8 py-3.5 active:opacity-80">
               <Text className="text-[16px] font-semibold text-white">再来一次</Text>
@@ -165,51 +206,49 @@ export default function QuizScreen() {
         </View>
       } />
 
-      {/* Progress bar */}
       <View className="h-0.5 bg-[#F0F0F0]">
         <RNAnimated.View style={{ width: `${pct}%`, height: '100%', backgroundColor: '#386641' }} />
       </View>
 
       <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 60 }}>
-        {/* Offline badge */}
         {offline && (
           <View className="mb-3 self-start rounded-md bg-[#FFF3E0] px-2.5 py-0.5">
             <Text className="text-[11px] font-medium text-[#E65100]">离线模式</Text>
           </View>
         )}
 
-        {/* Question counter */}
         <Text className="text-[13px] font-medium uppercase tracking-widest text-[#999]">
           第 {qIdx + 1} 题 · 共 {total} 题
         </Text>
 
-        {/* Question text */}
         <Animated.View entering={FadeInDown.delay(50).springify()} key={`q-${qIdx}`}>
           <Text className="mt-3 text-[20px] font-bold leading-7 text-[#111]">
             {q.q}
           </Text>
         </Animated.View>
 
-        {/* Options */}
         <View className="mt-6" style={{ gap: 10 }}>
           {q.options.map((opt, i) => (
             <OptionButton key={`${qIdx}-${i}`} index={qIdx} optIdx={i} label={LABELS[i]} text={opt}
-              answer={q.answer} selected={selected} submitted={submitted}
+              answer={revealed[qIdx] ?? -1} selected={selected} submitted={submitted}
               onPress={() => handleSelect(i)} />
           ))}
         </View>
       </ScrollView>
 
-      {/* Bottom CTA */}
       <View className="px-5 pt-2" style={{ paddingBottom: insets.bottom + 10 }}>
         {!submitted ? (
           <Pressable
             onPress={handleSubmit}
-            disabled={selected === null}
-            className={`w-full items-center rounded-2xl py-4 ${selected === null ? 'bg-[#E5E5E5]' : 'bg-[#386641]'}`}>
-            <Text className={`text-[16px] font-bold ${selected === null ? 'text-[#bbb]' : 'text-white'}`}>
-              提交答案
-            </Text>
+            disabled={selected === null || submitting}
+            className={`w-full items-center rounded-2xl py-4 ${selected === null || submitting ? 'bg-[#E5E5E5]' : 'bg-[#386641]'}`}>
+            {submitting ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text className={`text-[16px] font-bold ${selected === null ? 'text-[#bbb]' : 'text-white'}`}>
+                提交答案
+              </Text>
+            )}
           </Pressable>
         ) : (
           <Pressable
@@ -252,13 +291,10 @@ function OptionButton({
         disabled={submitted}
         className="flex-row items-center rounded-2xl border px-4 py-4 active:scale-[0.98]"
         style={{ borderColor, backgroundColor: bg }}>
-        {/* Label circle */}
         <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: labelBg }} className="items-center justify-center">
           <Text style={{ color: labelColor }} className="text-[14px] font-bold">{label}</Text>
         </View>
-        {/* Option text */}
         <Text className="ml-3 flex-1 text-[15px] font-medium text-[#222]">{text}</Text>
-        {/* Feedback icon */}
         {isCorrect && <Ionicons name="checkmark-circle" size={22} color="#386641" />}
         {isWrong && <Ionicons name="close-circle" size={22} color="#E53935" />}
       </Pressable>
