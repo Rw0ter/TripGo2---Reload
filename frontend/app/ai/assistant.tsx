@@ -1,16 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Animated as RNAnimated,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
   Text,
   TextInput,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import { FadeInDown, FadeIn, FadeInRight, FadeInLeft } from 'react-native-reanimated';
@@ -18,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Animated } from '@/components/ui/animated';
 import { ScreenHeader } from '@/components/ui/screen-header';
+import { streamChat, streamPlan, type ChatMessage } from '@/lib/ai';
 
 // ── Types ──────────────────────────────────────────────────
 type Mode = 'planner' | 'chat';
@@ -46,74 +45,6 @@ const PREFERENCES = [
   { key: 'family', label: '亲子游玩', icon: 'people-outline' },
   { key: 'photo', label: '摄影打卡', icon: 'camera-outline' },
 ];
-
-// ── AI Logic ───────────────────────────────────────────────
-function generateReply(q: string): string {
-  const l = q.toLowerCase();
-  if (/非遗|粤剧|醒狮|广绣|工夫茶|英歌舞|灰塑|龙舟/.test(l))
-    return '岭南非遗文化丰富多彩，以下是最具代表性的项目：\n\n🎭 **粤剧** — 联合国人类非物质文化遗产，又称"广东大戏"，唱腔婉转，服饰华丽。\n\n🦁 **醒狮** — 佛山醒狮最为著名，鼓点激昂，动作刚劲，每逢节庆必有表演。\n\n🪡 **广绣** — 中国四大名绣之一，色彩饱满，构图繁而不乱。\n\n🍵 **工夫茶** — 潮汕茶文化精髓，讲究"和、敬、精、乐"。\n\n🏺 **石湾陶塑** — 佛山千年窑火，人物造型栩栩如生。\n\n推荐体验地：广州粤剧艺术博物馆、佛山祖庙、潮州古城、石湾南风古灶。';
-  if (/美食|吃|好吃|早茶|潮汕|顺德|客家|点心|烧鹅|白切鸡|肠粉/.test(l))
-    return '🍜 **广东美食天堂**\n\n广东是公认的美食天堂，三大菜系各具特色：\n\n**广府菜** — 清淡鲜美\n早茶（虾饺、烧卖、叉烧包、凤爪）是广州人的日常仪式。推荐：广州酒家、陶陶居、泮溪酒家。\n\n**潮汕菜** — 精致细腻\n牛肉火锅、卤鹅、蚝烙、粿条汤。推荐：汕头小公园、潮州牌坊街。\n\n**顺德菜** — 世界美食之都\n鱼生、双皮奶、均安蒸猪、大良炒牛奶。推荐：大良华盖路、容桂渔人码头。\n\n**客家菜** — 咸香浓郁\n盐焗鸡、梅菜扣肉、酿豆腐。推荐：梅州、河源。';
-  if (/碉楼|开平|华侨|世界遗产|自力村/.test(l))
-    return '🏛️ **开平碉楼与村落**\n\n2007 年列入联合国世界文化遗产，是广东首个世界文化遗产。\n\n现存约 1833 座碉楼，集防卫、居住和中西建筑艺术于一体。最具代表性的村落：\n\n• **自力村** — 最集中，15 座碉楼，田园环绕\n• **马降龙** — 被誉为"世界最美村落"之一\n• **锦江里瑞石楼** — 开平第一楼，9 层高\n• **立园** — 华侨私家园林\n\n🚗 广州出发约 2 小时，高铁到开平南站后换乘公交。\n📅 最佳季节：春秋（3-5 月、9-11 月），稻田环绕时拍照最美。';
-  if (/博物馆|开放时间|展览|省博/.test(l))
-    return '🏛️ **广东主要博物馆**\n\n**广东省博物馆**（珠江新城）\n周二至周日 9:00-17:00，周一闭馆，免费需预约。\n\n**广州粤剧艺术博物馆**（荔湾恩宁路）\n周二至周日 9:00-17:00，免费需预约。\n\n**南越王博物院**（越秀）\n周二至周日 9:00-17:30，门票 10 元。\n\n**佛山祖庙博物馆**\n每日 8:30-17:30，门票 20 元。\n\n**深圳博物馆**（福田）\n周二至周日 10:00-18:00，免费免预约。';
-  if (/广州|羊城|花城|珠江|小蛮腰|广州塔/.test(l))
-    return '🏙️ **广州 — 千年商都**\n\n必打卡景点：\n• 广州塔 — 600 米高空俯瞰珠江新城\n• 陈家祠 — 岭南建筑艺术集大成者\n• 永庆坊 — 西关老城活化，地道广府生活\n• 沙面岛 — 欧陆风情建筑群，拍照圣地\n• 越秀公园 — 五羊石像，广州地标\n• 珠江夜游 — 两岸灯光秀，19:30-21:00 最佳\n\n🍵 特色体验：早茶、西关骑楼漫步、荔枝湾涌游船。\n🚄 周边：佛山 20 分钟高铁、顺德美食半日可达。';
-  return '很高兴收到你的问题！我可以帮你了解岭南文化、规划旅行行程、推荐美食景点。\n\n试试问我：\n• "推荐一个广州三日游行程"\n• "广东有哪些非遗文化？"\n• "潮汕有什么好吃的？"\n• "开平碉楼在哪里？怎么去？"\n\n或者切换到「行程规划」模式，我会为你生成一份完整的旅行计划 ✈️';
-}
-
-function generatePlan(from: string, to: string, budget: number, days: number, tags: string[], notes: string): string {
-  const spots: Record<string, string[]> = {
-    '广州': ['越秀公园 · 五羊石像', '陈家祠 · 永庆坊 · 沙面岛', '广州塔 · 花城广场 · 珠江夜游', '白云山 · 云台花园', '南越王博物院 · 北京路'],
-    '深圳': ['世界之窗 · 锦绣中华', '深圳湾公园 · 人才公园', '大梅沙海滨公园', '华侨城创意园 · OCT LOFT', '蛇口海上世界 · 明华轮'],
-    '佛山': ['祖庙 · 醒狮表演', '南风古灶 · 石湾公仔街', '顺德清晖园 · 大良美食', '西樵山 · 南海观音', '岭南天地 · 筷子路'],
-    '珠海': ['长隆海洋王国', '情侣路 · 珠海渔女 · 日月贝', '外伶仃岛 · 海岛度假', '圆明新园 · 梦幻水城', '港珠澳大桥 · 人工岛'],
-    '潮州': ['牌坊街 · 甲第巷 · 己略黄公祠', '广济桥 · 韩文公祠', '开元寺 · 潮州西湖', '凤凰山 · 凤凰单丛茶园', '龙湖古寨'],
-    '汕头': ['小公园 · 骑楼群 · 老妈宫', '南澳岛 · 青澳湾', '礐石风景区', '陈慈黉故居 · 前美村', '东海岸新城'],
-    '韶关': ['丹霞山 · 长老峰 · 阳元石', '南华寺 · 六祖道场', '云门山 · 玻璃桥', '珠玑古巷 · 梅关古道', '帽子峰林场'],
-    '梅州': ['客天下 · 客家小镇', '雁南飞茶田', '花萼楼 · 围龙屋群', '叶剑英纪念园', '灵光寺 · 阴那山'],
-  };
-  const citySpots = spots[to] || [`${to}中心城区`, `${to}文化地标`, `${to}自然风光`, `${to}特色街区`, `${to}周边景点`];
-
-  let plan = `## 🗺️ ${from} → ${to}\n`;
-  plan += `> ${days} 天行程 · 人均 ¥${budget} · ${tags.length > 0 ? tags.join(' · ') : '综合体验'}\n\n`;
-
-  for (let d = 0; d < days; d++) {
-    const morning = citySpots[(d * 2) % citySpots.length];
-    const afternoon = citySpots[(d * 2 + 1) % citySpots.length];
-    plan += `### 📅 第 ${d + 1} 天\n`;
-    plan += `- **上午** — ${morning}，感受${to}的独特魅力\n`;
-    plan += `- **午餐** — 品尝${to}当地特色美食\n`;
-    plan += `- **下午** — ${afternoon}，深度体验在地文化\n`;
-    plan += `- **晚上** — ${d < days - 1 ? '漫步夜市或江边，融入当地夜生活' : '享用告别晚餐，整理旅途记忆'}\n\n`;
-  }
-
-  const transport = Math.round(budget * 0.22);
-  const lodging = Math.round(budget * 0.35);
-  const dining = Math.round(budget * 0.25);
-  const tickets = Math.round(budget * 0.13);
-  const misc = budget - transport - lodging - dining - tickets;
-
-  plan += `### 💰 预算明细\n`;
-  plan += `| 项目 | 人均费用 |\n|------|----------|\n`;
-  plan += `| 往返交通 | ¥${transport} |\n`;
-  plan += `| 住宿（${Math.max(days - 1, 1)} 晚） | ¥${lodging} |\n`;
-  plan += `| 餐饮 | ¥${dining} |\n`;
-  plan += `| 门票 + 体验 | ¥${tickets} |\n`;
-  plan += `| 其他 | ¥${misc} |\n\n`;
-
-  plan += `### 📝 行前贴士\n`;
-  plan += `- 提前查看${to}天气预报，准备合适的衣物\n`;
-  plan += `- 热门景点建议提前线上预约购票\n`;
-  plan += `- 下载离线地图，山区可能信号不稳定\n`;
-  if (tags.includes('美食之旅')) plan += `- 备一些肠胃药，尽情品尝美食也要注意肠胃健康\n`;
-  if (tags.includes('非遗体验')) plan += `- 非遗体验项目建议提前电话确认开放情况和预约要求\n`;
-  plan += `- 携带适量现金，部分老店和小摊可能不支持扫码支付\n`;
-  if (notes) plan += `- 补充需求：${notes}\n`;
-
-  return plan;
-}
 
 // ── Chat Bubble ────────────────────────────────────────────
 function ChatBubble({ msg, index }: { msg: Message; index: number }) {
@@ -341,7 +272,6 @@ function PlanResult({ text }: { text: string }) {
 // ── Main Screen ────────────────────────────────────────────
 export default function AIAssistantScreen() {
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
   const [mode, setMode] = useState<Mode>('chat');
 
   // Chat
@@ -349,6 +279,7 @@ export default function AIAssistantScreen() {
   const [input, setInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const chatRef = useRef<ScrollView>(null);
+  const chatCancel = useRef<(() => void) | null>(null);
 
   // Planner
   const [from, setFrom] = useState('');
@@ -359,26 +290,81 @@ export default function AIAssistantScreen() {
   const [notes, setNotes] = useState('');
   const [planLoading, setPlanLoading] = useState(false);
   const [planResult, setPlanResult] = useState('');
+  const planCancel = useRef<(() => void) | null>(null);
 
-  async function send(q?: string) {
+  // 卸载时中断进行中的流，避免泄漏
+  useEffect(
+    () => () => {
+      chatCancel.current?.();
+      planCancel.current?.();
+    },
+    [],
+  );
+
+  // AI 对话：调用后端 SSE 接口（DeepSeek 代理），逐 token 流式填充助手气泡。
+  function send(q?: string) {
     const text = (q ?? input).trim();
     if (!text || chatLoading) return;
-    setMsgs(m => [...m, { role: 'user', text }]);
+
+    // 发给后端的完整历史（去掉首条欢迎语占位）+ 本轮用户消息
+    const history: ChatMessage[] = msgs
+      .filter((m, i) => !(i === 0 && m.text === WELCOME_MSG.text))
+      .map((m) => ({ role: m.role, content: m.text }));
+    history.push({ role: 'user', content: text });
+
+    // UI：追加用户气泡 + 一个空助手气泡用于流式填充
+    setMsgs((m) => [...m, { role: 'user', text }, { role: 'assistant', text: '' }]);
     setInput('');
     setChatLoading(true);
-    await new Promise(r => setTimeout(r, 800 + Math.random() * 700));
-    setMsgs(m => [...m, { role: 'assistant', text: generateReply(text) }]);
-    setChatLoading(false);
-    setTimeout(() => chatRef.current?.scrollToEnd({ animated: true }), 100);
+
+    chatCancel.current = streamChat(history, {
+      onToken: (delta) =>
+        setMsgs((cur) => {
+          const copy = cur.slice();
+          const last = copy[copy.length - 1];
+          copy[copy.length - 1] = { ...last, text: last.text + delta };
+          return copy;
+        }),
+      onDone: () => {
+        setChatLoading(false);
+        setTimeout(() => chatRef.current?.scrollToEnd({ animated: true }), 60);
+      },
+      onError: (msg) => {
+        setMsgs((cur) => {
+          const copy = cur.slice();
+          copy[copy.length - 1] = { role: 'assistant', text: `⚠️ ${msg}` };
+          return copy;
+        });
+        setChatLoading(false);
+      },
+    });
   }
 
-  async function doPlan() {
-    if (!from.trim() || !to.trim()) return;
+  // AI 行程规划：调用后端 SSE 接口，流式累积 Markdown 行程。
+  function doPlan() {
+    if (!from.trim() || !to.trim() || planLoading) return;
     setPlanLoading(true);
     setPlanResult('');
-    await new Promise(r => setTimeout(r, 1000 + Math.random() * 1000));
-    setPlanResult(generatePlan(from.trim(), to.trim(), budget, days, tags, notes.trim()));
-    setPlanLoading(false);
+    const tagLabels = PREFERENCES.filter((p) => tags.includes(p.key)).map((p) => p.label);
+
+    planCancel.current = streamPlan(
+      {
+        from: from.trim(),
+        to: to.trim(),
+        budget,
+        days,
+        tags: tagLabels,
+        notes: notes.trim() || undefined,
+      },
+      {
+        onToken: (delta) => setPlanResult((prev) => prev + delta),
+        onDone: () => setPlanLoading(false),
+        onError: (msg) => {
+          setPlanResult(`⚠️ ${msg}`);
+          setPlanLoading(false);
+        },
+      },
+    );
   }
 
   const isWelcome = msgs.length === 1 && msgs[0].role === 'assistant' && msgs[0].text === WELCOME_MSG.text;
@@ -452,7 +438,7 @@ export default function AIAssistantScreen() {
               tags={tags} setTags={setTags} notes={notes} setNotes={setNotes}
               loading={planLoading} onSubmit={doPlan} />
 
-            {planResult && <PlanResult text={planResult} />}
+            {planResult ? <PlanResult text={planResult} /> : null}
 
             {!planResult && !planLoading && (
               <Animated.View entering={FadeInDown.delay(300).springify()} className="mx-4 mt-6 items-center rounded-2xl bg-[#F9F9F9] py-10">
