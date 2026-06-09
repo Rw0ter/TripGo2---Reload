@@ -8,7 +8,7 @@
 
 ## 当前阶段
 
-主体功能已大面积落地：后端 **17 个业务模块**、前端约 **37 个路由屏**均已存在并接入真实数据。本次（2026-06-09）补做三件硬骨头并修复了文档失真：① 后端真正实现 `ai` 模块（DeepSeek 代理 + SSE 流式），前端 AI 助手接真后端、删除假回复；② 签到改用 UTC+8 判定当天；③ 建立 Jest 测试 + CI/CD 双门禁 + pre-commit 提交门禁，并顺手修复了 master 已破损的后端构建（缺 `@types/bcryptjs`）。下一步推进 RAG、支付/线路/酒店等剩余接口、长尾静态页批量铺开。
+主体功能已大面积落地：后端 **18 个业务模块**、前端约 **42 个路由屏**。本会话（2026-06-09）累计合并 **7 个 PR（#66–#72）**：① AI 后端模块（DeepSeek 代理 + SSE）+ 前端接入删假 AI；② 签到 UTC+8；③ Jest + CI/CD 双门禁 + pre-commit；④ 入参校验加固（reviews/favorites DTO）+ 后端筛选（/stories/mine、/stories/liked、DELETE /trips/:id）；⑤ orders 服务端定价 + 事务扣款 + 流水（杜绝 0 元下单）；⑥ quiz 服务端判分（防答案泄露）；⑦ RAG 知识库（本地 embedding + sqlite-vec，32 条，AI 检索增强，已真实联调）；⑧ 5 个法律/说明页 + 死链清理；⑨ study/cantonese 接 cultural。下一步：剩余占位屏真实化（见"下一步"）。
 
 ## 对账说明（2026-06-09，为何本文件此前不可信）
 
@@ -40,18 +40,19 @@
 - 暂无。
 
 ## 下一步（按优先级）
-1. **配置 `DEEPSEEK_API_KEY`**（后端 `.env`）端到端联调 AI 对话 / 规划——当前无 key 时 `/ai/chat`、`/ai/plan` 返回 503，前端显示"AI 服务未配置"。
-2. **RAG 模块**：基于已验证的 sqlite-vec spike（独立 better-sqlite3 连接），为 `ai` 模块加检索增强。
-3. 后端剩余接口：线路规划、酒店、地址、翻译 + TTS（见 page-registry"需新增接口"表）。
-4. 前端长尾静态屏（协议 / 隐私 / 非遗介绍等 ~14 屏）套 `StaticPage` 批量铺。
-5. 补业务缺口：orders（价格信任客户端、未写流水/扣余额）、messages（假数据 → Prisma）、reviews/favorites（补 DTO 校验）。
+> Task 1（校验）/ Task 4（死链法律页）/ Task 5（AI+RAG）已完成；以下为剩余占位屏真实化（Task 2）与后端筛选零头（Task 3）。
+
+1. **接已就绪后端（快）**：product/[id] 评论接 `GET /reviews?itemType=destination`、描述读 `Destination.description`（seed 需补文案）；collections 接 `GET/POST /favorites`（Favorite 缺 image/price 展示字段，需补字段或前端二次查引用对象）；vr 场景接 `GET /cultural?category=vr_scene`（需给 CulturalContent 加 image/panorama 字段 + seed）。
+2. **需新建后端**：messages 建 `Message` 模型按 userId 隔离 + 标记已读；profile/edit 加 `PUT /auth/userinfo` + 头像上传；trip/create 编辑加 `PUT /trips/:id`；search 推荐（`/search/hot`、`/search/suggestions`、分页）。
+3. **较大 / 需外部依赖**：scenic/[id] 与 guide/[city] 的价格/评分/时长/营业时间需 `Scenic` 大幅扩字段（评分可复用 reviews 聚合）；天气需新增 `GET /weather` 代理（**需外部天气 API key**）；checkin 每日任务/慈善需 `Task`/`Charity` 模型；钱包行程预算需 `Budget` 模型。
 
 ## 已知问题 / 坑
 
 > 已修旧条目已移除：bcrypt 高危依赖已于 #65 换 bcryptjs；后端构建缺类型已于本次修复。
 
-- **AI 需配 `DEEPSEEK_API_KEY`**（后端 `.env`）才能真正对话；缺失时接口 503、前端提示"AI 服务未配置"。RAG / sqlite-vec 仍只是 spike，未建模块。
-- 业务缺口（非阻塞、演示可用）：orders 价格由客户端传入且不校验商品、下单不写 Transaction / 不扣余额；messages 返回硬编码 DEMO 列表且非按用户；reviews / favorites 的 POST 用内联类型未走 DTO 校验；quiz 详情下发正确答案；my/stories、my/likes 前端全量过滤（后端无 `/stories/mine`、`/stories/liked`）；study / cantonese / collections / vr 场景为静态数据。
+- **AI 需配 `DEEPSEEK_API_KEY`**（后端 `.env`）才能真正对话与 RAG 检索增强；缺失时接口 503。RAG 已落地（`modules/rag`，transformers.js + sqlite-vec），知识库数据在 dev.db（gitignore），**新环境需跑 `npm run rag:index` 灌库**。
+- 剩余占位/假数据（待真实化，非阻塞，见"下一步"）：messages 后端 DEMO 列表非按用户；vr 场景列表 + 天气写死；scenic/[id]、guide/[city] 价格/评分/天气/时长本地派生；product 详情描述与评论硬编码（reviews 后端已就绪可接）；collections 硬编码（favorites 后端已就绪可接）；profile/edit 无 PUT 端点（本地兜底）；trip/create 无 PUT（不能编辑）；wallet 行程预算静态；checkin 每日任务/慈善本地。
+- 已修（本会话）：orders 0 元下单、quiz 答案泄露、reviews/favorites 校验、stories/mine|liked、study/cantonese 接 cultural、wallet 流水路径。
 - Prisma 的 SQLite 引擎无法加载扩展，sqlite-vec 必须独立 better-sqlite3 连接（CLAUDE.md §7）；写 vec0 表 rowid 须用 `BigInt`。
 - 地图腾讯 GL JS Key 为公开客户端 key（内置 demo key 兜底）；离线瓦片随 App 打包，改范围需重跑 `scripts/fetch-offline-tiles.js` 并 `expo start --clear`；GL 旋转需 3D viewMode。
 - 前端既有 ~14 条 lint warnings（unused / require / hook-deps，非本次引入）；CI lint 不因 warning 失败，逐步清理。
@@ -91,3 +92,8 @@
 - **2026-06-09** **签到日界改 UTC+8**：`beijingDateKey()` 基于 epoch+8h 取 UTC 日期，与服务器时区无关，修正北京 0–8 点签到落到前一天的 bug。
 - **2026-06-09** **建立测试 + CI/CD 门禁防回归**：后端引入 Jest（同目录 `*.spec.ts`），CI 升级为后端 build+test、前端 tsc+lint 双门禁，master push 增 CD 产物 job；新增 `.githooks/pre-commit` 本地强制门禁。起因：发现 master 构建已破损（缺 `@types/bcryptjs`）却被合并，旧 CI 没拦住。
 - **2026-06-09** **文档强制同步**：CLAUDE.md §12/§14 把"会话结束更新 PROGRESS/page-registry"与"提交前跑通构建+测试、改代码必须配套测试"列为**硬性阻断**要求，根治文档落后代码的历史问题。
+- **2026-06-09（续）** 第二批连续推进，按聚焦 PR 合并（#67–#72）：入参校验加固（reviews/favorites DTO、orders $transaction 服务端定价、quiz 服务端判分）+ 后端筛选（/stories/mine|liked、DELETE /trips/:id）+ RAG + 法律页 + study/cantonese 接 cultural。每个 PR 走 feat 分支 → pre-commit 门禁 → CI 双门禁 → squash 合并。
+- **2026-06-09（续）** RAG embedding 选**本地 transformers.js（bge-small-zh-v1.5，512 维）**：DeepSeek 无 embedding API，本地方案保留 SQLite"免部署"卖点、零额外 key；与 sqlite-vec 配合（独立 better-sqlite3 连接共用 dev.db）。
+- **2026-06-09（续）** orders 改 `itemType+itemId` 服务端定价：移除客户端 price（杜绝 0 元下单），在 `$transaction` 内校验余额 → 扣 `User.balance` → 建订单 → 写 `Transaction` 流水；并给 `Scenic` 加 `price` 字段（支持景点预订定价）。
+- **2026-06-09（续）** quiz `GET /quiz/:id` 剥离 answer + 新增 `/check`（逐题）`/submit`（服务端判分发积分），杜绝前端读答案作弊。
+- **2026-06-09（续）** 占位屏真实化策略：cultural/reviews/favorites/transactions 后端已就绪的优先接已有接口；messages/profile/trip-edit/scenic 大扩/天气(需外部 key)/checkin 任务/budget 需新建后端模型，作为后续分批。

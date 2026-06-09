@@ -51,6 +51,7 @@ AI 对话 / 行程规划由后端 `ai` 模块代理 DeepSeek（SSE 流式），*
 - 在 `backend/.env` 填 `DEEPSEEK_API_KEY`（`DEEPSEEK_BASE_URL` / `DEEPSEEK_MODEL` 可选，默认 `https://api.deepseek.com` / `deepseek-chat`）。
 - 接口：`POST /ai/chat`（对话）、`POST /ai/plan`（行程规划），响应均为 `text/event-stream`（逐段 `data: {"delta":"…"}`，以 `data: [DONE]` 结束）。
 - 未配置 key 时接口返回 503，前端 AI 助手会提示"AI 服务未配置"。
+- **知识库检索增强（RAG）**：后端 `rag` 模块用本地 embedding（transformers.js `bge-small-zh`）+ sqlite-vec；新环境跑 `cd backend && npm run rag:index` 灌入文创/旅游/非遗知识（约 32 条），对话/规划会优先采用检索到的知识。
 
 ## 测试与提交门禁
 

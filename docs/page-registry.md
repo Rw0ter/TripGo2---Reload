@@ -73,12 +73,12 @@
 | login1.html | 启动闪屏 | 动画屏 | 单独实现 | 无 | 完成 | 复刻启动动画，仅首启展示 |
 | welcome.html | 启动欢迎页 | 静态文本 | 单独实现 | 无 | 待开始 | 可用 Expo SplashScreen |
 | resetPW.html | 重置密码 | 认证 | Form组件 | auth | 待开始 | |
-| about_us.html | 关于我们 | 静态文本 | StaticPage组件 | 无 | 待开始 | settings 已有入口（死链） |
+| about_us.html | 关于我们 | 静态文本 | StaticPage组件 | 无 | 完成 | `app/about_us.tsx`，数据驱动 StaticPage（#71） |
 | xieyi.html | 用户服务协议 | 静态文本 | StaticPage组件 | 无 | 待开始 | |
-| yonghuxieyi.html | 用户隐私协议 | 静态文本 | StaticPage组件 | 无 | 待开始 | |
+| yonghuxieyi.html | 用户协议 | 静态文本 | StaticPage组件 | 无 | 完成 | `app/yonghuxieyi.tsx`，采用 xieyi 服务协议文案（#71） |
 | yinsi.html | 隐私政策 | 静态文本 | StaticPage组件 | 无 | 待开始 | |
-| yinsizhengce.html | 隐私政策 | 静态文本 | StaticPage组件 | 无 | 待开始 | 与 yinsi 几乎相同 |
-| shequguifan.html | 社区规范 | 静态文本 | StaticPage组件 | 无 | 待开始 | |
+| yinsizhengce.html | 隐私政策 | 静态文本 | StaticPage组件 | 无 | 完成 | `app/yinsizhengce.tsx`（#71）；另含新撰 `app/permissions.tsx` 应用权限说明 |
+| shequguifan.html | 社区规范 | 静态文本 | StaticPage组件 | 无 | 完成 | `app/shequguifan.tsx`（#71） |
 | help.html | AI 智能客服 | AI | 单独实现 | ai | 待开始 | 可复用 ai 模块；独立客服页未建 |
 | ctjy.html | 广东传统技艺介绍 | 静态文本 | StaticPage组件 | 无 | 待开始 | |
 | ctxj.html | 广东传统戏剧介绍 | 静态文本 | StaticPage组件 | 无 | 待开始 | |
@@ -87,7 +87,7 @@
 | mjms.html | 广东传统美术介绍 | 静态文本 | StaticPage组件 | 无 | 待开始 | 内嵌视频 |
 | yueju.html | 粤剧非遗详情 | 静态文本 | StaticPage组件 | 无 | 待开始 | |
 | zhenjiu.html | 岭南针灸非遗详情 | 静态文本 | StaticPage组件 | 无 | 待开始 | |
-| study.html | 学习非遗聚合页 | 列表 | 列表组件 | 无 | 完成 | `study.tsx`，全静态导航入口 |
+| study.html | 学习非遗聚合页 | 列表 | 列表组件 | cultural | 完成 | `study.tsx`，精选项目接 GET /cultural?category=topic（#72） |
 | fyxq.html | 非遗研学工坊详情 | 详情 | 详情组件 | 无 | 待开始 | |
 | community.html | 社区动态流 | 复杂屏 | 单独实现 | stories | 完成 | `(tabs)/community.tsx` |
 | Trip_Story.html | 社区故事详情 | 详情 | 单独实现 | stories, auth | 完成 | `story/[id].tsx`，点赞 + 评论 |
@@ -103,7 +103,7 @@
 | create_addr.html | 添加新地址 | 表单 | Form组件 | 新增:地址 | 待开始 | |
 | wlxx.html | 地址管理列表 | 列表 | 列表组件 | 新增:地址 | 待开始 | |
 | hotel.html | 酒店预订表单 | 表单 | Form组件 | 新增:酒店 | 待开始 | |
-| HK.html | 粤语学习 / 翻译 / 语音 | AI | 单独实现 | 新增:翻译+TTS | 完成 | `cantonese.tsx`（粤语 + 本地 TTS；翻译未做） |
+| HK.html | 粤语学习 / 翻译 / 语音 | AI | 单独实现 | cultural | 完成 | `cantonese.tsx`，短语/课程接 GET /cultural?category=phrase\|lesson（#72）；本地 TTS；翻译未做 |
 | Translate.html | 中译英翻译 | AI | 单独实现 | 新增:翻译 | 待开始 | 可接 ai 模块 |
 | VR Map.html | VR 全景浏览 | 地图VR | 单独实现 | 无 | 完成 | `vr.tsx`，自研 Three.js 全景（非 WebView） |
 
