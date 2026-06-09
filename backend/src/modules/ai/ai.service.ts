@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Response } from 'express';
+import { RagService } from '../rag/rag.service';
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -46,6 +47,16 @@ export function buildPlanPrompt(dto: PlanInput): string {
   ].join('\n');
 }
 
+// 把 RAG 检索到的知识拼进 system prompt；无知识则原样返回。导出便于单测。
+export function buildSystemWithContext(base: string, context: string[]): string {
+  if (!context || context.length === 0) return base;
+  const refs = context.map((c, i) => `[${i + 1}] ${c}`).join('\n');
+  return (
+    `${base}\n\n以下是与用户问题相关的「文脉粤游」知识库参考资料，` +
+    `回答时优先采用其中信息，但请用自己的话组织、不要照搬：\n${refs}`
+  );
+}
+
 // 从 DeepSeek（OpenAI 兼容）流式响应的一段原始 SSE 文本里提取增量 token。
 // 每个事件形如：data: {"choices":[{"delta":{"content":"x"}}]}；以 data: [DONE] 结束。
 // 导出为纯函数便于单测；不完整 / 非 JSON 的行会被安全跳过。
@@ -71,22 +82,29 @@ export function extractDeltas(raw: string): string[] {
 export class AiService {
   private readonly logger = new Logger(AiService.name);
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    private readonly rag: RagService,
+  ) {}
 
-  // AI 对话：注入岭南旅游系统提示后转发给 DeepSeek，SSE 写回。
+  // AI 对话：检索相关知识 → 注入岭南旅游系统提示 → 转发给 DeepSeek，SSE 写回。
   async chat(userMessages: ChatMessage[], res: Response): Promise<void> {
+    const lastUser = [...userMessages].reverse().find((m) => m.role === 'user');
+    const context = lastUser ? await this.rag.search(lastUser.content, 4) : [];
     const messages: ChatMessage[] = [
-      { role: 'system', content: CHAT_SYSTEM_PROMPT },
+      { role: 'system', content: buildSystemWithContext(CHAT_SYSTEM_PROMPT, context) },
       // 过滤掉客户端可能注入的 system 消息，防提示词注入
       ...userMessages.filter((m) => m.role !== 'system'),
     ];
     await this.streamChat(messages, res);
   }
 
-  // AI 行程规划：用规划专用提示，SSE 写回 Markdown。
+  // AI 行程规划：按目的地检索知识增强，SSE 写回 Markdown。
   async plan(input: PlanInput, res: Response): Promise<void> {
+    const tags = input.tags?.join(' ') ?? '';
+    const context = await this.rag.search(`${input.to} 旅游 ${tags}`.trim(), 5);
     const messages: ChatMessage[] = [
-      { role: 'system', content: PLAN_SYSTEM_PROMPT },
+      { role: 'system', content: buildSystemWithContext(PLAN_SYSTEM_PROMPT, context) },
       { role: 'user', content: buildPlanPrompt(input) },
     ];
     await this.streamChat(messages, res);
