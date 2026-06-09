@@ -1,0 +1,27 @@
+#!/bin/sh
+# TripGo 提交前门禁（强制）：自动化测试 / 类型检查必须通过，否则拒绝提交。
+#
+# 启用（每个 clone 执行一次，见 README / CLAUDE.md §13、§14）：
+#   git config core.hooksPath .githooks
+#
+# 仅对有暂存改动的子项目运行对应检查，避免无关开销。
+set -e
+
+ROOT="$(git rev-parse --show-toplevel)"
+STAGED="$(git diff --cached --name-only)"
+
+if [ -z "$STAGED" ]; then
+  exit 0
+fi
+
+if echo "$STAGED" | grep -q '^backend/'; then
+  echo "▶ 后端：构建 + 单元测试"
+  ( cd "$ROOT/backend" && npm run build && npm test )
+fi
+
+if echo "$STAGED" | grep -q '^frontend/'; then
+  echo "▶ 前端：类型检查 + Lint"
+  ( cd "$ROOT/frontend" && npx tsc --noEmit && npx expo lint )
+fi
+
+echo "✓ 提交前检查通过"

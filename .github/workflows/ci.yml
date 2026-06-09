@@ -7,8 +7,9 @@ on:
     branches: [master]
 
 jobs:
+  # ── 质量门禁：后端构建 + 单元测试（PR 与 push 都跑，必须绿才能合并）──
   backend:
-    name: 后端构建
+    name: 后端构建 + 测试
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -32,3 +33,72 @@ jobs:
 
       - name: 编译
         run: npm run build
+
+      - name: 单元测试
+        run: npm test
+
+  # ── 质量门禁：前端类型检查 + Lint ──
+  frontend:
+    name: 前端类型检查 + Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 类型检查（tsc --noEmit）
+        run: npx tsc --noEmit
+
+      - name: Lint（expo lint）
+        run: npx expo lint
+
+  # ── 交付产物（CD）：仅 master push 触发，门禁绿后构建可部署产物并上传 ──
+  # 本项目无线上部署目标，CD 以"持续产出可部署产物"落地（后端 dist + 前端 Web 静态站）。
+  build-artifacts:
+    name: 交付产物
+    needs: [backend, frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 后端构建产物
+        working-directory: backend
+        run: |
+          npm ci
+          npx prisma generate
+          npm run build
+
+      - name: 上传后端产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-dist
+          path: backend/dist
+          if-no-files-found: error
+
+      - name: 前端 Web 静态产物
+        working-directory: frontend
+        run: |
+          npm ci
+          npx expo export --platform web
+
+      - name: 上传前端 Web 产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-web
+          path: frontend/dist
+          if-no-files-found: error
