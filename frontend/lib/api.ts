@@ -3,7 +3,8 @@ import { router } from 'expo-router';
 import { useAuthStore } from '@/stores/auth';
 
 // 后端 API 基址走环境变量（见 .env.example），不硬编码 IP。
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+// 导出供 SSE 流式客户端（lib/ai.ts）复用，保持单一来源。
+export const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 const TIMEOUT_MS = 10000;
 
 interface ApiEnvelope<T> {

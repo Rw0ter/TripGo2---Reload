@@ -30,6 +30,7 @@ cp .env.example .env          # 填好 JWT_SECRET、DEEPSEEK_API_KEY
 npx prisma migrate dev --name init
 npx prisma db seed            # 灌入演示数据（轮播 / 景点 / 知识课堂 / 文创）
 npm run start:dev             # API http://localhost:3000  文档 /docs
+npm run verify                # 提交前自检：构建 + 单元测试
 ```
 
 ## 前端：安装与运行
@@ -42,6 +43,31 @@ npx expo start                # 按 w 开 web，或在 Android 模拟器运行
 
 > 后端地址走配置（不硬编码 IP），默认指向本机 `:3000`，需先启动后端。
 > 开发 / 演示以 web 与 Android 模拟器为准。
+
+## AI 助手
+
+AI 对话 / 行程规划由后端 `ai` 模块代理 DeepSeek（SSE 流式），**密钥仅后端持有**：
+
+- 在 `backend/.env` 填 `DEEPSEEK_API_KEY`（`DEEPSEEK_BASE_URL` / `DEEPSEEK_MODEL` 可选，默认 `https://api.deepseek.com` / `deepseek-chat`）。
+- 接口：`POST /ai/chat`（对话）、`POST /ai/plan`（行程规划），响应均为 `text/event-stream`（逐段 `data: {"delta":"…"}`，以 `data: [DONE]` 结束）。
+- 未配置 key 时接口返回 503，前端 AI 助手会提示"AI 服务未配置"。
+
+## 测试与提交门禁
+
+```
+# 后端
+cd backend
+npm test            # Jest 单元测试
+npm run verify      # = build + test（提交前必跑）
+
+# 前端
+cd frontend
+npx tsc --noEmit    # 类型检查
+npx expo lint       # Lint
+```
+
+- **启用本地提交门禁（每个 clone 执行一次）**：`git config core.hooksPath .githooks`。提交时会按改动的子项目自动跑构建 / 测试 / 类型检查，失败即拒绝提交。
+- CI（GitHub Actions）双门禁：后端 `build`+`test`、前端 `tsc`+`lint`，PR 必须全绿才能合并；master push 后另产出可部署产物（后端 dist + 前端 Web 静态站）。详见 CLAUDE.md 第 13 / 14 节。
 
 ## 文档体系
 
