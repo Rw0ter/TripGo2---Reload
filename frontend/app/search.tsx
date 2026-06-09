@@ -88,27 +88,6 @@ const CHIP_PALETTE: { bg: string; fg: string; icon: keyof typeof Ionicons.glyphM
   { bg: '#F6EFDD', fg: '#B07F32', icon: 'star' },
 ];
 
-// 文创卡暖色渐变池（destinations 图片未登记 → 禁用图片打底，渐变按 id 取）。
-const PRODUCT_GRADIENTS: readonly (readonly [string, string])[] = [
-  ['#F3E2C2', '#E7C892'],
-  ['#E9EFE2', '#CFE0C2'],
-  ['#F5E7CE', '#EAD3A2'],
-  ['#EFE6CF', '#DEC79A'],
-  ['#EDE7D6', '#D8C9A4'],
-  ['#F4ECD6', '#E6D2A6'],
-];
-
-// 文创图标按 type 派生（与 products.tsx 的 TYPE_LABELS 体系语义对齐：
-// 1 古筝 / 2 曲艺 / 3 技艺 / 4 美术 / 5 民俗 / 6 特产）。
-const PRODUCT_ICONS: Record<number, keyof typeof Ionicons.glyphMap> = {
-  1: 'musical-notes',
-  2: 'mic',
-  3: 'construct',
-  4: 'color-palette',
-  5: 'leaf',
-  6: 'restaurant',
-};
-
 // 排行榜前三名奖牌渐变（金 / 银 / 铜）—— 元组常量，类型更准。
 const MEDAL_GRADIENTS: readonly (readonly [string, string])[] = [
   ['#E7C078', GOLD],
@@ -118,20 +97,6 @@ const MEDAL_GRADIENTS: readonly (readonly [string, string])[] = [
 
 // 景点瀑布流高度池——交错取值制造「高低落差」（仿 home MasonryCard）。
 const MASONRY_HEIGHTS = [196, 168, 184, 212, 172, 200];
-
-// 文创渐变按 id 取色；图标按 type 取（缺省回退到 id 取一个暖色图标）。
-const FALLBACK_PRODUCT_ICONS: readonly (keyof typeof Ionicons.glyphMap)[] = [
-  'gift', 'color-palette', 'leaf', 'pricetag', 'sparkles', 'ribbon',
-];
-
-function productGradient(id: number): readonly [string, string] {
-  return PRODUCT_GRADIENTS[Math.abs(id) % PRODUCT_GRADIENTS.length];
-}
-
-function productIcon(item: DestinationItem): keyof typeof Ionicons.glyphMap {
-  if (item.type != null && PRODUCT_ICONS[item.type]) return PRODUCT_ICONS[item.type];
-  return FALLBACK_PRODUCT_ICONS[Math.abs(item.id) % FALLBACK_PRODUCT_ICONS.length];
-}
 
 // ── Helpers ──
 
@@ -319,7 +284,7 @@ export default function SearchScreen() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
 
         {/* ── 森林绿渐变 Hero 头部：返回 + 标题 + 大号白色搜索胶囊 ── */}
-        <LinearGradient colors={['#3E6B4F', '#5C8A6D']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+        <LinearGradient colors={['#3E6B4F', '#5C8A6D']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ zIndex: 30 }}>
           <Animated.View
             entering={FadeInDown.duration(450)}
             style={{ paddingTop: insets.top + 6 }}
@@ -376,12 +341,19 @@ export default function SearchScreen() {
                 </Pressable>
               </View>
 
-              {/* 下拉浮层：历史 / 建议 —— 正常流（mt-2，非 absolute），
-                  彻底规避 Android 上 absolute 下拉被 -mt-4 米白面板跨兄弟遮挡。 */}
+              {/* 下拉浮层：历史 / 建议 —— 悬浮覆盖层（absolute，不占布局高度，悬浮于主体面板之上）。 */}
               {showDropdown && dropdownItems.length > 0 ? (
                 <View
-                  style={{ boxShadow: '0px 8px 22px rgba(0,0,0,0.18)' }}
-                  className="mt-2 overflow-hidden rounded-2xl bg-white">
+                  style={{
+                    position: 'absolute',
+                    top: 56,
+                    left: 0,
+                    right: 0,
+                    zIndex: 50,
+                    elevation: 12,
+                    boxShadow: '0px 8px 22px rgba(0,0,0,0.18)',
+                  }}
+                  className="overflow-hidden rounded-2xl bg-white">
                   {isHistoryDropdown ? (
                     <View className="flex-row items-center justify-between border-b border-[#F0ECDD] px-4 pb-2 pt-3">
                       <View className="flex-row items-center">
@@ -571,7 +543,7 @@ export default function SearchScreen() {
                 </Animated.View>
               ) : null}
 
-              {/* 文创：暖色渐变图标卡（双列，禁用占位图打底）*/}
+              {/* 文创：真实图打底卡（双列）*/}
               {destinations.length > 0 ? (
                 <Animated.View entering={FadeInDown.delay(120).duration(420)} className="mt-4">
                   <SectionTitle title="文创好物" subtitle={`${destinations.length} 件岭南匠造`} icon="gift" />
@@ -703,7 +675,7 @@ function ScenicResultCard({
   );
 }
 
-// ── 文创结果卡：暖色渐变 + Ionicons 图标（图标按 type、渐变按 id）+ 标题 + 价格 + 已售（禁用占位图）──
+// ── 文创结果卡：真实文创图打底 + 标题 + 价格 + 已售 ──
 function DestinationResultCard({
   item,
   delay,
@@ -713,8 +685,6 @@ function DestinationResultCard({
   delay: number;
   onPress: () => void;
 }) {
-  const grad = productGradient(item.id);
-  const icon = productIcon(item);
   return (
     <Animated.View entering={FadeInDown.delay(delay).duration(420)} className="mb-3">
       <Pressable
@@ -726,17 +696,12 @@ function DestinationResultCard({
           transform: pressed ? [{ scale: 0.97 }] : [],
         })}
         className="overflow-hidden rounded-2xl bg-white">
-        {/* 暖色渐变图标块取代照片 */}
-        <LinearGradient
-          colors={grad}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{ height: 96 }}
-          className="items-center justify-center">
-          <View className="h-12 w-12 items-center justify-center rounded-full bg-white/55">
-            <Ionicons name={icon} size={26} color="#9C6F26" />
-          </View>
-        </LinearGradient>
+        {/* 真实文创图（已注册到 legacy-images.ts）打底 */}
+        <Image
+          source={resolveLegacyImage(item.image)}
+          resizeMode="cover"
+          style={{ width: '100%', height: 132 }}
+        />
         <View className="p-3">
           <Text numberOfLines={2} className="text-[14px] font-semibold leading-5" style={{ color: INK, minHeight: 40 }}>
             {item.title}
