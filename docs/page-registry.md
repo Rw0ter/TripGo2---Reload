@@ -48,9 +48,9 @@
 | itinerary.html | 行程 Tab | 核心Tab | 单独实现 | scenic | 完成 | `(tabs)/itinerary.tsx`，接后端 POI |
 | mine1.html | 我的 Tab（正式版） | 核心Tab | 单独实现 | auth | 完成 | `(tabs)/mine.tsx`，接 authStore + 改版 |
 | bianji.html | 编辑个人信息 | 表单 | Form组件 | auth | 完成 | `profile/edit.tsx`；PUT /auth/userinfo 失败有本地兜底，头像占位 |
-| search.html | 智能搜索 | 列表 | 列表组件 | search | 完成 | `search.tsx`，岭南绿改版（图片打底景点卡 + 文创真实图卡 + 缩略图排行榜 + FadeInDown），历史/建议下拉悬浮覆盖（不占高度）+ 即时建议 |
+| search.html | 智能搜索 | 列表 | 单独实现 | search | 完成 | `search.tsx` 搜索工具式独立排版（搜索框即主角 + 悬浮历史/建议覆盖层 + 热搜榜 TOP10 编号榜 + 猜你想搜 chip；结果景点/文创真实图卡跳详情）；不沿用首页骨架 |
 | activity.html | 搜索结果列表 | 列表 | 列表组件 | search | 完成 | 已并入 `search.tsx` 结果区 |
-| chanpin.html | 文创产品列表 | 列表 | 列表组件 | destinations | 完成 | `products.tsx` 岭南精品改版（绿渐变 Hero「岭南匠造」+ 横滑彩色分类 chip + 真实图双列瀑布流 + type 渐变药丸/热销角标 + FadeInDown）；wccpImg 真实图已注册 |
+| chanpin.html | 文创产品列表 | 列表 | 单独实现 | destinations | 完成 | `products.tsx` 电商目录式独立排版（左侧竖向分类导航栏 + 右侧商品网格 + 综合/销量/价格排序，真实图/¥红价/已售，跳 /product/[id]）；不沿用首页瀑布流骨架 |
 | wccp_info.html | 文创产品详情 | 详情 | 详情组件 | destinations, orders | 完成 | `product/[id].tsx`，下单 POST /orders（评论/详情部分硬编码） |
 | xq.html | 景点详情 | 详情 | 详情组件 | scenic, orders | 完成 | `scenic/[id].tsx`（价格/天气等本地派生） |
 | hotTrip.html | 城市攻略 / 景点列表 | 详情 | 详情组件 | scenic | 完成 | `guide/[city].tsx`，接 GET /scenic?city= |
@@ -103,7 +103,7 @@
 | create_addr.html | 添加新地址 | 表单 | Form组件 | 新增:地址 | 待开始 | |
 | wlxx.html | 地址管理列表 | 列表 | 列表组件 | 新增:地址 | 待开始 | |
 | hotel.html | 酒店预订表单 | 表单 | Form组件 | 新增:酒店 | 待开始 | |
-| HK.html | 粤语课堂（翻译器）| AI | 单独实现 | ai, cultural | 完成 | `cantonese.tsx` 重设计：核心=普通话→粤语翻译器（文字 / 原生语音输入 STT → POST /ai/translate → 粤语文字 + expo-speech TTS）；常用粤语短语点读。原生语音需 expo dev build |
+| HK.html | 粤语课堂（翻译器）| AI | 单独实现 | ai, cultural | 完成 | `cantonese.tsx` 双面板翻译器式独立排版（普通话输入面板 + 译/换向 + 粤语译文面板 + 朗读 + 横滑常用语）：文字/原生语音 STT → POST /ai/translate → expo-speech TTS。原生语音需 dev build；不沿用首页骨架 |
 | Translate.html | 中译英翻译 | AI | 单独实现 | 新增:翻译 | 待开始 | 可接 ai 模块 |
 | VR Map.html | VR 全景浏览 | 地图VR | 单独实现 | 无 | 完成 | `vr.tsx`，自研 Three.js 全景（非 WebView） |
 
