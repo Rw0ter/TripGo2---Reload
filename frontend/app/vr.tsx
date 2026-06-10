@@ -32,13 +32,14 @@ interface VRScene {
   weather: string; panoramaImage: string; coverKey: string;
 }
 
+// panoramaImage 为后端 /static/legacy/ 下的等距柱状(2:1) 360° 全景图，每个场景一张真实图。
 const SCENES: VRScene[] = [
-  { id: 'gztower',  name: '广州塔',   subtitle: '600 米高空俯瞰珠江新城', city: '广州', weather: '32°C', panoramaImage: 'vr-1.jpg', coverKey: 'jd/gz.jpg' },
-  { id: 'danxia',   name: '丹霞山',   subtitle: '世界自然遗产 · 赤壁丹崖', city: '韶关', weather: '28°C', panoramaImage: 'vr-1.jpg', coverKey: 'jd/dxs.png' },
-  { id: 'kaiping',  name: '开平碉楼', subtitle: '华侨故里 · 世界文化遗产', city: '开平', weather: '31°C', panoramaImage: 'vr-2.jpg', coverKey: 'changlong.png' },
-  { id: 'zhujiang', name: '珠江夜景', subtitle: '华灯初上 · 一江两岸璀璨', city: '广州', weather: '29°C', panoramaImage: 'vr-1.jpg', coverKey: 'gz2.jpg' },
-  { id: 'yueju',    name: '粤剧博物馆', subtitle: '岭南建筑 · 非遗传承', city: '广州', weather: '30°C', panoramaImage: 'vr-2.jpg', coverKey: 'gz3.jpg' },
-  { id: 'chaozhou', name: '潮州古城', subtitle: '千年牌坊街 · 工夫茶', city: '潮州', weather: '29°C', panoramaImage: 'vr-3.jpg', coverKey: 'xc/xc_chaozhou.jpeg' },
+  { id: 'gztower',  name: '广州塔',   subtitle: '600 米高空俯瞰珠江新城', city: '广州', weather: '32°C', panoramaImage: 'vr-gztower.jpg', coverKey: 'jd/gz.jpg' },
+  { id: 'danxia',   name: '丹霞山',   subtitle: '世界自然遗产 · 赤壁丹崖', city: '韶关', weather: '28°C', panoramaImage: 'vr-danxia.jpg', coverKey: 'jd/dxs.png' },
+  { id: 'kaiping',  name: '开平碉楼', subtitle: '华侨故里 · 世界文化遗产', city: '开平', weather: '31°C', panoramaImage: 'vr-kaiping.jpg', coverKey: 'changlong.png' },
+  { id: 'zhujiang', name: '珠江夜景', subtitle: '华灯初上 · 一江两岸璀璨', city: '广州', weather: '29°C', panoramaImage: 'vr-zhujiang.jpg', coverKey: 'gz2.jpg' },
+  { id: 'yueju',    name: '粤剧博物馆', subtitle: '岭南建筑 · 非遗传承', city: '广州', weather: '30°C', panoramaImage: 'vr-yueju.jpg', coverKey: 'gz3.jpg' },
+  { id: 'chaozhou', name: '潮州古城', subtitle: '千年牌坊街 · 工夫茶', city: '潮州', weather: '29°C', panoramaImage: 'vr-chaozhou.jpg', coverKey: 'xc/xc_chaozhou.jpeg' },
 ];
 
 const FEATURED = SCENES[0];
