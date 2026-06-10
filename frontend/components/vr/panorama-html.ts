@@ -5,8 +5,6 @@
 export const EVENT_TAG = 'vr-viewer';
 export const COMMAND_TAG = 'vr-cmd';
 
-const THREE_CDN = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js';
-
 export interface PanoramaParams {
   image: string;   // 全景图 URL（后端 /static/legacy/ 下的文件）
   name: string;
@@ -99,10 +97,16 @@ canvas{display:block;position:fixed;inset:0}
 <div id="gesture-hint">↔ 拖动查看 · 双指缩放</div>
 <div id="hotspots-container"></div>
 
-<script src="${THREE_CDN}"></script>
+<script src="${p.apiBase}/static/legacy/three.min.js"></script>
 <script>
 (function(){
   'use strict';
+  // 容错：three.js 没加载到（本地静态缺失/网络异常）时也别卡在「加载中」——直接退出并隐藏 loading。
+  if (typeof THREE === 'undefined') {
+    var ld = document.getElementById('loading');
+    if (ld) { ld.querySelector('.prog-text').textContent = '全景资源加载失败'; }
+    return;
+  }
   var canvas=document.getElementById('c');
   var loading=document.getElementById('loading');
   var hint=document.getElementById('gesture-hint');
@@ -132,10 +136,13 @@ canvas{display:block;position:fixed;inset:0}
 
   function createSphere(url){
     if(sphere){scene.remove(sphere);if(material)material.dispose();}
+    // TextureLoader.load(url, onLoad, onProgress, onError)：成功时（onLoad）才隐藏「加载中」，
+    // 失败时（onError）显示失败文案。原来把 done 误放在 onProgress（图片加载基本不触发），
+    // 导致即使全景图成功加载，遮罩也永远停在「全景加载中」。
     var tex=new THREE.TextureLoader().load(url,
-      function(xhr){},
       function(){loading.classList.add('done')},
-      function(){loading.classList.add('done')}
+      undefined,
+      function(){var pt=loading.querySelector('.prog-text');if(pt){pt.textContent='全景加载失败，请检查网络后重试'}}
     );
     tex.colorSpace=THREE.SRGBColorSpace;
     tex.minFilter=THREE.LinearFilter;

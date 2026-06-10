@@ -105,7 +105,7 @@
 | hotel.html | 酒店预订表单 | 表单 | Form组件 | 新增:酒店 | 待开始 | |
 | HK.html | 粤语课堂（翻译器）| AI | 单独实现 | ai, cultural | 完成 | `cantonese.tsx` 双面板翻译器式独立排版（普通话输入面板 + 译/换向 + 粤语译文面板 + 朗读 + 横滑常用语）：文字/原生语音 STT → POST /ai/translate → expo-speech TTS。原生语音需 dev build；不沿用首页骨架 |
 | Translate.html | 中译英翻译 | AI | 单独实现 | 新增:翻译 | 待开始 | 可接 ai 模块 |
-| VR Map.html | VR 全景浏览 | 地图VR | 单独实现 | 无 | 完成 | `vr.tsx`，自研 Three.js 全景（非 WebView） |
+| VR Map.html | VR 全景浏览 | 地图VR | 单独实现 | 无 | 完成 | `vr.tsx`，自研 Three.js 全景（非 WebView）；修复「一直全景加载中」（TextureLoader onLoad 回调错位）+ three.js 改本地静态 + 6 场景真实等距 360 全景图（~2MB，Wikimedia） |
 
 ## 废弃草稿 / 测试页（5）— 不重写（2026-05-20 确认）
 
