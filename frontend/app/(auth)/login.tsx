@@ -63,7 +63,7 @@ export default function LoginScreen() {
 
       <View className="mt-3 flex-row justify-end">
         <Pressable onPress={() => router.push('/forgot' as never)} accessibilityRole="button">
-          <Text className="text-[13px] font-semibold text-eco">忘记密码？</Text>
+          <Text className="text-[13px] font-semibold text-eco-accent">忘记密码？</Text>
         </Pressable>
       </View>
 
@@ -72,9 +72,9 @@ export default function LoginScreen() {
       </View>
 
       <View className="mt-6 flex-row justify-center">
-        <Text className="text-[14px] text-eco-mid/70">还没有账号？</Text>
+        <Text className="text-[14px] text-white/70">还没有账号？</Text>
         <Pressable onPress={() => router.push('/register')} accessibilityRole="button">
-          <Text className="text-[14px] font-bold text-eco"> 立即注册</Text>
+          <Text className="text-[14px] font-bold text-eco-accent"> 立即注册</Text>
         </Pressable>
       </View>
     </AuthScreenLayout>

@@ -16,7 +16,7 @@ interface AuthInputProps {
   textContentType?: TextInputProps['textContentType'];
 }
 
-// 浅色填充圆角输入框 + Ionicons 前置图标；密码框带显隐切换。
+// 玻璃拟态输入框（半透明白底 + 白字），用于沉浸式森林背景上的玻璃表单卡。
 export function AuthInput({
   icon,
   value,
@@ -31,15 +31,20 @@ export function AuthInput({
   const [hide, setHide] = useState(!!secureTextEntry);
   return (
     <View
-      className="h-14 flex-row items-center rounded-2xl bg-eco-cream px-4"
-      style={{ borderWidth: 1, borderColor: '#E4EFE7' }}>
-      <Ionicons name={icon} size={20} color="#6E9A85" />
+      className="h-[52px] flex-row items-center rounded-2xl px-4"
+      style={{
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.2)',
+      }}>
+      <Ionicons name={icon} size={20} color="rgba(255,255,255,0.75)" />
       <TextInput
-        className="h-full flex-1 px-3 text-[15px] text-eco-dark"
+        className="h-full flex-1 px-3 text-[15px] text-white"
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#9CB3A6"
+        placeholderTextColor="rgba(255,255,255,0.55)"
+        selectionColor="#B7F5C9"
         secureTextEntry={secureTextEntry ? hide : false}
         keyboardType={keyboardType}
         autoCapitalize="none"
@@ -53,7 +58,7 @@ export function AuthInput({
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={hide ? '显示密码' : '隐藏密码'}>
-          <Ionicons name={hide ? 'eye-off-outline' : 'eye-outline'} size={20} color="#9CB3A6" />
+          <Ionicons name={hide ? 'eye-off-outline' : 'eye-outline'} size={20} color="rgba(255,255,255,0.6)" />
         </Pressable>
       ) : null}
     </View>
