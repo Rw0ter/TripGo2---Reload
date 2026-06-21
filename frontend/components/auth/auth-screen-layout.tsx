@@ -34,7 +34,7 @@ export function AuthScreenLayout({ children }: { children: ReactNode }) {
       <SafeAreaView style={{ flex: 1 }}>
         <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView
-            contentContainerClassName="flex-grow justify-center px-2 py-10"
+            contentContainerClassName="flex-grow justify-center px-4 py-10"
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
             {/* 品牌时刻 */}
