@@ -62,6 +62,51 @@ jobs:
       - name: Lint（expo lint）
         run: npx expo lint
 
+  # ── 安卓 APK 打包（自包含本地 gradle 构建）：门禁绿后 prebuild + assembleDebug，产出 APK 上传 ──
+  # 不依赖 EAS / Expo 账号；debug 变体用自动生成的 debug keystore，无需签名密钥。
+  android-apk:
+    name: 安卓 APK 打包
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: 配置 Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 生成原生 android 工程（prebuild）
+        run: npx expo prebuild --platform android --no-install
+
+      - name: gradle 构建 debug APK
+        working-directory: frontend/android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: 上传 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
   # ── 交付产物（CD）：仅 master push 触发，门禁绿后构建可部署产物并上传 ──
   # 本项目无线上部署目标，CD 以"持续产出可部署产物"落地（后端 dist + 前端 Web 静态站）。
   build-artifacts:
