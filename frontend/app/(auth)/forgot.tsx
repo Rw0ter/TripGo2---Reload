@@ -51,7 +51,7 @@ export default function ForgotScreen() {
   }
 
   return (
-    <AuthScreenLayout title="找回密码" subtitle="验证用户名与注册邮箱后设置新密码">
+    <AuthScreenLayout>
       <AuthInput
         icon="person-outline"
         value={username}
@@ -73,7 +73,7 @@ export default function ForgotScreen() {
       </View>
       <View className="mt-4">
         <AuthInput
-          icon="lock-closed-outline"
+          icon="key-outline"
           value={password}
           onChangeText={setPassword}
           placeholder="新密码（6-72 位）"
@@ -85,8 +85,8 @@ export default function ForgotScreen() {
       </View>
 
       {error ? (
-        <View className="mt-4 rounded-xl bg-[#FCEDE9] px-3 py-2.5">
-          <Text className="text-center text-[13px] text-[#C0584B]">{error}</Text>
+        <View className="mt-4 rounded-xl px-3 py-2.5" style={{ backgroundColor: 'rgba(255,107,107,0.16)', borderWidth: 1, borderColor: 'rgba(255,107,107,0.35)' }}>
+          <Text className="text-center text-[13px] text-[#FFD9D2]">{error}</Text>
         </View>
       ) : null}
 
@@ -96,7 +96,7 @@ export default function ForgotScreen() {
 
       <View className="mt-6 flex-row justify-center">
         <Pressable onPress={() => router.replace('/login')} accessibilityRole="button">
-          <Text className="text-[14px] font-bold text-eco">返回登录</Text>
+          <Text className="text-[14px] font-bold text-eco-accent">返回登录</Text>
         </Pressable>
       </View>
     </AuthScreenLayout>

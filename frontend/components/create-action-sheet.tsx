@@ -13,7 +13,7 @@ interface CreateActionSheetProps {
 
 // 「添加」tab 点击后弹出的创建动作菜单。
 const ACTIONS = [
-  { icon: 'map-outline' as const, label: '新建行程', route: '/trip/create', isAction: false },
+  { icon: 'leaf-outline' as const, label: '新建绿色计划', route: '/trip/create', isAction: false },
   { icon: 'create-outline' as const, label: '发布故事', route: '/post/story', isAction: false },
   { icon: 'sparkles-outline' as const, label: 'AI 语音助手', route: null as any, isAction: true },
 ];

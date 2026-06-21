@@ -28,30 +28,30 @@ interface City {
 }
 
 const CITIES: City[] = [
-  { name: '广州市', suggest: '建议 4 天', imageKey: 'jd/gz.jpg' },
-  { name: '深圳市', suggest: '建议 3 天', imageKey: 'xc/xc_shenzhen.jpg' },
-  { name: '珠海市', suggest: '建议 2 天', imageKey: 'xc/xc_zhuhai.jpg' },
-  { name: '佛山市', suggest: '建议 2 天', imageKey: 'changlong.png' },
-  { name: '东莞市', suggest: '建议 2 天', imageKey: 'xc/xc_dongguan.jpg' },
-  { name: '惠州市', suggest: '建议 2 天', imageKey: 'xc/xc_huizhou.jpg' },
-  { name: '中山市', suggest: '建议 2 天', imageKey: 'dgypzzbwg.png' },
-  { name: '江门市', suggest: '建议 2 天', imageKey: 'xc/xc_jiangmen.jpg' },
-  { name: '肇庆市', suggest: '建议 2 天', imageKey: 'xc/xc_zhaoqing.jpg' },
-  { name: '汕头市', suggest: '建议 2 天', imageKey: 'xc/xc_chaozhou.jpeg' },
-  { name: '潮州市', suggest: '建议 2 天', imageKey: 'xc/xc_chaozhou.jpeg' },
-  { name: '韶关市', suggest: '建议 2 天', imageKey: 'jd/dxs.png' },
-  { name: '湛江市', suggest: '建议 2 天', imageKey: 'jd/gzcl.png' },
-  { name: '梅州市', suggest: '建议 2 天', imageKey: 'xc/xc_meizhou.jpg' },
-  { name: '汕尾市', suggest: '建议 2 天', imageKey: 'xc/xc_jieyang.jpeg' },
+  { name: '广州市', suggest: '低碳出行 · 减塑生活', imageKey: 'jd/gz.jpg' },
+  { name: '深圳市', suggest: '绿色通勤 · 节能减排', imageKey: 'xc/xc_shenzhen.jpg' },
+  { name: '珠海市', suggest: '滨海生态 · 绿色出行', imageKey: 'xc/xc_zhuhai.jpg' },
+  { name: '佛山市', suggest: '垃圾分类 · 循环利用', imageKey: 'changlong.png' },
+  { name: '东莞市', suggest: '节水节电 · 绿色制造', imageKey: 'xc/xc_dongguan.jpg' },
+  { name: '惠州市', suggest: '亲近自然 · 低碳健行', imageKey: 'xc/xc_huizhou.jpg' },
+  { name: '中山市', suggest: '绿色社区 · 节能生活', imageKey: 'dgypzzbwg.png' },
+  { name: '江门市', suggest: '绿色农业 · 减碳生活', imageKey: 'xc/xc_jiangmen.jpg' },
+  { name: '肇庆市', suggest: '山水生态 · 守护绿水', imageKey: 'xc/xc_zhaoqing.jpg' },
+  { name: '汕头市', suggest: '绿色饮食 · 光盘行动', imageKey: 'xc/xc_chaozhou.jpeg' },
+  { name: '潮州市', suggest: '旧物新用 · 以旧换新', imageKey: 'xc/xc_chaozhou.jpeg' },
+  { name: '韶关市', suggest: '森林康养 · 守护生态', imageKey: 'jd/dxs.png' },
+  { name: '湛江市', suggest: '海洋保护 · 低碳生活', imageKey: 'jd/gzcl.png' },
+  { name: '梅州市', suggest: '绿色家园 · 节能减排', imageKey: 'xc/xc_meizhou.jpg' },
+  { name: '汕尾市', suggest: '海岸守护 · 绿色出行', imageKey: 'xc/xc_jieyang.jpeg' },
 ];
 
 const DAYS_OPTIONS = [
   { label: '1 天', value: '1天' },
-  { label: '2 天', value: '2天' },
   { label: '3 天', value: '3天' },
-  { label: '4 天', value: '4天' },
-  { label: '5 天', value: '5天' },
   { label: '7 天', value: '7天' },
+  { label: '14 天', value: '14天' },
+  { label: '21 天', value: '21天' },
+  { label: '30 天', value: '30天' },
 ];
 
 export default function CreateTripScreen() {
@@ -78,8 +78,8 @@ export default function CreateTripScreen() {
     if (!canSubmit || submitting) return;
     setSubmitting(true);
     try {
-      const tripName = `${departure} → ${destination!.name} · ${days}`;
-      const daysNum = parseInt(days) || 2;
+      const tripName = `${destination!.name}低碳计划 · ${days}`;
+      const daysNum = parseInt(days) || 7;
       const tripDays = Array.from({ length: daysNum }, (_, i) => ({
         title: `第${i + 1}天`,
         notes: '',
@@ -96,16 +96,16 @@ export default function CreateTripScreen() {
   return (
     <View className="flex-1 bg-[#F4F1E4]">
       {/* Header */}
-      <View className="bg-[#3E6B4F]">
-        <ScreenHeader title="新建行程" tint="dark" />
+      <View className="bg-[#2D6A4F]">
+        <ScreenHeader title="新建绿色计划" tint="dark" />
       </View>
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 100 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        {/* Trip summary pill */}
+        {/* Plan summary pill */}
         <View className="mt-5 flex-row justify-center">
-          <View className="flex-row items-center rounded-full bg-[#3E6B4F]/10 px-4 py-2">
-            <Ionicons name="location-outline" size={13} color="#386641" />
-            <Text className="ml-1.5 text-[13px] font-medium text-[#386641]">{departure} → {destination?.name ?? '...'} · {days}</Text>
+          <View className="flex-row items-center rounded-full bg-[#2D6A4F]/10 px-4 py-2">
+            <Ionicons name="leaf-outline" size={13} color="#2D6A4F" />
+            <Text className="ml-1.5 text-[13px] font-medium text-[#2D6A4F]">{destination?.name ?? '选择关注领域'} · 行动周期 {days}</Text>
           </View>
         </View>
 
@@ -114,11 +114,11 @@ export default function CreateTripScreen() {
           <Pressable onPress={() => { setSearchQuery(''); setModalVisible(true); }}>
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center" style={{ gap: 10 }}>
-                <View className="h-10 w-10 items-center justify-center rounded-full bg-[#E8F5E9]">
-                  <Ionicons name="navigate-outline" size={20} color="#386641" />
+                <View className="h-10 w-10 items-center justify-center rounded-full bg-[#D8F3DC]">
+                  <Ionicons name="navigate-outline" size={20} color="#2D6A4F" />
                 </View>
                 <View>
-                  <Text className="text-[11px] font-medium uppercase tracking-wider text-[#999]">出发地</Text>
+                  <Text className="text-[11px] font-medium uppercase tracking-wider text-[#999]">行动起点</Text>
                   <Text className="mt-0.5 text-[16px] font-semibold text-[#1a1a1a]">{departure}</Text>
                 </View>
               </View>
@@ -130,36 +130,36 @@ export default function CreateTripScreen() {
         {/* Destination card */}
         <Animated.View entering={FadeInDown.delay(150).springify()} className="mt-4 rounded-2xl bg-white p-5" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.07, shadowRadius: 12 }}>
           <View className="mb-4 flex-row items-center" style={{ gap: 10 }}>
-            <View className="h-10 w-10 items-center justify-center rounded-full bg-[#E8F5E9]">
-              <Ionicons name="flag-outline" size={20} color="#386641" />
+            <View className="h-10 w-10 items-center justify-center rounded-full bg-[#D8F3DC]">
+              <Ionicons name="leaf-outline" size={20} color="#2D6A4F" />
             </View>
             <View>
-              <Text className="text-[11px] font-medium uppercase tracking-wider text-[#999]">目的地</Text>
-              <Text className="mt-0.5 text-[16px] font-semibold text-[#1a1a1a]">{destination?.name ?? '点击选择城市'}</Text>
+              <Text className="text-[11px] font-medium uppercase tracking-wider text-[#999]">关注领域</Text>
+              <Text className="mt-0.5 text-[16px] font-semibold text-[#1a1a1a]">{destination?.name ?? '点击选择区域'}</Text>
             </View>
           </View>
           <View className="flex-row items-center rounded-xl bg-[#F2F2F2] px-3 py-2.5">
             <Ionicons name="search" size={16} color="#999" />
-            <TextInput value={searchQuery} onChangeText={setSearchQuery} placeholder="输入城市名称筛选..." placeholderTextColor="#bbb" className="ml-2 flex-1 py-0 text-[14px] text-[#333]" autoCorrect={false} />
+            <TextInput value={searchQuery} onChangeText={setSearchQuery} placeholder="输入区域名称筛选…" placeholderTextColor="#bbb" className="ml-2 flex-1 py-0 text-[14px] text-[#333]" autoCorrect={false} />
             {searchQuery.length > 0 && (
               <Pressable onPress={() => setSearchQuery('')} className="p-1"><Ionicons name="close-circle" size={18} color="#ccc" /></Pressable>
             )}
           </View>
           <ScrollView horizontal={false} nestedScrollEnabled keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={{ maxHeight: 280 }} className="mt-3">
             {filteredCities.length === 0 ? (
-              <Text className="py-6 text-center text-[13px] text-[#ccc]">未找到匹配城市</Text>
+              <Text className="py-6 text-center text-[13px] text-[#ccc]">未找到匹配区域</Text>
             ) : (
               <View style={{ gap: 6 }}>
                 {filteredCities.map((city) => {
                   const selected = destination?.name === city.name;
                   return (
-                    <Pressable key={city.name} onPress={() => setDestination(city)} className={`flex-row items-center rounded-xl p-2.5 ${selected ? 'bg-[#E8F5E9]' : 'bg-white active:bg-[#F5F5F5]'}`} style={selected ? { borderWidth: 1.5, borderColor: '#386641' } : {}}>
+                    <Pressable key={city.name} onPress={() => setDestination(city)} className={`flex-row items-center rounded-xl p-2.5 ${selected ? 'bg-[#D8F3DC]' : 'bg-white active:bg-[#F5F5F5]'}`} style={selected ? { borderWidth: 1.5, borderColor: '#2D6A4F' } : {}}>
                       <Image source={resolveLegacyImage(city.imageKey)} style={{ width: 52, height: 52, borderRadius: 12 }} resizeMode="cover" />
                       <View className="ml-3 flex-1">
-                        <Text className={`text-[14px] font-bold ${selected ? 'text-[#386641]' : 'text-[#333]'}`}>{city.name}</Text>
+                        <Text className={`text-[14px] font-bold ${selected ? 'text-[#2D6A4F]' : 'text-[#333]'}`}>{city.name}</Text>
                         <Text className="mt-0.5 text-[12px] text-[#999]">{city.suggest}</Text>
                       </View>
-                      <View className={`h-6 w-6 items-center justify-center rounded-full ${selected ? 'bg-[#386641]' : 'border-2 border-[#ddd]'}`}>
+                      <View className={`h-6 w-6 items-center justify-center rounded-full ${selected ? 'bg-[#2D6A4F]' : 'border-2 border-[#ddd]'}`}>
                         {selected && <Ionicons name="checkmark" size={14} color="#fff" />}
                       </View>
                     </Pressable>
@@ -173,11 +173,11 @@ export default function CreateTripScreen() {
         {/* Days selector */}
         <Animated.View entering={FadeInDown.delay(200).springify()} className="mt-4 rounded-2xl bg-white p-5" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.07, shadowRadius: 12 }}>
           <View className="mb-3 flex-row items-center" style={{ gap: 10 }}>
-            <View className="h-10 w-10 items-center justify-center rounded-full bg-[#E8F5E9]">
-              <Ionicons name="calendar-outline" size={20} color="#386641" />
+            <View className="h-10 w-10 items-center justify-center rounded-full bg-[#D8F3DC]">
+              <Ionicons name="calendar-outline" size={20} color="#2D6A4F" />
             </View>
             <View>
-              <Text className="text-[11px] font-medium uppercase tracking-wider text-[#999]">游玩天数</Text>
+              <Text className="text-[11px] font-medium uppercase tracking-wider text-[#999]">行动周期</Text>
               <Text className="mt-0.5 text-[16px] font-semibold text-[#1a1a1a]">{days}</Text>
             </View>
           </View>
@@ -185,7 +185,7 @@ export default function CreateTripScreen() {
             {DAYS_OPTIONS.map((d) => {
               const active = days === d.value;
               return (
-                <Pressable key={d.value} onPress={() => setDays(d.value)} className={`items-center rounded-xl px-5 py-3 ${active ? 'bg-[#386641]' : 'border border-[#eee] bg-[#F9F9F9]'}`}>
+                <Pressable key={d.value} onPress={() => setDays(d.value)} className={`items-center rounded-xl px-5 py-3 ${active ? 'bg-[#2D6A4F]' : 'border border-[#eee] bg-[#F9F9F9]'}`}>
                   <Text className={`text-[15px] font-bold ${active ? 'text-white' : 'text-[#555]'}`}>{d.label}</Text>
                 </Pressable>
               );
@@ -196,11 +196,11 @@ export default function CreateTripScreen() {
 
       {/* Submit button */}
       <View className="absolute bottom-0 left-0 right-0 px-4 pt-3" style={{ paddingBottom: insets.bottom + 12 }}>
-        <Pressable onPress={handleSubmit} disabled={!canSubmit || submitting} className={`w-full items-center justify-center rounded-2xl py-4 ${canSubmit && !submitting ? 'bg-[#386641]' : 'bg-[#C4D4C8]'}`}>
+        <Pressable onPress={handleSubmit} disabled={!canSubmit || submitting} className={`w-full items-center justify-center rounded-2xl py-4 ${canSubmit && !submitting ? 'bg-[#2D6A4F]' : 'bg-[#C4D4C8]'}`}>
           {submitting ? <ActivityIndicator color="#fff" /> : (
             <View className="flex-row items-center" style={{ gap: 6 }}>
-              <Ionicons name="compass-outline" size={20} color="#fff" />
-              <Text className="text-[16px] font-bold text-white">开始规划行程</Text>
+              <Ionicons name="leaf-outline" size={20} color="#fff" />
+              <Text className="text-[16px] font-bold text-white">生成绿色计划</Text>
             </View>
           )}
         </Pressable>
@@ -211,13 +211,13 @@ export default function CreateTripScreen() {
         <Pressable className="flex-1 justify-end bg-black/35" onPress={() => setModalVisible(false)}>
           <Pressable className="rounded-t-3xl bg-white px-5 pt-6" style={{ paddingBottom: insets.bottom + 16, maxHeight: '75%' }} onPress={(e) => e.stopPropagation()}>
             <View className="mb-4 self-center h-1 w-10 rounded-full bg-[#E0E0E0]" />
-            <Text className="mb-4 text-center text-[16px] font-bold text-[#1a1a1a]">选择出发城市</Text>
+            <Text className="mb-4 text-center text-[16px] font-bold text-[#1a1a1a]">选择行动起点</Text>
             <ScrollView bounces={false} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 8 }}>
               <View className="flex-row flex-wrap" style={{ gap: 10 }}>
                 {CITIES.map((city) => {
                   const active = departure === city.name;
                   return (
-                    <Pressable key={city.name} onPress={() => { setDeparture(city.name); setModalVisible(false); }} className={`flex-row items-center rounded-xl px-3 py-2.5 ${active ? 'bg-[#386641]' : 'border border-[#eee] bg-[#F9F9F9]'}`}>
+                    <Pressable key={city.name} onPress={() => { setDeparture(city.name); setModalVisible(false); }} className={`flex-row items-center rounded-xl px-3 py-2.5 ${active ? 'bg-[#2D6A4F]' : 'border border-[#eee] bg-[#F9F9F9]'}`}>
                       <Image source={resolveLegacyImage(city.imageKey)} style={{ width: 24, height: 24, borderRadius: 6 }} resizeMode="cover" />
                       <Text className={`ml-2 text-[13px] font-semibold ${active ? 'text-white' : 'text-[#444]'}`}>{city.name}</Text>
                     </Pressable>

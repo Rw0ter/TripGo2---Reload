@@ -3,7 +3,7 @@
 > 项目的"活文档"。每个 AI 会话**开始时读它、结束时更新它**（用法见 CLAUDE.md 第 12 / 14 节）。
 > **真相来源是代码 + `git log`**，不是本文件的叙述。发现不一致，以代码为准并立刻订正这里。
 
-**最后更新：2026-06-21**（绿色低碳转型深化 + 落库；分支 `feat/green-deepening`）
+**最后更新：2026-06-21**（绿色深化二轮：UI 高级感 + 沉浸式重排 + eco 测试；分支 `feat/green-polish`。一轮 `feat/green-deepening` 已合并 PR #85）
 
 ## 当前阶段
 
@@ -18,7 +18,7 @@
 - 前端 Expo Router + NativeWind + Zustand；RAG（sqlite-vec 本地 embedding）；AI(DeepSeek+SSE)。
 - 本地 Piper TTS（后端 ai 模块，模型不入库）。
 
-**本会话：绿色低碳转型深化（2026-06-21，分支 feat/green-deepening）**
+**一轮：绿色低碳转型深化（2026-06-21，分支 feat/green-deepening，已合并 PR #85）**
 1. **落库 + 基线**：把未提交的绿色转型整体落库；修陈旧测试（ai plan prompt、orders 生态良品）、
    前端 TS/lint error，后端 55 测试全过、前端 0 error。`.gitignore` 挡住 400MB 本地 TTS 与 db-wal。
 2. **改名**：全局「文脉粤游」→「绿途」（slug greentrip）；CLAUDE.md/AGENTS.md 同步主题 + 记录 TTS 约定。
@@ -34,16 +34,21 @@
 8. **绿色地图**：map.tsx 由旅行地图重定位为绿色地图（回收点/充电站/公园/地铁/共享单车 快捷搜索），保留地图引擎。
 9. 删除废弃 kokoro TTS 脚本。
 
+**二轮：UI 高级感 + 沉浸式重排（2026-06-21，分支 feat/green-polish）**
+1. **eco 补测试**：eco.service.spec（status/plant/recordActivity/progress，8 例），后端共 63 测试。
+2. **AI 助手交互重构**：修覆盖层拦截正常点击（去全屏 dismiss、气泡 pointerEvents none、加关闭按钮）；
+   自动化执行时页面四周 RGB 流光灯带（automating 状态 + VoiceAutomationGlow）。
+3. **认证页大改版**：弃"大图+底部白卡"骨架 → 整屏沉浸森林 + 居中玻璃拟态表单（玻璃输入 + 辉光 CTA）。
+4. **森林页沉浸式重排**：删顶部栏，整屏即场景，统计浮于天空 + 能量球环绕树 + 玻璃进度/底部 dock，无白卡流。
+
 ## 进行中
-- **长尾文案清扫**（子代理）：static-pages（关于/隐私/协议）、messages 演示文案、search/home/ai 等屏的
-  非遗/旅游残留中文文案 → 绿色低碳等价。待整合 + 验证后提交。
-- **验证 + PR**：开 PR、等 CI 双门禁、合并。
+- **旅游结构屏转绿**（子代理）：trip/create、my/trips、scenic/[id]、guide/[city] + 入口文案。待整合验证后提交。
+- **验证 + PR**：expo 截图已验证 登录/森林沉浸版；待开 PR、过 CI、合并。
 
 ## 下一步（按优先级）
-1. 仍偏旅游结构的长尾屏（`scenic/[id]`、`guide/[city]`、`my/trips`、`wallet` 流水文案、`orders`、
-   `trip/create`、`post/story`）——本轮未深改，需评估"转绿色等价 or 下线"。
-2. cultural 后端数据为非遗内容、study 页已删，已成孤儿——评估移除或改造。
-3. 全景图/部分图片仍可继续替换为更贴主题素材。
+1. cultural 后端数据为非遗内容、study 页已删，已成孤儿——评估移除或改造。
+2. 全景图/部分图片可继续替换为更贴主题素材。
+3. 真机原生构建前确认 expo-speech-recognition 的 config plugin（CI 仅跑 web）。
 
 ## 已知问题 / 坑
 - RAG / AI 需后端 `.env` 配 `DEEPSEEK_API_KEY`，缺失时 AI 接口 503。

@@ -2,8 +2,10 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as Speech from 'expo-speech';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCallback, useRef } from 'react';
-import { Platform, TextInput, View } from 'react-native';
+import { Platform, Pressable, TextInput, View } from 'react-native';
 import 'react-native-reanimated';
 import '../global.css';
 
@@ -11,6 +13,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ToastContainer } from '@/components/ui/toast';
 import { VoiceAssistantBall } from '@/components/ai/voice-assistant-ball';
 import { VoiceAssistantSheet } from '@/components/ai/voice-assistant-sheet';
+import { VoiceAutomationGlow } from '@/components/ai/voice-automation-glow';
 import { useVoiceAssistant } from '@/stores/voice-assistant';
 import { apiRequest } from '@/lib/api';
 import { streamChat } from '@/lib/ai';
@@ -115,6 +118,9 @@ async function sendToAI(
     const { cmd, params, displayText } = extractCommand(fullResponse);
     if (cmd) {
       addMessage({ role: 'assistant', text: displayText, isCommand: true });
+      // 点亮页面四周 RGB 流光灯带，提示「助手正在替你操作」
+      useVoiceAssistant.getState().setAutomating(true);
+      setTimeout(() => useVoiceAssistant.getState().setAutomating(false), 1800);
       if (cmd === 'open_page' && params.page) {
         let route = params.page.replace(/^\/+/, '');
         // 纠正常见 AI 错误：/products/91 → /product/91（产品详情是单数路径）
@@ -167,6 +173,7 @@ async function sendToAI(
 
 function VoiceAssistantOverlay() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { visible, listening, transcript, setListening, setTranscript, clearTranscript, addMessage, hide } = useVoiceAssistant();
   const inputRef = useRef<TextInput>(null);
 
@@ -257,6 +264,17 @@ function VoiceAssistantOverlay() {
           style={{ flex: 1, fontSize: 14, color: '#1A1A1A', paddingVertical: 8 }}
         />
       </View>
+      {/* 关闭助手（替代原全屏点击退出，避免拦截正常页面操作） */}
+      <Pressable
+        onPress={hide}
+        accessibilityRole="button"
+        accessibilityLabel="关闭语音助手"
+        style={{ position: 'absolute', top: insets.top + 10, right: 16 }}
+        pointerEvents="auto">
+        <View style={{ height: 38, width: 38, borderRadius: 19, backgroundColor: 'rgba(27,67,50,0.82)', alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name="close" size={20} color="#fff" />
+        </View>
+      </Pressable>
     </View>
   );
 }
@@ -306,6 +324,7 @@ export default function RootLayout() {
         </Stack>
         <ToastContainer />
         <VoiceAssistantOverlay />
+        <VoiceAutomationGlow />
       </View>
       <StatusBar style="auto" />
     </ThemeProvider>

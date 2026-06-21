@@ -16,7 +16,7 @@ interface AuthInputProps {
   textContentType?: TextInputProps['textContentType'];
 }
 
-// 浅色填充圆角输入框 + Ionicons 前置图标；密码框带显隐切换。
+// 近实心白底输入框（深色文字 + eco 图标 + 轻投影），浮于沉浸式森林背景上。
 export function AuthInput({
   icon,
   value,
@@ -31,8 +31,8 @@ export function AuthInput({
   const [hide, setHide] = useState(!!secureTextEntry);
   return (
     <View
-      className="h-14 flex-row items-center rounded-2xl bg-eco-cream px-4"
-      style={{ borderWidth: 1, borderColor: '#E4EFE7' }}>
+      className="h-[52px] flex-row items-center rounded-2xl px-4"
+      style={{ backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0px 4px 14px rgba(0,0,0,0.16)' }}>
       <Ionicons name={icon} size={20} color="#6E9A85" />
       <TextInput
         className="h-full flex-1 px-3 text-[15px] text-eco-dark"
@@ -40,6 +40,7 @@ export function AuthInput({
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor="#9CB3A6"
+        selectionColor="#40916C"
         secureTextEntry={secureTextEntry ? hide : false}
         keyboardType={keyboardType}
         autoCapitalize="none"

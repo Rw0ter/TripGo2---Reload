@@ -34,11 +34,11 @@ function getSpotDetail(name: string, city: string): { address: string; hours: st
   return { address: `广东省${city}市境内`, hours: '08:00-18:00' };
 }
 
-function computeStarRating(name: string): string {
+// 生态指数（由名称稳定派生）：取代旅游星级评分。
+function computeGreenIndex(name: string): number {
   let h = 0;
   for (let i = 0; i < name.length; i += 1) h = (h * 31 + name.charCodeAt(i)) & 0xffff;
-  const stars = 3 + (h % 3);
-  return '★'.repeat(stars) + '☆'.repeat(5 - stars);
+  return 88 + (h % 12); // 88-99
 }
 
 export default function CityGuideScreen() {
@@ -66,15 +66,15 @@ export default function CityGuideScreen() {
   return (
     <View className="flex-1 bg-[#eef2f5]">
       {/* Hero header — matching Legacy moreTrip.html */}
-      <View className="relative items-center justify-end bg-[#3E6B4F] pb-6" style={{ height: '20%' }}>
+      <View className="relative items-center justify-end bg-[#2D6A4F] pb-6" style={{ height: '20%' }}>
         <Pressable
           onPress={() => router.back()}
           style={{ position: 'absolute', top: insets.top + 6, left: 12 }}
           className="z-10 h-10 w-10 items-center justify-center">
           <Ionicons name="chevron-back" size={23} color="#fff" />
         </Pressable>
-        <Text className="text-[28px] font-bold text-white">{city || '城市攻略'}</Text>
-        <Text className="mt-1 text-[13px] text-white/75">发现{city}的旅行灵感</Text>
+        <Text className="text-[28px] font-bold text-white">{city || '城市低碳指南'}</Text>
+        <Text className="mt-1 text-[13px] text-white/75">探索{city}的绿色生活方式</Text>
       </View>
 
       <ScrollView
@@ -84,23 +84,23 @@ export default function CityGuideScreen() {
           <View className="items-center py-16">
             <Ionicons name="alert-circle-outline" size={40} color="#aaa" />
             <Text className="mt-2 text-[14px] text-[#999]">加载失败</Text>
-            <Pressable onPress={() => void load()} className="mt-3 rounded-xl bg-[#41816c] px-5 py-2">
+            <Pressable onPress={() => void load()} className="mt-3 rounded-xl bg-[#2D6A4F] px-5 py-2">
               <Text className="text-[14px] font-bold text-white">重试</Text>
             </Pressable>
           </View>
         ) : !spots ? (
           <View className="items-center py-16">
-            <ActivityIndicator color="#41816c" />
+            <ActivityIndicator color="#2D6A4F" />
           </View>
         ) : spots.length === 0 ? (
           <View className="items-center py-16">
-            <Ionicons name="map-outline" size={48} color="#ddd" />
-            <Text className="mt-3 text-[15px] text-[#999]">该城市暂无景点数据</Text>
+            <Ionicons name="leaf-outline" size={48} color="#ddd" />
+            <Text className="mt-3 text-[15px] text-[#999]">该城市暂无绿色地标数据</Text>
           </View>
         ) : (
           spots.map((s, idx) => {
             const detail = getSpotDetail(s.name, city ?? '');
-            const rating = computeStarRating(s.name);
+            const greenIndex = computeGreenIndex(s.name);
             return (
               <Animated.View
                 key={s.id}
@@ -121,11 +121,20 @@ export default function CityGuideScreen() {
 
                 {/* Card content */}
                 <View className="p-4">
-                  {/* Title */}
-                  <Text className="text-[18px] font-bold text-[#333]">{s.name}</Text>
+                  {/* Title + 绿色地标标识 */}
+                  <View className="flex-row items-center justify-between">
+                    <Text className="flex-1 text-[18px] font-bold text-[#333]" numberOfLines={1}>{s.name}</Text>
+                    <View className="ml-2 flex-row items-center rounded-full bg-[#D8F3DC] px-2.5 py-1">
+                      <Ionicons name="leaf" size={11} color="#2D6A4F" />
+                      <Text className="ml-1 text-[11px] font-semibold text-[#2D6A4F]">绿色地标</Text>
+                    </View>
+                  </View>
 
-                  {/* Star rating */}
-                  <Text className="mt-1 text-[14px] tracking-wider text-[#ffb400]">{rating}</Text>
+                  {/* 生态指数 */}
+                  <View className="mt-1.5 flex-row items-center">
+                    <Ionicons name="trending-up" size={14} color="#52B788" />
+                    <Text className="ml-1 text-[13px] font-semibold text-[#40916C]">生态指数 {greenIndex}</Text>
+                  </View>
 
                   {/* Description */}
                   <Text numberOfLines={2} className="mt-2 text-[13px] leading-5 text-[#555]">
@@ -152,21 +161,21 @@ export default function CityGuideScreen() {
                     <Text className="mt-1 text-[12px] text-[#aaa]">{detail.address}</Text>
                   </View>
 
-                  {/* Action buttons — 路线 + 分享 */}
+                  {/* Action buttons — 查看详情 + 分享 */}
                   <View className="mt-3 flex-row" style={{ gap: 8 }}>
                     <Pressable
                       onPress={() => router.push({ pathname: '/scenic/[id]', params: { id: s.id } })}
-                      className="flex-1 items-center rounded-xl bg-[#3E6B4F] py-2.5 active:opacity-80">
+                      className="flex-1 items-center rounded-xl bg-[#2D6A4F] py-2.5 active:opacity-80">
                       <View className="flex-row items-center">
-                        <Ionicons name="navigate" size={16} color="#fff" />
-                        <Text className="ml-1.5 text-[14px] font-semibold text-white">路线</Text>
+                        <Ionicons name="leaf-outline" size={16} color="#fff" />
+                        <Text className="ml-1.5 text-[14px] font-semibold text-white">查看详情</Text>
                       </View>
                     </Pressable>
                     <Pressable
-                      className="flex-1 items-center rounded-xl border border-[#3E6B4F] bg-white py-2.5 active:opacity-80">
+                      className="flex-1 items-center rounded-xl border border-[#2D6A4F] bg-white py-2.5 active:opacity-80">
                       <View className="flex-row items-center">
-                        <Ionicons name="share-outline" size={16} color="#3E6B4F" />
-                        <Text className="ml-1.5 text-[14px] font-semibold text-[#3E6B4F]">分享</Text>
+                        <Ionicons name="share-outline" size={16} color="#2D6A4F" />
+                        <Text className="ml-1.5 text-[14px] font-semibold text-[#2D6A4F]">分享</Text>
                       </View>
                     </Pressable>
                   </View>

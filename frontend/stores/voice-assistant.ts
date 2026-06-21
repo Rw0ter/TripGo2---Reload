@@ -9,12 +9,15 @@ export interface VAMessage {
 interface VoiceAssistantState {
   visible: boolean;
   listening: boolean;
+  // 正在执行自动化指令（收能量/种树/跳转/下单）——驱动页面四周 RGB 流光灯带。
+  automating: boolean;
   messages: VAMessage[];
   transcript: string;
   show: () => void;
   hide: () => void;
   reset: () => void;
   setListening: (v: boolean) => void;
+  setAutomating: (v: boolean) => void;
   setTranscript: (t: string) => void;
   addMessage: (msg: VAMessage) => void;
   clearTranscript: () => void;
@@ -23,6 +26,7 @@ interface VoiceAssistantState {
 export const useVoiceAssistant = create<VoiceAssistantState>((set) => ({
   visible: false,
   listening: false,
+  automating: false,
   messages: [],
   transcript: '',
   // 打开助手：不清除历史，保持连续对话
@@ -32,6 +36,7 @@ export const useVoiceAssistant = create<VoiceAssistantState>((set) => ({
   // 手动重置：开始全新的对话
   reset: () => set({ messages: [], transcript: '' }),
   setListening: (v) => set({ listening: v }),
+  setAutomating: (v) => set({ automating: v }),
   setTranscript: (t) => set({ transcript: t }),
   addMessage: (msg) => set((s) => {
     const next = [...s.messages, msg];

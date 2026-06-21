@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRef, useEffect } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 import { useVoiceAssistant } from '@/stores/voice-assistant';
 
@@ -23,7 +23,7 @@ function isCommandOnly(text: string): boolean {
 }
 
 export function VoiceAssistantSheet() {
-  const { messages, listening, transcript, hide } = useVoiceAssistant();
+  const { messages, listening, transcript } = useVoiceAssistant();
   const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -32,11 +32,8 @@ export function VoiceAssistantSheet() {
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-      {/* 点击空白退出 */}
-      <Pressable style={StyleSheet.absoluteFill} onPress={hide} />
-
-      {/* 对话气泡 */}
-      <View style={styles.bubblesWrap} pointerEvents="box-none">
+      {/* 对话气泡：display-only（pointerEvents none），让正常点击穿透到下层页面，不抢用户操作 */}
+      <View style={styles.bubblesWrap} pointerEvents="none">
         <ScrollView
           ref={scrollRef}
           style={styles.scroll}
