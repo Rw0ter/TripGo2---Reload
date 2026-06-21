@@ -32,7 +32,7 @@ export function AuthInput({
   return (
     <View
       className="h-[52px] flex-row items-center rounded-2xl px-4"
-      style={{ backgroundColor: 'rgba(255,255,255,0.45)', boxShadow: '0px 4px 14px rgba(0,0,0,0.16)' }}>
+      style={{ backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0px 4px 14px rgba(0,0,0,0.16)' }}>
       <Ionicons name={icon} size={20} color="#6E9A85" />
       <TextInput
         className="h-full flex-1 px-3 text-[15px] text-eco-dark"
