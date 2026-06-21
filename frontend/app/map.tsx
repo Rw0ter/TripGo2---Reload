@@ -1,5 +1,6 @@
-// 旅行地图 —— 对应 Legacy map.html，重写为真正的 React 屏。
-// 在线：腾讯地图 GL SDK（定位 / 搜索 / 路线规划走 service 库，无后端代理）。
+// 绿色低碳地图 —— 在旅行地图基础上重定位为环保地图。
+// 在线：腾讯地图 GL SDK（定位 / 搜索 / 路线规划走 service 库，无后端代理），
+//       顶部提供绿色品类快捷搜索（回收点 / 充电站 / 公园 / 地铁 / 共享单车），鼓励绿色出行。
 // 离线：检测到地图不可用时自动切换到内置的离线地图（见 components/map/offline-map）。
 
 import { Ionicons } from '@expo/vector-icons';
@@ -39,6 +40,15 @@ const ROUTE_MODES: {
 ];
 
 type Destination = { lat: number; lng: number; title: string };
+
+// 绿色出行 / 环保设施 快捷品类（点击即在地图上搜索对应 POI）。
+const GREEN_CATEGORIES: { label: string; kw: string }[] = [
+  { label: '回收点', kw: '垃圾分类回收点' },
+  { label: '充电站', kw: '新能源汽车充电站' },
+  { label: '公园绿地', kw: '公园' },
+  { label: '地铁站', kw: '地铁站' },
+  { label: '共享单车', kw: '共享单车' },
+];
 
 export default function TravelMapScreen() {
   const insets = useSafeAreaInsets();
@@ -160,6 +170,12 @@ export default function TravelMapScreen() {
     send({ type: 'search', keyword: kw });
   };
 
+  const onCategory = (kw: string) => {
+    setKeyword(kw);
+    setResults(null);
+    send({ type: 'search', keyword: kw });
+  };
+
   const onPickResult = (poi: MapPoi) => {
     setDestination({ lat: poi.lat, lng: poi.lng, title: poi.title });
     setKeyword(poi.title);
@@ -247,7 +263,7 @@ export default function TravelMapScreen() {
         <View
           style={{ boxShadow: '0px 2px 8px rgba(0,0,0,0.12)' }}
           className="rounded-full bg-white px-4 py-1.5">
-          <Text className="text-[15px] font-bold text-[#33403A]">旅行地图</Text>
+          <Text className="text-[15px] font-bold text-[#33403A]">绿色地图</Text>
         </View>
         <Pressable
           onPress={() => (mapMode === 'online' ? setMapMode('offline') : goOnline())}
@@ -281,7 +297,7 @@ export default function TravelMapScreen() {
                 onChangeText={setKeyword}
                 onSubmitEditing={onSearch}
                 returnKeyType="search"
-                placeholder="搜索景点 / 地址"
+                placeholder="搜索回收点 / 环保设施 / 地址"
                 placeholderTextColor="#B3B7B0"
                 className="ml-2 flex-1 text-[14px] text-[#33403A]"
               />
@@ -303,6 +319,25 @@ export default function TravelMapScreen() {
                 <Text className="text-[12px] font-bold text-white">搜索</Text>
               </Pressable>
             </View>
+
+            {/* 绿色品类快捷搜索 */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="mt-2"
+              keyboardShouldPersistTaps="handled">
+              {GREEN_CATEGORIES.map((c) => (
+                <Pressable
+                  key={c.kw}
+                  onPress={() => onCategory(c.kw)}
+                  accessibilityRole="button"
+                  style={{ boxShadow: '0px 2px 8px rgba(0,0,0,0.1)' }}
+                  className="mr-2 flex-row items-center rounded-full bg-white px-3 py-1.5">
+                  <Ionicons name="leaf" size={12} color="#40916C" />
+                  <Text className="ml-1 text-[12px] font-medium text-[#33403A]">{c.label}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
 
             {/* 搜索结果 */}
             {results && results.length > 0 && (
