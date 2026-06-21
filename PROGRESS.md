@@ -79,6 +79,22 @@
 2. **CI 安卓 APK 打包（分支 ci/android-apk-build，PR #91）**：ci.yml 增 android-apk job（expo prebuild + gradlew assembleDebug，
    自包含、无需 EAS/签名密钥），app.json 补 android.package。
 
+**七轮：AI 体验修复（2026-06-21，分支 feat/ai-fixes-r2）**
+1. **灯带改纯内阴影**：VoiceAutomationGlow 去掉 border 描边，仅 inset boxShadow 双层变色 + 范围放大（60/150px）；
+   RGB 每通道仍 [30,185]（已 eval 验证 boxShadow 含 …inset）。
+2. **修 AI 伪造"[系统]已打开…"**：buildHistory 把 App 注入的「[系统]…」回执改写成 user 角色「（系统回执）」，
+   不再让模型把它当自己的话模仿；prompt 加规则 #9/#10（回执以它为准 + 严禁自行编造"已打开/已到达/已下单"、必须真出指令）。
+3. **AI 能打开商品详情（修 ID 漂移）**：商品(destination) ID 因 re-seed 从 79–114 漂到 187–222，硬编码 ID 必失效；
+   改为 AI 只传**商品名**——新增 open_product 指令 + 前端 resolveDestinationId 实时查 /destinations 解析当前 id；buy 同步改名解析。
+   已验证「打开麦秆纤维便携餐盒详情」→ /product/189。
+4. **AI 静默查个人资料**：prompt 规则 #6 扩展（名字/昵称/账号/我是谁/积分… → query_profile，不反问）；
+   query_profile 回执前置「账号名：X」。已验证「我叫什么名字」→ 账号名 forestdemo9464。
+5. **本地 llama.cpp 大模型兜底**：脚本 `backend/scripts/run-local-ai.ps1` 自动下载 llama.cpp(CUDA b9744)+cudart
+   + 指定 GGUF（Qwen3.6-12B-IQ-Q4_0，6.9GB），起 OpenAI 兼容服务 :8080（`-ngl 99` 全量上 RTX3080）；后端既有
+   `LOCAL_AI_URL` 兜底链路直接复用、无需改后端逻辑。已实测：模型加载成功、`/v1/chat/completions` 中英文均正常
+   （"垃圾分类是为了确保资源再利用…"），且 thinking 走 `reasoning_content`、不污染 `content` 答案。
+   `backend/local-ai/`（二进制+模型，数 GB）已 gitignore 不入库。
+
 ## 进行中
 - 暂无。本批 11 项已全部完成并合并：#89（AI 集群）、#90（地图）、#92+#93（首页，#93 按反馈换真实彩色图标+轮播无缝循环+电商级搜索）、#91（安卓 APK 打包，gradle 首跑 31min 绿）。
 
@@ -103,4 +119,6 @@
 - **2026-06-21** 找回密码无邮件服务，采用"用户名+注册邮箱"身份核验后直接重置，且不区分账号是否存在以防枚举。
 - **2026-06-21** 行程 tab 直接承载森林主页（路由仍 `/itinerary`，不改路由降风险）；原 green/index informational 页保留为"绿色资讯"。
 - **2026-06-21** 地图保留腾讯 GL 引擎，仅换内容/文案为绿色出行，避免重造地图能力。
+- **2026-06-21** 本地大模型走 llama.cpp（llama-server，OpenAI 兼容），复用既有 `LOCAL_AI_URL` 兜底链路、不改后端逻辑；llama.cpp 二进制 + GGUF 数 GB 不入库（脚本按需下载）。指定模型为社区 uncensored 版——脚本与后端均模型无关，已在脚本注明：面向真实用户的 App 建议换标准 instruct GGUF 更安全。
+- **2026-06-21** 商品(destination) ID 随 re-seed 漂移，AI 一律按**商品名**操作（open_product / buy），前端实时查 `/destinations` 解析当前 id，从根上规避硬编码 ID 失效。
 - 此前关键决策（2026-05~06）见 git 历史与旧版本记录。

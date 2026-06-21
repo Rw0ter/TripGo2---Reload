@@ -87,12 +87,18 @@ function extractCommand(text: string): { cmd: string | null; params: Record<stri
 }
 
 /** 从显示消息列表构建 AI 对话历史（role+content 格式） */
-function buildHistory(messages: { role: string; text: string }[]) {
-  // 最近 20 条，避免 context 过长
-  return messages.slice(-20).map((m) => ({
-    role: m.role as 'user' | 'assistant',
-    content: m.text,
-  }));
+function buildHistory(messages: { role: string; text: string; isCommand?: boolean }[]) {
+  // 最近 24 条；把 App 注入的"[系统]…"执行回执改写成 user 角色的"（系统回执）"，
+  // 避免模型把"[系统]已打开…"当成自己说过的话去模仿、伪造，而不真正走指令。
+  return messages.slice(-24).map((m) => {
+    if (m.role === 'assistant' && m.text.startsWith('[系统]')) {
+      return {
+        role: 'user' as const,
+        content: `（系统回执）${m.text.replace(/^\[系统\]\s*/, '')}`,
+      };
+    }
+    return { role: m.role as 'user' | 'assistant', content: m.text };
+  });
 }
 
 // 跳转健壮性：把 AI 给的 page（可能是中文页名 / 非精确路径）归一化为合法路由，
@@ -149,6 +155,29 @@ function screenNameOf(pathname: string): string {
   return '绿途';
 }
 
+// 按商品名解析到当前数据库的商品(destination) id —— 规避 re-seed 导致的商品 ID 漂移
+// （AI 只认商品名，App 实时查 /destinations 匹配出当前 id 再跳转）。
+async function resolveDestinationId(query: string): Promise<{ id: number; title: string } | null> {
+  const q = (query || '').trim();
+  if (!q) return null;
+  try {
+    const list = await apiRequest<{ id: number; title: string }[]>('/destinations');
+    if (!Array.isArray(list) || !list.length) return null;
+    const norm = (s: string) => (s || '').replace(/\s|（.*?）|\(.*?\)|套装|礼盒|版/g, '');
+    const nq = norm(q);
+    const hit =
+      list.find((p) => p.title === q) ||
+      list.find((p) => p.title.includes(q) || q.includes(p.title)) ||
+      list.find((p) => {
+        const nt = norm(p.title);
+        return nt && (nt.includes(nq) || nq.includes(nt));
+      });
+    return hit ? { id: hit.id, title: hit.title } : null;
+  } catch {
+    return null;
+  }
+}
+
 /** 发送文字到 AI，携带完整对话历史 + 当前界面上下文，执行指令时放慢节奏让自动化"看得见" */
 async function sendToAI(
   text: string,
@@ -183,7 +212,7 @@ async function sendToAI(
       if (cmd === 'open_page' && params.page) {
         const route = resolveRoute(params.page);
         if (route) {
-          const label = SCREEN_NAMES[route] ?? '目标页面';
+          const label = screenNameOf(route);
           addMessage({ role: 'assistant', text: `正在为你打开「${label}」…`, isCommand: true });
           await new Promise((r) => setTimeout(r, 1100));
           router.push(route as never);
@@ -194,14 +223,41 @@ async function sendToAI(
           addMessage({ role: 'assistant', text: `[系统] 未能识别页面「${params.page}」，请换个说法`, isCommand: true });
           stopGlow();
         }
-      } else if (cmd === 'buy' && params.productId) {
-        const pid = params.productId.replace(/^\/+/, '');
-        addMessage({ role: 'assistant', text: '正在为你打开商品并下单…', isCommand: true });
-        await new Promise((r) => setTimeout(r, 1100));
-        router.push(`/product/${pid}?autoBuy=1` as any);
-        await new Promise((r) => setTimeout(r, 900));
-        addMessage({ role: 'assistant', text: `[系统] 已下单（商品 ${pid}），订单已支付`, isCommand: true });
-        stopGlow();
+      } else if (cmd === 'open_product' && params.name) {
+        addMessage({ role: 'assistant', text: '正在为你查找商品…', isCommand: true });
+        const d = await resolveDestinationId(params.name);
+        if (!d) {
+          addMessage({ role: 'assistant', text: `[系统] 没找到商品「${params.name}」，换个说法试试`, isCommand: true });
+          stopGlow();
+        } else {
+          addMessage({ role: 'assistant', text: `正在为你打开「${d.title}」…`, isCommand: true });
+          await new Promise((r) => setTimeout(r, 1000));
+          router.push(`/product/${d.id}` as any);
+          await new Promise((r) => setTimeout(r, 900));
+          addMessage({ role: 'assistant', text: `[系统] 已到达商品详情「${d.title}」`, isCommand: true });
+          stopGlow();
+        }
+      } else if (cmd === 'buy' && (params.name || params.productId)) {
+        addMessage({ role: 'assistant', text: '正在为你查找商品…', isCommand: true });
+        let pid: number | null = null;
+        let title = params.name ?? '';
+        if (params.productId && /^\d+$/.test(params.productId.replace(/^\/+/, ''))) {
+          pid = parseInt(params.productId.replace(/^\/+/, ''), 10);
+        } else if (params.name) {
+          const d = await resolveDestinationId(params.name);
+          if (d) { pid = d.id; title = d.title; }
+        }
+        if (pid == null) {
+          addMessage({ role: 'assistant', text: `[系统] 没找到商品「${params.name ?? params.productId}」，换个说法试试`, isCommand: true });
+          stopGlow();
+        } else {
+          addMessage({ role: 'assistant', text: `正在为你打开「${title}」并下单…`, isCommand: true });
+          await new Promise((r) => setTimeout(r, 1000));
+          router.push(`/product/${pid}?autoBuy=1` as any);
+          await new Promise((r) => setTimeout(r, 900));
+          addMessage({ role: 'assistant', text: `[系统] 已为你下单「${title}」，订单已支付`, isCommand: true });
+          stopGlow();
+        }
       } else if (cmd === 'collect_energy' && params.activity) {
         const names: Record<string, string> = {
           green_travel: '绿色出行', waste_sort: '垃圾分类', eco_quiz: '环保答题',
@@ -234,7 +290,7 @@ async function sendToAI(
         try {
           const s = await apiRequest<{ carbonCredits: number; points: number; treesPlanted: number; totalCarbonSaved: number }>('/eco/progress', { auth: true });
           const name = useAuthStore.getState().user?.username ?? '你';
-          addMessage({ role: 'assistant', text: `[系统] ${name} 的数据：碳积分 ${s.carbonCredits}、积分 ${s.points}、已种 ${s.treesPlanted} 棵真树、累计减排 ${s.totalCarbonSaved.toFixed(1)} kg`, isCommand: true });
+          addMessage({ role: 'assistant', text: `[系统] 账号名：${name}；碳积分 ${s.carbonCredits}、可用积分 ${s.points}、已种 ${s.treesPlanted} 棵真树、累计减排 ${s.totalCarbonSaved.toFixed(1)} kg`, isCommand: true });
         } catch (err) {
           addMessage({ role: 'assistant', text: `[系统] 查询失败：${err instanceof Error ? err.message : '请先登录'}`, isCommand: true });
         }

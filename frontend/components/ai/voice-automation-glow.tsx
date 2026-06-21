@@ -11,10 +11,8 @@ import Reanimated, {
 
 import { useVoiceAssistant } from '@/stores/voice-assistant';
 
-// 自动化执行时，页面四周显示一圈缓缓流转的炫彩灯带 + 柔光（pointerEvents none，不挡操作）。
-// 每个通道严格落在 [30,185]：既不刺眼纯白、也不死黑，呈高级的"哑光霓虹"质感。
-//   rose(185,60,95) amber(185,130,45) lime(150,185,50) green(45,185,110)
-//   teal(40,170,175) azure(45,120,185) violet(120,70,185) magenta(185,60,160)
+// 自动化执行时，页面四周泛起一圈"向内"流转的炫彩柔光（只有 inset shadow 变色，无 border 描边）。
+// 每个通道严格落 [30,185]：哑光霓虹，不刺眼也不死黑。范围放大成内扩柔光晕，pointerEvents none 不挡操作。
 const HUES = [
   '#B93C5F', '#B9822D', '#96B932', '#2DB96E',
   '#28AAAF', '#2D78B9', '#7846B9', '#B93CA0', '#B93C5F',
@@ -28,7 +26,7 @@ export function VoiceAutomationGlow() {
   useEffect(() => {
     if (automating) {
       t.value = 0;
-      // 3.6s 一圈，缓慢流转更显从容（呼应"放慢自动化节奏"）。
+      // 3.6s 一圈，缓慢流转更从容。
       t.value = withRepeat(withTiming(1, { duration: 3600, easing: Easing.linear }), -1, false);
     } else {
       cancelAnimation(t);
@@ -36,51 +34,24 @@ export function VoiceAutomationGlow() {
     return () => cancelAnimation(t);
   }, [automating, t]);
 
-  // 三层同色错相位：外层弥散柔光晕 → 中层过渡 → 内层清晰灯带 + 发光投影，叠出"灯带 + glow"层次。
-  const haze = useAnimatedStyle(() => ({
-    borderColor: interpolateColor(t.value, STOPS, HUES),
-    // 轻微呼吸：0.14 ↔ 0.22
-    opacity: 0.14 + 0.08 * (1 - Math.abs(0.5 - t.value) * 2),
-  }));
-  const mid = useAnimatedStyle(() => ({
-    borderColor: interpolateColor((t.value + 0.05) % 1, STOPS, HUES),
-  }));
-  const band = useAnimatedStyle(() => ({
-    borderColor: interpolateColor((t.value + 0.1) % 1, STOPS, HUES),
-  }));
+  // 双层内阴影、错相位：内圈较亮收口 + 外扩大范围柔光，共同变色；不画 border。
+  const style = useAnimatedStyle(() => {
+    const c1 = interpolateColor(t.value, STOPS, HUES);
+    const c2 = interpolateColor((t.value + 0.5) % 1, STOPS, HUES);
+    return {
+      boxShadow: `inset 0px 0px 60px 6px ${c1}, inset 0px 0px 150px 48px ${c2}`,
+    };
+  });
 
   if (!automating) return null;
 
   return (
-    <>
-      {/* 外层：粗而弥散的柔光晕 */}
-      <Reanimated.View
-        pointerEvents="none"
-        style={[
-          { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderWidth: 16, zIndex: 300 },
-          haze,
-        ]}
-      />
-      {/* 中层：过渡光带 */}
-      <Reanimated.View
-        pointerEvents="none"
-        style={[
-          { position: 'absolute', top: 5, left: 5, right: 5, bottom: 5, borderWidth: 8, borderRadius: 12, opacity: 0.45, zIndex: 300 },
-          mid,
-        ]}
-      />
-      {/* 内层：清晰灯带 + 柔和发光投影（glow） */}
-      <Reanimated.View
-        pointerEvents="none"
-        style={[
-          {
-            position: 'absolute', top: 11, left: 11, right: 11, bottom: 11,
-            borderWidth: 2.5, borderRadius: 18, zIndex: 300,
-            boxShadow: '0px 0px 22px rgba(120,180,150,0.55)',
-          },
-          band,
-        ]}
-      />
-    </>
+    <Reanimated.View
+      pointerEvents="none"
+      style={[
+        { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 300 },
+        style,
+      ]}
+    />
   );
 }

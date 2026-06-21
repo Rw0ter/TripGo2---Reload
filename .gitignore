@@ -29,6 +29,9 @@ backend/uploads/
 # 本地 TTS 模型 / 二进制（Piper / VITS，数百 MB，运行期资源，不入库；新环境自行放置到 backend/tts/）
 backend/tts/
 
+# 本地大模型（llama.cpp 二进制 + GGUF 模型，数 GB，运行期资源；用 scripts/run-local-ai.ps1 自动下载）
+backend/local-ai/
+
 # 日志
 *.log
 npm-debug.log*
