@@ -5,7 +5,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
-  type ImageSourcePropType,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   Pressable,
@@ -23,24 +22,30 @@ import type { Banner, Quiz, Scenic } from '@/lib/api-types';
 import { comingSoon } from '@/lib/coming-soon';
 import { resolveLegacyImage } from '@/lib/legacy-images';
 
-// 四宫格 / 五项入口是 App 导航菜单（非后端数据），保持静态。
-const GRID4 = [
-  { icon: require('../../assets/legacy/img/index_list_4combo/qd.png'), label: '签到' },
-  { icon: require('../../assets/legacy/img/lxwd.png'), label: '绿色行动' },
-  { icon: require('../../assets/legacy/img/index_list_4combo/phb.png'), label: '排行榜' },
-  { icon: require('../../assets/legacy/img/VR.png'), label: 'VR' },
+// 首页功能入口（App 导航菜单，非后端数据）。图标统一用 @expo/vector-icons 的 Ionicons（项目标准，
+// 矢量、清晰、可主题化），每个入口配一种生态色，呈"浅色圆角磁贴 + 饱和图标"的现代超级 App 质感，
+// 替换旧版岭南主题 PNG（琵琶 / 铁鼎 / people_dance 等与绿色低碳无关的图）。
+type EntryDef = {
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  route: string | null;
+};
+const ENTRIES: EntryDef[] = [
+  { label: '签到', icon: 'calendar-clear', color: '#2E9E5B', route: '/checkin' },
+  { label: '绿色行动', icon: 'leaf', color: '#4CAF7D', route: '/green' },
+  { label: '排行榜', icon: 'trophy', color: '#E0A93B', route: '/leaderboard' },
+  { label: 'VR', icon: 'glasses', color: '#3A8DDE', route: '/vr' },
+  { label: '生态良品', icon: 'storefront', color: '#18A999', route: '/products' },
+  { label: '绿色地图', icon: 'map', color: '#5AA06E', route: '/map' },
+  { label: '智能助手', icon: 'sparkles', color: '#6C7BE0', route: '/ai/assistant' },
+  { label: '环保学堂', icon: 'school', color: '#EF9A4D', route: '/green' },
+  { label: '知识库', icon: 'library', color: '#C77B53', route: '/cantonese' },
 ];
 
-const ENTRY5 = [
-  { icon: require('../../assets/legacy/img/pipa1.png'), label: '生态良品' },
-  { icon: require('../../assets/legacy/img/lxdt3.png'), label: '绿色地图' },
-  { icon: require('../../assets/legacy/img/zhushou.png'), label: '智能助手' },
-  { icon: require('../../assets/legacy/img/people_dance.png'), label: '环保学堂' },
-  { icon: require('../../assets/legacy/img/tieding1.png'), label: '知识库' },
-];
 
-
-// 顶部轮播图：高清广东城市大图 + 名称浮层，每 4 秒自动切换、可手动滑动。
+// 顶部轮播图：现代"露边卡片"样式 —— 卡片窄于屏宽、右侧露出下一张边缘，
+// 大圆角 + 分类胶囊 + 双向渐变标题；snapToInterval 吸附，4.5s 自动轮播，可手滑。
 function Carousel({
   banners,
   pageWidth,
@@ -51,7 +56,10 @@ function Carousel({
   const scrollRef = useRef<ScrollView>(null);
   const [index, setIndex] = useState(0);
   const indexRef = useRef(0);
-  const imgWidth = pageWidth - 28;
+  const SIDE = 16;
+  const GAP = 12;
+  const cardW = pageWidth - SIDE * 2 - 22; // 右侧露出 ~22px 提示可滑动
+  const interval = cardW + GAP;
   const count = banners.length;
 
   useEffect(() => {
@@ -60,21 +68,15 @@ function Carousel({
       const next = (indexRef.current + 1) % count;
       indexRef.current = next;
       setIndex(next);
-      scrollRef.current?.scrollTo({ x: next * pageWidth, animated: true });
-    }, 4000);
+      scrollRef.current?.scrollTo({ x: next * interval, animated: true });
+    }, 4500);
     return () => clearInterval(timer);
-  }, [pageWidth, count]);
+  }, [interval, count]);
 
-  function onMomentumEnd(e: NativeSyntheticEvent<NativeScrollEvent>) {
-    const i = Math.round(e.nativeEvent.contentOffset.x / pageWidth);
-    indexRef.current = i;
-    setIndex(i);
-  }
-
-  // 手动滑动时实时更新指示器：onMomentumScrollEnd 只在惯性结束时触发，跟手性差。
+  // snapToInterval 吸附后实时更新指示器（跟手）。
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
-    const i = Math.round(e.nativeEvent.contentOffset.x / pageWidth);
-    if (i !== indexRef.current) {
+    const i = Math.round(e.nativeEvent.contentOffset.x / interval);
+    if (i !== indexRef.current && i >= 0 && i < count) {
       indexRef.current = i;
       setIndex(i);
     }
@@ -85,36 +87,38 @@ function Carousel({
       <ScrollView
         ref={scrollRef}
         horizontal
-        pagingEnabled
         showsHorizontalScrollIndicator={false}
+        snapToInterval={interval}
+        decelerationRate="fast"
         scrollEventThrottle={16}
         onScroll={onScroll}
-        onMomentumScrollEnd={onMomentumEnd}>
-        {banners.map((b) => (
-          <View key={b.id} style={{ width: pageWidth }} className="items-center">
+        contentContainerStyle={{ paddingHorizontal: SIDE }}>
+        {banners.map((b, i) => (
+          <View
+            key={b.id}
+            style={{ width: cardW, marginRight: i === count - 1 ? 0 : GAP }}>
             <View
-              style={{ width: imgWidth, height: 196, boxShadow: '0px 8px 20px rgba(0,0,0,0.28)' }}
-              className="overflow-hidden rounded-3xl">
+              style={{ height: 190, boxShadow: '0px 10px 24px rgba(0,0,0,0.30)' }}
+              className="overflow-hidden rounded-[26px]">
               <Image
                 source={resolveLegacyImage(b.image)}
                 resizeMode="cover"
-                style={{ width: imgWidth, height: 196 }}
+                style={{ width: cardW, height: 190 }}
               />
               <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.66)']}
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  height: 110,
-                }}
+                colors={['rgba(0,0,0,0.06)', 'transparent', 'rgba(0,0,0,0.72)']}
+                locations={[0, 0.42, 1]}
+                style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
               />
-              <View className="absolute bottom-3.5 left-4 right-4">
-                <Text className="text-xl font-extrabold text-white">
+              <View className="absolute left-3.5 top-3.5 flex-row items-center rounded-full bg-white/20 px-2.5 py-1">
+                <Ionicons name="leaf" size={11} color="#CFF5DD" />
+                <Text className="ml-1 text-[10px] font-semibold text-white">绿色低碳</Text>
+              </View>
+              <View className="absolute bottom-4 left-4 right-4">
+                <Text className="text-[19px] font-extrabold text-white" numberOfLines={1}>
                   {b.title}
                 </Text>
-                <Text className="mt-0.5 text-[12px] text-white/85">
+                <Text className="mt-0.5 text-[12px] text-white/85" numberOfLines={1}>
                   {b.subtitle}
                 </Text>
               </View>
@@ -122,12 +126,12 @@ function Carousel({
           </View>
         ))}
       </ScrollView>
-      <View className="mt-2.5 flex-row justify-center gap-1.5">
+      <View className="mt-3 flex-row justify-center gap-1.5">
         {banners.map((b, i) => (
           <View
             key={b.id}
             style={{
-              width: i === index ? 16 : 6,
+              width: i === index ? 18 : 6,
               height: 6,
               borderRadius: 3,
               backgroundColor:
@@ -209,28 +213,27 @@ function QuizCard({ item, width }: { item: Quiz; width: number }) {
 }
 
 function EntryItem({
-  icon,
-  label,
-  size,
+  entry,
+  width,
   onPress,
 }: {
-  icon: ImageSourcePropType;
-  label: string;
-  size: number;
+  entry: EntryDef;
+  width: number;
   onPress: () => void;
 }) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={label}
-      className="items-center py-1.5">
-      <Image
-        source={icon}
-        resizeMode="contain"
-        style={{ width: size, height: size }}
-      />
-      <Text className="mt-1.5 text-[12px] text-[#4a4a42]">{label}</Text>
+      accessibilityLabel={entry.label}
+      style={{ width }}
+      className="items-center py-2">
+      <View
+        style={{ backgroundColor: entry.color + '1F' }}
+        className="h-[52px] w-[52px] items-center justify-center rounded-2xl">
+        <Ionicons name={entry.icon} size={26} color={entry.color} />
+      </View>
+      <Text className="mt-1.5 text-[12px] text-[#4a4a42]">{entry.label}</Text>
     </Pressable>
   );
 }
@@ -257,7 +260,7 @@ export default function HomeScreen() {
   const [error, setError] = useState(false);
 
   const quizCardW = Math.round(width * 0.66);
-  const hotCardW = Math.round(width * 0.62);
+  const gridItemW = (width - 48) / 5; // 卡片 mx-4(32) + px-2(16)，5 列
   const load = useCallback(async () => {
     setError(false);
     try {
@@ -307,12 +310,17 @@ export default function HomeScreen() {
             <Pressable
               onPress={() => router.push('/search')}
               accessibilityRole="search"
-              style={{ boxShadow: '0px 2px 8px rgba(0,0,0,0.12)' }}
-              className="mt-3 h-11 flex-row items-center rounded-full bg-white px-4">
-              <Ionicons name="search" size={16} color="#5C8A6D" />
-              <Text className="ml-2 text-sm text-[#9aa39b]">
+              style={{ boxShadow: '0px 4px 14px rgba(0,0,0,0.16)' }}
+              className="mt-3 h-12 flex-row items-center rounded-2xl bg-white py-1.5 pl-1.5 pr-1.5">
+              <View className="h-9 w-9 items-center justify-center rounded-xl bg-[#E6F2EA]">
+                <Ionicons name="search" size={17} color="#40916C" />
+              </View>
+              <Text className="ml-2.5 flex-1 text-[13px] text-[#9aa39b]">
                 搜索生态良品 / 环保知识 / 活动
               </Text>
+              <View className="rounded-xl bg-[#40916C] px-3.5 py-2">
+                <Text className="text-[12px] font-bold text-white">搜索</Text>
+              </View>
             </Pressable>
           </Animated.View>
 
@@ -332,44 +340,20 @@ export default function HomeScreen() {
 
         {/* 主体 */}
         <View className="-mt-4 rounded-t-[22px] bg-[#F4F1E4] pt-5">
-          {/* 入口宫格 */}
+          {/* 入口宫格 —— 浅色磁贴 + 矢量图标，5 列两排（列对齐） */}
           <Animated.View
             entering={FadeInDown.delay(160).duration(450)}
-            style={{ boxShadow: '0px 4px 14px rgba(0,0,0,0.06)' }}
-            className="mx-4 rounded-2xl bg-white pb-2 pt-3">
-            <View className="flex-row justify-around px-2">
-              {GRID4.map((it) => {
-                const routes: Record<string, string> = { '签到': '/checkin', '绿色行动': '/green', '排行榜': '/leaderboard', 'VR': '/vr' };
-                const target = routes[it.label];
-                return (
-                  <EntryItem
-                    key={it.label}
-                    icon={it.icon}
-                    label={it.label}
-                    size={40}
-                    onPress={() => target ? router.push(target as any) : comingSoon(it.label)}
-                  />
-                );
-              })}
-            </View>
-            <View
-              style={{ height: 1 }}
-              className="mx-3 my-1.5 bg-[#EFEBDC]"
-            />
-            <View className="flex-row justify-around px-1">
-              {ENTRY5.map((it) => {
-                const routes: Record<string, string> = { '生态良品': '/products', '绿色地图': '/map', '智能助手': '/ai/assistant', '环保学堂': '/green', '知识库': '/cantonese' };
-                const target = routes[it.label];
-                return (
-                  <EntryItem
-                    key={it.label}
-                    icon={it.icon}
-                    label={it.label}
-                    size={42}
-                    onPress={() => target ? router.push(target as any) : comingSoon(it.label)}
-                  />
-                );
-              })}
+            style={{ boxShadow: '0px 6px 18px rgba(0,0,0,0.07)' }}
+            className="mx-4 rounded-3xl bg-white px-2 pb-3 pt-3">
+            <View className="flex-row flex-wrap">
+              {ENTRIES.map((e) => (
+                <EntryItem
+                  key={e.label}
+                  entry={e}
+                  width={gridItemW}
+                  onPress={() => (e.route ? router.push(e.route as any) : comingSoon(e.label))}
+                />
+              ))}
             </View>
           </Animated.View>
 

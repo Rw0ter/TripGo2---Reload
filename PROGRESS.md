@@ -68,15 +68,23 @@
 2. **web 端定位补全**：srcDoc iframe 是不透明源、浏览器拒绝其内 geolocation → 改在父窗口取 GPS，
    新增 `locateAt` 指令把坐标喂进 iframe；失败退回 IP 兜底。（地图依赖腾讯 GL + 浏览器定位权限，无前端单测；CI 仅 tsc+lint。）
 
+**六轮：首页重设计 + CI 安卓打包（2026-06-21）**
+1. **首页重设计（分支 feat/home-redesign）**：① 搜索框升级为"图标胶囊 + 搜索按钮"高级感样式；
+   ② 轮播改"露边卡片"现代样式（卡片窄于屏、右侧露出下一张、大圆角 + 分类胶囊 + snapToInterval 吸附）；
+   ③ 上图下文功能入口换掉旧版岭南 PNG（琵琶/铁鼎/people_dance）→ 浅色磁贴 + Ionicons 矢量图标（项目图标标准），
+   9 项 5 列两排列对齐、生态配色。已截图验证。
+2. **CI 安卓 APK 打包（分支 ci/android-apk-build，PR #91）**：ci.yml 增 android-apk job（expo prebuild + gradlew assembleDebug，
+   自包含、无需 EAS/签名密钥），app.json 补 android.package。
+
 ## 进行中
-- 暂无（四/五轮收尾：待提交、PR、过 CI、合并）。
+- 暂无（六轮收尾：home 待 PR；APK CI PR #91 在跑）。
 
 ## 下一步（按优先级）
-1. **本批次剩余 2 项（下一轮）**：① /home 顶部轮播+搜索框样式/逻辑重设计 + 上图下文功能按钮换联网真实图标；
-   ② CI/CD 增加 APK 打包测试（正式进安卓；需定 EAS 云构建 vs 本地 gradle prebuild）。
-2. cultural 后端数据为非遗内容、study 页已删，已成孤儿——评估移除或改造。
-3. 真机原生构建前确认 expo-speech-recognition 的 config plugin（CI 仅跑 web）。
-4. 部分景点照片为 CC-BY(-SA)，已在 CREDITS 署名；如需更严格可换 CC0/PD。
+1. 本批 11 项已全部落地（六轮覆盖 #1~#11）；APK CI 首跑若因 SDK/内存等需微调，按 PR #91 反馈迭代。
+2. 首页功能图标用 Ionicons（项目标准、矢量清晰、可主题化）；若后续要换成下载的栅格图标集，需先解决"单一来源保持风格一致 + 本机无 SVG→PNG 工具"两难。
+3. cultural 后端数据为非遗内容、study 页已删，已成孤儿——评估移除或改造。
+4. 真机原生构建前确认 expo-speech-recognition 的 config plugin（CI 仅跑 web）。
+5. 部分景点照片为 CC-BY(-SA)，已在 CREDITS 署名；如需更严格可换 CC0/PD。
 
 ## 已知问题 / 坑
 - RAG / AI 需后端 `.env` 配 `DEEPSEEK_API_KEY`，缺失时 AI 接口 503。
