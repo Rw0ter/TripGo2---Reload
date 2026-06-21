@@ -21,7 +21,7 @@ export class AiController {
       '逐段返回 data: {"delta":"..."}，错误为 data: {"error":"..."}，以 data: [DONE] 结束。',
   })
   async chat(@Body() dto: ChatDto, @Res() res: Response): Promise<void> {
-    await this.ai.chat(dto.messages, res);
+    await this.ai.chat(dto.messages, res, { localOnly: dto.localOnly });
   }
 
   @Post('plan')

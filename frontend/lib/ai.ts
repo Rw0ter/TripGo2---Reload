@@ -118,11 +118,14 @@ function streamSSE(
 }
 
 // AI 对话：传完整对话历史（含本轮用户消息）。
+// opts.localOnly=true → 仅用本地模型（后端跳过 DeepSeek），用于 /ai/assistant 页。
 export function streamChat(
   messages: ChatMessage[],
   handlers: StreamHandlers,
+  opts?: { localOnly?: boolean },
 ): () => void {
-  return streamSSE('/ai/chat', { messages }, handlers);
+  const body = opts?.localOnly ? { messages, localOnly: true } : { messages };
+  return streamSSE('/ai/chat', body, handlers);
 }
 
 // AI 行程规划。

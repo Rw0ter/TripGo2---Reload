@@ -225,4 +225,36 @@ describe('AiService.chat', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(writes.join('')).toContain('data: {"delta":"离线"}');
   });
+
+  it('localOnly=true → 只用本地模型，完全跳过 DeepSeek', async () => {
+    const fetchMock = jest.fn().mockResolvedValueOnce(
+      fakeStreamResponse([
+        'data: {"choices":[{"delta":{"content":"本地直答"}}]}\n\n',
+        'data: [DONE]\n\n',
+      ]),
+    );
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const svc = new AiService(
+      makeConfig({
+        DEEPSEEK_API_KEY: 'k', // 即便配了云端，localOnly 也不应调用它
+        LOCAL_AI_URL: 'http://127.0.0.1:8080/v1',
+        LOCAL_AI_MODEL: 'Qwen3.6-12B-IQ-Q4_0',
+      }),
+      makeRag(),
+    );
+    const { res, writes } = makeFakeRes();
+    await svc.chat([{ role: 'user', content: 'hi' }], res, { localOnly: true });
+    expect(fetchMock).toHaveBeenCalledTimes(1); // 只打本地，没打 DeepSeek
+    expect(fetchMock.mock.calls[0][0] as string).toContain('127.0.0.1:8080');
+    expect(writes.join('')).toContain('data: {"delta":"本地直答"}');
+  });
+
+  it('localOnly=true 但未配本地模型 → 抛 503（未触碰响应流）', async () => {
+    const svc = new AiService(makeConfig({ DEEPSEEK_API_KEY: 'k' }), makeRag());
+    const { res, writes } = makeFakeRes();
+    await expect(
+      svc.chat([{ role: 'user', content: 'hi' }], res, { localOnly: true }),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+    expect(writes).toHaveLength(0);
+  });
 });

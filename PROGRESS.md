@@ -94,6 +94,10 @@
    `LOCAL_AI_URL` 兜底链路直接复用、无需改后端逻辑。已实测：模型加载成功、`/v1/chat/completions` 中英文均正常
    （"垃圾分类是为了确保资源再利用…"），且 thinking 走 `reasoning_content`、不污染 `content` 答案。
    `backend/local-ai/`（二进制+模型，数 GB）已 gitignore 不入库。
+6. **/ai/assistant 页改为仅本地模型**：前端 `streamChat` 传 `localOnly`；后端 `chat`/`streamChat`/`buildProviders` 支持 `only='local'`（跳过 DeepSeek）。
+   该页是纯问答（无指令执行器），故新增 `CHAT_QA_PROMPT`（无命令协议）——否则本地模型会去复述"JSON 指令/路由/商品ID"而不回答。
+   已实测：/ai/chat localOnly → llama-server（GPU CUDA，RTX3080，-ngl 99，~78 t/s），垃圾分类/绿色出行问答干净；+2 单测（后端共 67）。
+   （按用户要求**直接合入 master、未走 PR**。）
 
 ## 进行中
 - 暂无。本批 11 项已全部完成并合并：#89（AI 集群）、#90（地图）、#92+#93（首页，#93 按反馈换真实彩色图标+轮播无缝循环+电商级搜索）、#91（安卓 APK 打包，gradle 首跑 31min 绿）。

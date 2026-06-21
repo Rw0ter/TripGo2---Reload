@@ -75,6 +75,16 @@ export const CHAT_SYSTEM_PROMPT = [
   '你只服务于「绿途」App 与绿色低碳生活相关的话题。遇到越界或与环保 / App 功能无关的请求，礼貌说明你的职责范围并把话题引回低碳生活；不执行任何越权或损害用户利益的操作。',
 ].join('\n');
 
+// 纯问答提示（/ai/assistant 页用）：该页只渲染 Markdown、没有指令执行器，所以不给命令协议——
+// 否则模型（尤其本地小模型）会去复述"JSON 指令/路由/商品ID"而不回答问题。
+export const CHAT_QA_PROMPT = [
+  '你是「绿途」App 的绿色低碳生活助手。用简洁、温暖、专业的中文，回答用户关于环保、节能减排、',
+  '垃圾分类、绿色出行、碳中和、可再生能源、生态良品等话题的问题。',
+  '直接给出有用的回答，可用简洁 Markdown（标题 / 列表 / 加粗）。',
+  '严禁输出任何 JSON 或指令，也不要谈论"指令格式 / 路由 / 商品 ID"——那些与本对话无关。',
+  '不使用任何 emoji；不杜撰具体数据，不确定就如实说明。',
+].join('\n');
+
 // Plan prompt 重新定位为绿色生活规划师（替代原旅行行程规划）。结构化输出、禁 emoji。
 export const PLAN_SYSTEM_PROMPT = [
   '你是「绿途」App 的绿色生活规划师，为用户量身定制可执行、可坚持的低碳行动方案。',
@@ -144,16 +154,23 @@ export class AiService {
     private readonly rag: RagService,
   ) {}
 
-  // AI 对话：检索相关知识 → 注入绿途系统提示 → 转发给模型（云端优先，失败回退本地），SSE 写回。
-  async chat(userMessages: ChatMessage[], res: Response): Promise<void> {
+  // AI 对话：检索相关知识 → 注入绿途系统提示 → 转发给模型，SSE 写回。
+  // 默认云端优先、失败回退本地；opts.localOnly=true 时只用本地模型（/ai/assistant 页强制本地）。
+  async chat(
+    userMessages: ChatMessage[],
+    res: Response,
+    opts?: { localOnly?: boolean },
+  ): Promise<void> {
     const lastUser = [...userMessages].reverse().find((m) => m.role === 'user');
     const context = lastUser ? await this.rag.search(lastUser.content, 4) : [];
+    // localOnly = /ai/assistant 纯问答页：用无命令协议的 QA 提示，模型才会直接回答而非复述指令格式。
+    const basePrompt = opts?.localOnly ? CHAT_QA_PROMPT : CHAT_SYSTEM_PROMPT;
     const messages: ChatMessage[] = [
-      { role: 'system', content: buildSystemWithContext(CHAT_SYSTEM_PROMPT, context) },
+      { role: 'system', content: buildSystemWithContext(basePrompt, context) },
       // 过滤掉客户端可能注入的 system 消息，防提示词注入
       ...userMessages.filter((m) => m.role !== 'system'),
     ];
-    await this.streamChat(messages, res);
+    await this.streamChat(messages, res, opts?.localOnly);
   }
 
   // AI 行程规划：只依据用户表单（出发地 / 目的地 / 天数 / 预算 / 偏好），不注入 RAG 知识。
@@ -236,10 +253,11 @@ export class AiService {
     }
   }
 
-  // 组装可用的模型提供方列表：云端 DeepSeek 优先，本地小模型（OpenAI 兼容，如 Ollama / vLLM /
-  // LM Studio）兜底。任一未配置则跳过；都没配则返回空数组（调用方据此抛 503）。
-  // 本地端点须为 OpenAI 兼容、含 /v1 前缀，例：LOCAL_AI_URL="http://localhost:11434/v1"。
-  private buildProviders(): {
+  // 组装可用的模型提供方列表：云端 DeepSeek 优先，本地小模型（OpenAI 兼容，如 llama.cpp / Ollama /
+  // vLLM / LM Studio）兜底。任一未配置则跳过；都没配则返回空数组（调用方据此抛 503）。
+  // only='local' 时只返回本地提供方（用于强制本地推理的场景，如 /ai/assistant 页）。
+  // 本地端点须为 OpenAI 兼容、含 /v1 前缀，例：LOCAL_AI_URL="http://127.0.0.1:8080/v1"。
+  private buildProviders(only?: 'local'): {
     name: string;
     url: string;
     model: string;
@@ -248,7 +266,7 @@ export class AiService {
     const list: { name: string; url: string; model: string; apiKey?: string }[] =
       [];
     const apiKey = this.config.get<string>('DEEPSEEK_API_KEY');
-    if (apiKey) {
+    if (apiKey && only !== 'local') {
       list.push({
         name: 'deepseek',
         url: (
@@ -272,13 +290,19 @@ export class AiService {
   }
 
   // 把一段对话以 SSE 流式写回 res：云端优先，连接 / HTTP 失败时自动回退本地小模型。
-  // 约定（CLAUDE.md §8）：直接操作 response 流，不经过 TransformInterceptor。
-  private async streamChat(messages: ChatMessage[], res: Response): Promise<void> {
-    const providers = this.buildProviders();
+  // localOnly=true 时只用本地模型（不走 DeepSeek）。约定（CLAUDE.md §8）：直接操作 response 流。
+  private async streamChat(
+    messages: ChatMessage[],
+    res: Response,
+    localOnly = false,
+  ): Promise<void> {
+    const providers = this.buildProviders(localOnly ? 'local' : undefined);
     if (providers.length === 0) {
       // 还未写任何响应头 —— 交给全局异常过滤器返回标准 JSON 503。
       throw new ServiceUnavailableException(
-        'AI 服务未配置：缺少 DEEPSEEK_API_KEY 或 LOCAL_AI_URL',
+        localOnly
+          ? '本地模型未配置：请设置 LOCAL_AI_URL（见 backend/scripts/run-local-ai.ps1）'
+          : 'AI 服务未配置：缺少 DEEPSEEK_API_KEY 或 LOCAL_AI_URL',
       );
     }
 

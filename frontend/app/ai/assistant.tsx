@@ -288,7 +288,7 @@ export default function AIAssistantScreen() {
     [],
   );
 
-  // AI 对话：调用后端 SSE 接口（DeepSeek 代理），逐 token 流式填充助手气泡。
+  // AI 对话：本页强制走本地模型（localOnly），后端跳过 DeepSeek，逐 token 流式填充助手气泡。
   function send(q?: string) {
     const text = (q ?? input).trim();
     if (!text || chatLoading) return;
@@ -332,7 +332,7 @@ export default function AIAssistantScreen() {
         });
         setChatLoading(false);
       },
-    });
+    }, { localOnly: true });
   }
 
   // AI 行程规划：调用后端 SSE 接口，流式累积 Markdown 行程。

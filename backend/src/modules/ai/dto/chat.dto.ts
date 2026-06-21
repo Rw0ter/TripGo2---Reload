@@ -4,7 +4,9 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsIn,
+  IsOptional,
   IsString,
   MaxLength,
   MinLength,
@@ -34,4 +36,12 @@ export class ChatDto {
   @ValidateNested({ each: true })
   @Type(() => ChatMessageDto)
   messages: ChatMessageDto[];
+
+  @ApiProperty({
+    required: false,
+    description: '仅使用本地模型（跳过 DeepSeek 云端）。用于 /ai/assistant 页强制本地推理。',
+  })
+  @IsOptional()
+  @IsBoolean()
+  localOnly?: boolean;
 }
