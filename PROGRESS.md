@@ -62,12 +62,18 @@
 6. **灯带优化**：VoiceAutomationGlow 三层（弥散柔光晕 + 过渡 + 清晰灯带 + boxShadow glow），RGB 每通道严格落 [30,185] 哑光霓虹；3.6s 缓转 + 呼吸（已 eval 验证渲染）。
 7. **删加号菜单「规划行程」**：create-action-sheet 去掉「新建绿色计划」(/trip/create)，仅留发布故事 + AI 语音助手（已截图验证）。
 
+**五轮：地图控件冲突 + web 定位（2026-06-21，分支 feat/map-web-geolocation）**
+1. **GL 自带控件不再冲突**：initMap 里移除右上角指南针(ROTATION)、把缩放(ZOOM)/比例尺(SCALE)挪到左下角；
+   原右上角与"在线离线切换"、右下角与"定位按钮"重叠的问题解决（已截图验证）。
+2. **web 端定位补全**：srcDoc iframe 是不透明源、浏览器拒绝其内 geolocation → 改在父窗口取 GPS，
+   新增 `locateAt` 指令把坐标喂进 iframe；失败退回 IP 兜底。（地图依赖腾讯 GL + 浏览器定位权限，无前端单测；CI 仅 tsc+lint。）
+
 ## 进行中
-- 暂无（四轮收尾：待提交、PR、过 CI、合并）。
+- 暂无（四/五轮收尾：待提交、PR、过 CI、合并）。
 
 ## 下一步（按优先级）
-1. **本批次剩余 3 项（下一轮）**：① 地图腾讯 GL 右上角指南针/控件与顶部搜索框 + 在线离线切换冲突、web 端定位补全；
-   ② /home 顶部轮播+搜索框样式/逻辑重设计 + 上图下文功能按钮换联网真实图标；③ CI/CD 增加 APK 打包测试（正式进安卓）。
+1. **本批次剩余 2 项（下一轮）**：① /home 顶部轮播+搜索框样式/逻辑重设计 + 上图下文功能按钮换联网真实图标；
+   ② CI/CD 增加 APK 打包测试（正式进安卓；需定 EAS 云构建 vs 本地 gradle prebuild）。
 2. cultural 后端数据为非遗内容、study 页已删，已成孤儿——评估移除或改造。
 3. 真机原生构建前确认 expo-speech-recognition 的 config plugin（CI 仅跑 web）。
 4. 部分景点照片为 CC-BY(-SA)，已在 CREDITS 署名；如需更严格可换 CC0/PD。

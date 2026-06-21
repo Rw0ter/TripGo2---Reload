@@ -44,7 +44,9 @@ export type MapCommand =
   | { type: 'clearRoute' }
   | { type: 'startNav' }
   | { type: 'stopNav' }
-  | { type: 'rotateMap'; deg: number };
+  | { type: 'rotateMap'; deg: number }
+  // web 端在父窗口取得 GPS 坐标后喂进 iframe（srcDoc 不透明源内无法直接定位）。
+  | { type: 'locateAt'; lat: number; lng: number; source?: LocateSource };
 
 // 地图 → React 的事件。
 export type MapEvent =

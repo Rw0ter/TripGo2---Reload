@@ -29,8 +29,32 @@ export const TencentMap = forwardRef<TencentMapHandle, TencentMapProps>(
       ref,
       () => ({
         send: (cmd: MapCommand) => {
-          if (loadedRef.current) post(cmd);
-          else pendingRef.current.push(cmd);
+          const enqueue = (c: MapCommand) => {
+            if (loadedRef.current) post(c);
+            else pendingRef.current.push(c);
+          };
+          // 定位特殊处理：srcDoc iframe 是不透明源，浏览器会拒绝其内部的 geolocation。
+          // 改在父窗口（真实 localhost 源、安全上下文）取 GPS，再把坐标喂进 iframe；
+          // 失败则退回 iframe 内的 IP 兜底（原 locate）。
+          if (
+            cmd.type === 'locate' &&
+            typeof navigator !== 'undefined' &&
+            navigator.geolocation
+          ) {
+            navigator.geolocation.getCurrentPosition(
+              (pos) =>
+                enqueue({
+                  type: 'locateAt',
+                  lat: pos.coords.latitude,
+                  lng: pos.coords.longitude,
+                  source: 'gps',
+                }),
+              () => enqueue({ type: 'locate' }),
+              { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 },
+            );
+            return;
+          }
+          enqueue(cmd);
         },
       }),
       [],
