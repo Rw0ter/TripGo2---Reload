@@ -53,7 +53,7 @@ export default function RegisterScreen() {
   }
 
   return (
-    <AuthScreenLayout title="创建账号" subtitle="加入绿途，开启你的绿色行动">
+    <AuthScreenLayout>
       <AuthInput
         icon="person-outline"
         value={username}
@@ -77,7 +77,7 @@ export default function RegisterScreen() {
       </View>
       <View className="mt-4">
         <AuthInput
-          icon="lock-closed-outline"
+          icon="key-outline"
           value={password}
           onChangeText={setPassword}
           placeholder="密码（6-72 位）"

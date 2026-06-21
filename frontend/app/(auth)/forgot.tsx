@@ -51,7 +51,7 @@ export default function ForgotScreen() {
   }
 
   return (
-    <AuthScreenLayout title="找回密码" subtitle="验证用户名与注册邮箱后设置新密码">
+    <AuthScreenLayout>
       <AuthInput
         icon="person-outline"
         value={username}
@@ -73,7 +73,7 @@ export default function ForgotScreen() {
       </View>
       <View className="mt-4">
         <AuthInput
-          icon="lock-closed-outline"
+          icon="key-outline"
           value={password}
           onChangeText={setPassword}
           placeholder="新密码（6-72 位）"

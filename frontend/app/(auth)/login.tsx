@@ -38,7 +38,7 @@ export default function LoginScreen() {
   }
 
   return (
-    <AuthScreenLayout title="欢迎回来" subtitle="登录绿途，继续你的低碳之旅">
+    <AuthScreenLayout>
       <AuthInput
         icon="person-outline"
         value={username}
@@ -50,7 +50,7 @@ export default function LoginScreen() {
       />
       <View className="mt-4">
         <AuthInput
-          icon="lock-closed-outline"
+          icon="key-outline"
           value={password}
           onChangeText={setPassword}
           placeholder="密码"
