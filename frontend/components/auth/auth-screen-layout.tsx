@@ -79,7 +79,7 @@ export function AuthScreenLayout({ children }: AuthScreenLayoutProps) {
                   textShadowOffset: { width: 0, height: 0 },
                   textShadowRadius: 6,
                 }}>
-                欢迎来到文脉粤游APP
+                欢迎来到绿途APP
               </Animated.Text>
             </View>
             <View className="mt-10 flex-1 justify-center">{children}</View>

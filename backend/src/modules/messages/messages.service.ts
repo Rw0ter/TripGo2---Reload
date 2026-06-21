@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 // 消息演示数据（不持久化，后续可扩展为 Prisma 模型）。
 const DEMO_MESSAGES = [
-  { id: 1, type: 'system', title: '欢迎加入文脉粤游', text: '探索岭南非遗文化，开启你的文化之旅！', time: '2026-06-03 09:00', unread: false },
+  { id: 1, type: 'system', title: '欢迎加入绿途', text: '探索岭南非遗文化，开启你的文化之旅！', time: '2026-06-03 09:00', unread: false },
   { id: 2, type: 'like', title: '新的点赞', text: '你的动态「广绣体验日记」被 岭南行者 点赞了', time: '2026-06-02 14:30', unread: true },
   { id: 3, type: 'comment', title: '新的评论', text: '文化爱好者 评论了你的动态：\"写得真好！\"', time: '2026-06-02 11:20', unread: true },
   { id: 4, type: 'order', title: '订单已发货', text: '你的文创产品「广绣团扇」已发货，预计 3 天送达', time: '2026-06-01 16:00', unread: false },

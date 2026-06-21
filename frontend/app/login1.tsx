@@ -238,7 +238,7 @@ export default function Login1Screen() {
             fontWeight: '600',
             color: '#c8ffea',
           }}>
-          欢迎来到文脉粤游APP
+          欢迎来到绿途APP
         </Animated.Text>
       </View>
 

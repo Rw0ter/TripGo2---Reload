@@ -1,4 +1,4 @@
-// TripGo（文脉粤游）数据模型 —— SQLite 单文件库
+// TripGo（绿途）数据模型 —— SQLite 单文件库
 // 改表结构后执行：npx prisma migrate dev --name <说明>
 
 generator client {
