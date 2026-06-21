@@ -76,6 +76,17 @@ const MAP_SCRIPT = `
     destMarker=new TMap.MultiMarker({map:map,styles:{d:new TMap.MarkerStyle({width:30,height:39,anchor:{x:15,y:39},src:pin('#E8552D')})},geometries:[]});
     routeLine=new TMap.MultiPolyline({map:map,styles:{r:new TMap.PolylineStyle({color:'#1E9E63',width:7,borderColor:'#FFFFFF',borderWidth:2,lineCap:'round'})},geometries:[]});
     navMarker=new TMap.MultiMarker({map:map,styles:{n:new TMap.MarkerStyle({width:22,height:22,anchor:{x:11,y:11},src:dot('#E8552D')})},geometries:[]});
+    // 清掉/重排 GL 自带控件：右上角的指南针(ROTATION)与缩放(ZOOM)、比例尺(SCALE)
+    // 会和我们顶部的搜索框 / 在线离线切换、右下角定位按钮重叠。移除指南针（导航有自带罗盘提示），
+    // 缩放、比例尺挪到左下角空白处。
+    try{
+      var DC=TMap.constants&&TMap.constants.DEFAULT_CONTROL_ID, CP=TMap.constants&&TMap.constants.CONTROL_POSITION;
+      if(DC&&map.removeControl){ if(DC.ROTATION) map.removeControl(DC.ROTATION); }
+      if(DC&&CP&&map.getControl){
+        var zc=map.getControl(DC.ZOOM); if(zc&&zc.setPosition) zc.setPosition(CP.BOTTOM_LEFT);
+        var sc=map.getControl(DC.SCALE); if(sc&&sc.setPosition) sc.setPosition(CP.BOTTOM_LEFT);
+      }
+    }catch(e){}
     ready=true;
     emit({type:'ready'});
     flush();
@@ -83,6 +94,7 @@ const MAP_SCRIPT = `
 
   function dispatch(cmd){
     if(cmd.type==='locate') return doLocate();
+    if(cmd.type==='locateAt') return applyLocation(cmd.lat,cmd.lng,cmd.source||'gps');
     if(cmd.type==='search') return doSearch(cmd.keyword);
     if(cmd.type==='selectPoi') return doSelectPoi(cmd);
     if(cmd.type==='planRoute') return doPlanRoute(cmd);
