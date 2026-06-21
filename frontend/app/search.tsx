@@ -564,7 +564,7 @@ export default function SearchScreen() {
             {/* 景点：横向行式列表（缩略图 + 文字 + 评分），刻意不用瀑布流 */}
             {scenicList.length > 0 ? (
               <Animated.View entering={FadeInDown.duration(360)} className="mb-5">
-                <ResultGroupLabel category="scenic" title="景点" count={scenicList.length} unit="处" />
+                <ResultGroupLabel category="scenic" title="生态场所" count={scenicList.length} unit="处" />
                 <View
                   className="overflow-hidden rounded-2xl"
                   style={{ backgroundColor: SURFACE, borderWidth: 1, borderColor: LINE }}
@@ -679,7 +679,7 @@ function ScenicRow({
         <View className="flex-row items-center">
           {/* 类目徽标：岭南绿胶囊，一眼区分这是景点 */}
           <View className="mr-1.5 rounded px-1.5 py-0.5" style={{ backgroundColor: CAT.scenic.tint }}>
-            <Text className="text-[9.5px] font-bold" style={{ color: CAT.scenic.ink }}>景点</Text>
+            <Text className="text-[9.5px] font-bold" style={{ color: CAT.scenic.ink }}>生态场所</Text>
           </View>
           <Text numberOfLines={1} className="flex-1 text-[15.5px] font-bold" style={{ color: INK }}>{item.name}</Text>
         </View>

@@ -58,7 +58,7 @@ export default function MyTripsScreen() {
   );
 
   async function handleDelete(id: string) {
-    Alert.alert('删除行程', '确定要删除这条行程吗？此操作不可撤销。', [
+    Alert.alert('删除绿色计划', '确定要删除这条绿色计划吗？此操作不可撤销。', [
       { text: '取消', style: 'cancel' },
       {
         text: '删除',
@@ -84,9 +84,9 @@ export default function MyTripsScreen() {
 
   return (
     <View className="flex-1 bg-[#F4F1E4]">
-      <View className="bg-[#3E6B4F]">
+      <View className="bg-[#2D6A4F]">
         <ScreenHeader
-          title="我的线路"
+          title="我的绿色计划"
           tint="dark"
           right={
             <Pressable onPress={() => router.push('/trip/create')}>
@@ -99,7 +99,7 @@ export default function MyTripsScreen() {
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
         {!trips && !error ? (
           <View className="items-center py-20">
-            <ActivityIndicator color="#3E6B4F" />
+            <ActivityIndicator color="#2D6A4F" />
           </View>
         ) : error ? (
           <View className="items-center py-20">
@@ -107,20 +107,21 @@ export default function MyTripsScreen() {
             <Text className="mt-3 text-[14px] text-[#999]">{error}</Text>
             <Pressable
               onPress={() => load()}
-              className="mt-4 rounded-full bg-[#3E6B4F] px-6 py-2.5"
+              className="mt-4 rounded-full bg-[#2D6A4F] px-6 py-2.5"
             >
               <Text className="text-[14px] font-bold text-white">重试</Text>
             </Pressable>
           </View>
         ) : trips!.length === 0 ? (
           <View className="items-center py-20">
-            <Ionicons name="map-outline" size={48} color="#ccc" />
-            <Text className="mt-3 text-[14px] text-[#999]">暂无行程</Text>
+            <Ionicons name="leaf-outline" size={48} color="#ccc" />
+            <Text className="mt-3 text-[14px] text-[#999]">还没有绿色计划</Text>
+            <Text className="mt-1 text-[12px] text-[#bbb]">从一次低碳行动开始你的绿色足迹</Text>
             <Pressable
               onPress={() => router.push('/trip/create')}
-              className="mt-4 rounded-full bg-[#3E6B4F] px-6 py-2.5"
+              className="mt-4 rounded-full bg-[#2D6A4F] px-6 py-2.5"
             >
-              <Text className="text-[14px] font-bold text-white">新建行程</Text>
+              <Text className="text-[14px] font-bold text-white">新建绿色计划</Text>
             </Pressable>
           </View>
         ) : (
@@ -147,15 +148,15 @@ export default function MyTripsScreen() {
                         <View className="flex-row items-center">
                           <Ionicons name="calendar-outline" size={13} color="#999" />
                           <Text className="ml-1 text-[12px] text-[#999]">
-                            {dayCount} 天
+                            {dayCount} 天行动周期
                           </Text>
                         </View>
                       ) : null}
                       {destCount > 0 ? (
                         <View className="ml-3 flex-row items-center">
-                          <Ionicons name="location-outline" size={13} color="#999" />
+                          <Ionicons name="leaf-outline" size={13} color="#999" />
                           <Text className="ml-1 text-[12px] text-[#999]">
-                            {destCount} 个目的地
+                            {destCount} 项绿色行动
                           </Text>
                         </View>
                       ) : null}
