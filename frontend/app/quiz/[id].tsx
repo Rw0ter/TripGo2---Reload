@@ -23,11 +23,11 @@ interface QuizDetail { id: number; tag: string; title: string; desc: string; que
 
 // ── Offline fallback ──────────────────────────────────────
 const OFFLINE_QUESTIONS: Question[] = [
-  { q: '被誉为"岭南音乐活化石"的广东非遗代表是？', options: ['粤剧', '客家山歌', '广东音乐', '汉剧'], answer: 2 },
-  { q: '广州著名的传统手工艺"广州牙雕"主要以什么原料制作？', options: ['竹子', '玉石', '象牙', '木材'], answer: 2 },
-  { q: '被列为国家级非遗的"醒狮"起源于广东哪个地区？', options: ['广州', '佛山', '深圳', '惠州'], answer: 1 },
-  { q: '广东非遗中"英歌舞"常在什么场合中表演？', options: ['婚礼庆典', '清明扫墓', '春节与庙会', '中秋祭月'], answer: 2 },
-  { q: '广东传统饮食文化中被列为非遗的点心是？', options: ['肠粉', '虾饺', '烧麦', '云吞面'], answer: 1 },
+  { q: '以下哪种气体是主要的温室气体？', options: ['氧气', '二氧化碳', '氮气', '氢气'], answer: 1 },
+  { q: '一度电大约相当于排放多少克二氧化碳？', options: ['100g', '500g', '960g', '2000g'], answer: 2 },
+  { q: '以下哪项不属于可再生能源？', options: ['太阳能', '风能', '煤炭', '水能'], answer: 2 },
+  { q: '全球变暖的主要原因是？', options: ['火山喷发', '太阳活动', '人类活动排放温室气体', '地球公转'], answer: 2 },
+  { q: '以下哪种交通方式碳排放最低？', options: ['私家车', '公交车', '高铁', '自行车'], answer: 3 },
 ];
 
 function pickOfflineQuestions(count = 5): Question[] {

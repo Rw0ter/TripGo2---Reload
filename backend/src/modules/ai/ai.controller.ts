@@ -34,6 +34,13 @@ export class AiController {
     await this.ai.plan(dto, res);
   }
 
+  // TTS 语音合成（Piper 本地引擎）
+  @Post('speak')
+  @ApiOperation({ summary: '文本转语音（Piper TTS 本地引擎，返回 WAV 音频 base64）' })
+  async speak(@Body() dto: { text: string }) {
+    return this.ai.speak(dto.text);
+  }
+
   // 普通话→粤语文字翻译（非流式，走统一信封）。粤语课堂用。
   @Post('translate')
   @ApiOperation({ summary: '普通话→粤语文字翻译（DeepSeek，非流式）' })

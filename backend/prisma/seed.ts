@@ -3,56 +3,64 @@ import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-// 文创产品种子数据（迁移自旧版 destinations.json）。
-// type：1 古筝工艺 / 2 曲艺周边 / 3 陶瓷玉雕 / 4 书画印刷 / 5 民俗手作 / 6 广东特产。
+// 生态良品种子数据（迁移自旧版 destinations.json，改为绿色低碳产品）。
+// type：1 环保餐具 / 2 绿色家居 / 3 清洁用品 / 4 再生制品 / 5 有机食品 / 6 节能数码。
 const destinations = [
-  { title: '潮州木雕书签', image: '/resources/img/wccpImg/czmdsq.png', money: '58.00', number: '312', type: 1 },
-  { title: '广式云雀古筝模型', image: '/resources/img/wccpImg/gsyqgzmx.png', money: '128.00', number: '256', type: 1 },
-  { title: '岭南黄花梨迷你古筝', image: '/resources/img/wccpImg/lnhhlmngz.png', money: '198.00', number: '143', type: 1 },
-  { title: '佛山伽蓝古筝琴码摆件', image: '/resources/img/wccpImg/fsjlgzqmbj.png', money: '78.00', number: '298', type: 1 },
-  { title: '广州珠江古筝微雕挂饰', image: '/resources/img/wccpImg/gzzjgzwdgs.png', money: '98.00', number: '205', type: 1 },
-  { title: '南海黑檀木古筝笔筒', image: '/resources/img/wccpImg/nhhtmgzbt.png', money: '68.00', number: '176', type: 1 },
-  { title: '粤剧脸谱竹扇', image: '/resources/img/wccpImg/yjlpzs.png', money: '48.00', number: '412', type: 2 },
-  { title: '广州粤曲演唱光盘套装', image: '/resources/img/wccpImg/gzyqycgptz.png', money: '88.00', number: '289', type: 2 },
-  { title: '潮汕潮剧布偶公仔', image: '/resources/img/wccpImg/cscjbogz.png', money: '128.00', number: '197', type: 2 },
-  { title: '珠三角曲艺剪纸挂件', image: '/resources/img/wccpImg/zsjqyjzgj.png', money: '38.00', number: '521', type: 2 },
-  { title: '广州粤乐唱盘艺术画', image: '/resources/img/wccpImg/gzylcpysh.png', money: '158.00', number: '134', type: 2 },
-  { title: '南海木偶戏手办', image: '/resources/img/wccpImg/nhmoxsb.jpg', money: '198.00', number: '162', type: 2 },
-  { title: '佛山彩绘陶瓷花瓶', image: '/resources/img/wccpImg/fschtchp.jpg', money: '168.00', number: '284', type: 3 },
-  { title: '潮州紫砂茶具套装', image: '/resources/img/wccpImg/czzscjtz.png', money: '298.00', number: '109', type: 3 },
-  { title: '广州岭南剪纸艺术框', image: '/resources/img/wccpImg/gzlnjzysk.png', money: '78.00', number: '333', type: 3 },
-  { title: '潮汕雕瓷摆件', image: '/resources/img/wccpImg/csdcbj.png', money: '198.00', number: '212', type: 3 },
-  { title: '广州玉雕手链', image: '/resources/img/wccpImg/gzydsl.png', money: '248.00', number: '154', type: 3 },
-  { title: '深圳硬木手工家具模型', image: '/resources/img/wccpImg/szymsgjjmx.jpg', money: '328.00', number: '89', type: 3 },
-  { title: '潮州木版水印年画', image: '/resources/img/wccpImg/czmbsynh.png', money: '58.00', number: '467', type: 4 },
-  { title: '广州琉璃彩绘挂件', image: '/resources/img/wccpImg/gzllchgj.png', money: '88.00', number: '398', type: 4 },
-  { title: '佛山岭南彩墨山水画', image: '/resources/img/wccpImg/fslncmssh.png', money: '198.00', number: '176', type: 4 },
-  { title: '深圳原创插画明信片', image: '/resources/img/wccpImg/szycchmxp.jpg', money: '28.00', number: '622', type: 4 },
-  { title: '广州水彩花鸟挂画', image: '/resources/img/wccpImg/gzschngh.png', money: '138.00', number: '215', type: 4 },
-  { title: '珠海贝壳马赛克画', image: '/resources/img/wccpImg/zhbkmskh.png', money: '158.00', number: '143', type: 4 },
-  { title: '潮汕纸扎花灯模型', image: '/resources/img/wccpImg/cszzhdmx.png', money: '68.00', number: '524', type: 5 },
-  { title: '广州醒狮工艺头盔', image: '/resources/img/wccpImg/gzxsgytk.png', money: '198.00', number: '131', type: 5 },
-  { title: '佛山龙舟赛纪念摆件', image: '/resources/img/wccpImg/fslzsjnbj.png', money: '88.00', number: '269', type: 5 },
-  { title: '南海年节灯谜手工卡', image: '/resources/img/wccpImg/nhnjdmsgk.png', money: '38.00', number: '712', type: 5 },
-  { title: '潮汕牛肉丸手工礼盒', image: '/resources/img/wccpImg/csnrwsglh.png', money: '128.00', number: '198', type: 5 },
-  { title: '广州传统风筝手绘套装', image: '/resources/img/wccpImg/gzctfzshtz.png', money: '78.00', number: '345', type: 5 },
-  { title: '广式腊肠农家自制', image: '/resources/img/wccpImg/gslcnjzz.png', money: '18.80', number: '547', type: 6 },
-  { title: '潮汕手打牛肉丸', image: '/resources/img/wccpImg/cssdnrw.png', money: '88.80', number: '778', type: 6 },
-  { title: '东莞米粉干细粉丝', image: '/resources/img/wccpImg/dgmfgxfs.png', money: '18.80', number: '559', type: 6 },
-  { title: '佛山盲公饼', image: '/resources/img/wccpImg/fsmgb.png', money: '19.90', number: '443', type: 6 },
-  { title: '大良蹦砂', image: '/resources/img/wccpImg/dlbs.png', money: '22.00', number: '996', type: 6 },
-  { title: '潮州凤凰单丛茶', image: '/resources/img/wccpImg/czfhdcc.png', money: '99.00', number: '886', type: 6 },
-  { title: '十年新会陈皮', image: '/resources/img/wccpImg/snxhcp.png', money: '128.00', number: '669', type: 6 },
-  { title: '广东妃子笑荔枝', image: '/resources/img/wccpImg/gdfzxlz.png', money: '49.00', number: '699', type: 6 },
-  { title: '梅州客家梅菜干', image: '/resources/img/wccpImg/mzkjcmg.png', money: '12.80', number: '544', type: 6 },
+  // ── 1 环保餐具 ──
+  { title: '天然竹纤维餐具套装', image: '/resources/img/wccpImg/czmdsq.png', money: '68.00', number: '512', type: 1, description: '天然竹纤维模压成型，可自然降解，不含 BPA，适合户外野餐和日常使用', detail: '材质：竹纤维+玉米淀粉；套装含碗/盘/杯/筷/勺' },
+  { title: '不锈钢环保吸管套装', image: '/resources/img/wccpImg/gsyqgzmx.png', money: '38.00', number: '728', type: 1, description: '304 食品级不锈钢，含直管+弯管+清洁刷+收纳袋，可重复使用数千次', detail: '材质：304不锈钢；含4件套；可替代约500根一次性塑料吸管' },
+  { title: '麦秆纤维便携餐盒', image: '/resources/img/wccpImg/lnhhlmngz.png', money: '45.00', number: '443', type: 1, description: '天然麦秆纤维+PP 共混，轻便耐用，微波可用，替代一次性塑料饭盒', detail: '材质：麦秆纤维+食品级PP；容量800ml；耐温-20°C~120°C' },
+  { title: '可降解玉米淀粉杯', image: '/resources/img/wccpImg/fsjlgzqmbj.png', money: '25.00', number: '889', type: 1, description: 'PLA 玉米淀粉材质，工业堆肥条件下 90 天降解，适合冷热饮', detail: '材质：PLA聚乳酸；6个装；耐温50°C以下' },
+  { title: '木质便携筷子礼盒', image: '/resources/img/wccpImg/gzzjgzwdgs.png', money: '35.00', number: '634', type: 1, description: '天然檀木手工打磨，配收纳布袋，告别一次性筷子', detail: '材质：天然檀木；含筷子+布袋；可重复使用多年' },
+  { title: '硅胶折叠咖啡杯', image: '/resources/img/wccpImg/nhhtmgzbt.png', money: '79.00', number: '321', type: 1, description: '食品级硅胶，折叠后仅 4cm 厚，随身携带替代纸杯', detail: '材质：食品级硅胶+PP杯盖；容量350ml；可折叠设计' },
+
+  // ── 2 绿色家居 ──
+  { title: '有机棉四件套床品', image: '/resources/img/wccpImg/yjlpzs.png', money: '328.00', number: '156', type: 2, description: 'GOTS 认证有机棉，零农药种植，比常规棉减碳 46%', detail: '材质：100%有机棉；含床单+被套+枕套×2；多色可选' },
+  { title: 'LED 智能护眼台灯', image: '/resources/img/wccpImg/gzyqycgptz.png', money: '198.00', number: '289', type: 2, description: '比白炽灯节电 80%，寿命 25000 小时，无频闪自然光', detail: '功率：8W；色温：3000K-6500K可调；USB充电口' },
+  { title: '天然乳胶枕', image: '/resources/img/wccpImg/cscjbogz.png', money: '168.00', number: '412', type: 2, description: '泰国天然乳胶，无合成胶，透气抗菌，可生物降解', detail: '材质：天然乳胶；高度可选；配有机棉枕套' },
+  { title: '太阳能户外壁灯', image: '/resources/img/wccpImg/zsjqyjzgj.png', money: '88.00', number: '567', type: 2, description: '太阳能充电+人体感应，零电费，IP65 防水，自动亮灭', detail: '功率：3W；太阳能板：5V/1W；感应距离3-5米' },
+  { title: '水培室内绿植套装', image: '/resources/img/wccpImg/gzylcpysh.png', money: '99.00', number: '378', type: 2, description: '无土栽培，自吸水花盆，净化空气，办公桌的绿色伴侣', detail: '含花盆+基质+种子；可选绿萝/薄荷/罗勒' },
+  { title: '天然除湿竹炭包', image: '/resources/img/wccpImg/nhmoxsb.jpg', money: '29.00', number: '892', type: 2, description: '天然竹炭，吸湿除味，可日晒再生重复使用一年以上', detail: '材质：天然竹炭；4包装；每包200g' },
+
+  // ── 3 清洁用品 ──
+  { title: '可降解垃圾袋', image: '/resources/img/wccpImg/fschtchp.jpg', money: '19.90', number: '1456', type: 3, description: '玉米淀粉 PBAT 共混，堆肥条件 90 天降解，比普通塑料袋减碳 70%', detail: '材质：PBAT+玉米淀粉；45×50cm；50只装' },
+  { title: '无患子天然洗涤剂', image: '/resources/img/wccpImg/czzscjtz.png', money: '32.00', number: '623', type: 3, description: '无患子果实天然皂苷，可用于洗衣/洗碗/洗手/洗发，零化学污染', detail: '成分：100%无患子提取物；500ml；可自然降解' },
+  { title: '天然海绵沐浴球', image: '/resources/img/wccpImg/gzlnjzysk.png', money: '28.00', number: '534', type: 3, description: '地中海天然海绵，可生物降解，替代塑料浴球', detail: '材质：天然海绵；直径8-10cm；可持续采收' },
+  { title: '柠檬酸除垢清洁剂', image: '/resources/img/wccpImg/csdcbj.png', money: '15.00', number: '987', type: 3, description: '食品级柠檬酸，天然除垢去水渍，替代化学清洁剂', detail: '成分：食品级柠檬酸；500g装；可用于水壶/咖啡机/浴室' },
+  { title: '竹纤维洗碗布', image: '/resources/img/wccpImg/gzydsl.png', money: '18.00', number: '1123', type: 3, description: '天然竹纤维，吸水去油不粘腻，用后可堆肥降解', detail: '材质：竹纤维；10片装；可机洗重复使用' },
+  { title: '固体洗发皂', image: '/resources/img/wccpImg/szymsgjjmx.jpg', money: '45.00', number: '456', type: 3, description: '天然植物油冷制，无塑料瓶包装，一块皂 = 3 瓶洗发水', detail: '成分：椰子油/橄榄油/蓖麻油；适合中性发质；80g' },
+
+  // ── 4 再生制品 ──
+  { title: '回收 PET 双肩包', image: '/resources/img/wccpImg/czmbsynh.png', money: '158.00', number: '267', type: 4, description: '12 个回收塑料瓶制成，rPET 面料，碳排放比原生聚酯纤维减 75%', detail: '材质：100%再生PET；防水耐磨；容量20L' },
+  { title: '再生纸手工笔记本', image: '/resources/img/wccpImg/gzllchgj.png', money: '28.00', number: '734', type: 4, description: '100% 消费后回收废纸，大豆油墨印刷，节约造纸用水 60%', detail: '材质：再生纸；A5尺寸；80页；可回收' },
+  { title: '旧轮胎再生橡胶地垫', image: '/resources/img/wccpImg/fslncmssh.png', money: '68.00', number: '345', type: 4, description: '回收废旧轮胎制成，耐磨防滑，室内外通用', detail: '材质：再生橡胶；50×80cm；防滑纹理' },
+  { title: '回收牛仔布托特包', image: '/resources/img/wccpImg/szycchmxp.jpg', money: '88.00', number: '412', type: 4, description: '回收旧牛仔裤手工改造，每只独一无二，坚固耐用', detail: '材质：回收牛仔布；手工制作；可承重10kg' },
+  { title: '再生塑料环保笔', image: '/resources/img/wccpImg/gzschngh.png', money: '12.00', number: '1890', type: 4, description: '再生 PP 塑料笔杆+可替换笔芯，6 支装', detail: '材质：再生PP塑料；0.5mm笔尖；6支装+替换芯×6' },
+  { title: '回收玻璃花瓶', image: '/resources/img/wccpImg/zhbkmskh.png', money: '58.00', number: '523', type: 4, description: '回收啤酒瓶再造，手工吹制，每件纹理独一无二', detail: '材质：100%回收玻璃；手工吹制；高15-18cm' },
+
+  // ── 5 有机食品 ──
+  { title: '有机冷压椰子油', image: '/resources/img/wccpImg/cszzhdmx.png', money: '89.00', number: '667', type: 5, description: '有机椰子低温冷压萃取，可烹饪/护发/护肤，玻璃瓶包装可回收', detail: '容量：500ml；认证：USDA Organic；玻璃瓶装' },
+  { title: '高山有机绿茶', image: '/resources/img/wccpImg/gzxsgytk.png', money: '128.00', number: '445', type: 5, description: '无农药高山茶园，手采一芽二叶，碳足迹比常规茶低 40%', detail: '净重：150g；产地：福建武夷山；有机认证' },
+  { title: '公平贸易咖啡豆', image: '/resources/img/wccpImg/fslzsjnbj.png', money: '98.00', number: '334', type: 5, description: '公平贸易认证，小农合作社直供，收入回馈社区可持续发展', detail: '净重：250g；烘焙度：中深；产地：埃塞俄比亚' },
+  { title: '有机杂粮礼盒', image: '/resources/img/wccpImg/nhnjdmsgk.png', money: '158.00', number: '289', type: 5, description: '有机认证小米/糙米/黑米/红豆/绿豆 5 种杂粮，牛皮纸包装', detail: '含5种杂粮；总净重2.5kg；无农药化肥种植' },
+  { title: '野生蓝莓干', image: '/resources/img/wccpImg/csnrwsglh.png', money: '45.00', number: '723', type: 5, description: '大兴安岭野生蓝莓，无糖添加，自然晒干保留花青素', detail: '净重：200g；产地：大兴安岭；无添加剂' },
+  { title: '蜂蜡保鲜布套装', image: '/resources/img/wccpImg/gzctfzshtz.png', money: '58.00', number: '556', type: 5, description: '有机棉布 + 天然蜂蜡，可重复使用一年，替代保鲜膜', detail: '含S/M/L 3片；材质：有机棉+蜂蜡+荷荷巴油；可降解' },
+
+  // ── 6 节能数码 ──
+  { title: '太阳能充电宝', image: '/resources/img/wccpImg/gslcnjzz.png', money: '168.00', number: '534', type: 6, description: '高效单晶硅光伏板，晴天 6 小时充满，一度太阳能减排 0.9kg CO₂', detail: '容量：20000mAh；光伏转化率22%；USB-C快充输出' },
+  { title: '可充电锂电池套装', image: '/resources/img/wccpImg/cssdnrw.png', money: '89.00', number: '678', type: 6, description: '5 号+7 号各 4 节，可充放电 1000+ 次，一节替代千节一次性电池', detail: '含5号×4+7号×4+USB充电器；NiMH电池' },
+  { title: '低功耗蓝牙温湿度计', image: '/resources/img/wccpImg/dgmfgxfs.png', money: '49.00', number: '890', type: 6, description: '一颗纽扣电池用一年，手机APP查看历史数据，智能家居必备', detail: '连接：BLE 5.0；精度：±0.3°C/±2%RH；APP实时同步' },
+  { title: '可降解植物基手机壳', image: '/resources/img/wccpImg/fsmgb.png', money: '78.00', number: '456', type: 6, description: '亚麻纤维+玉米基 PLA，工业堆肥 180 天降解，支持无线充电', detail: '材质：PLA+亚麻纤维；兼容iPhone/华为/小米主流机型' },
+  { title: '智能节能插座', image: '/resources/img/wccpImg/dlbs.png', money: '128.00', number: '345', type: 6, description: 'WiFi 远程控制+定时开关+电量统计，消灭待机功耗，月省电 10-20%', detail: '协议：WiFi 2.4G；最大功率：2500W；APP远程控制' },
+  { title: '手摇发电应急收音机', image: '/resources/img/wccpImg/czfhdcc.png', money: '158.00', number: '234', type: 6, description: '手摇 1 分钟可用 30 分钟，太阳能+USB 三充，应急照明+SOS', detail: '含LED手电筒+SOS警报；内置2000mAh电池；FM/AM收音' },
 ];
 
 // 首页轮播图。image 为前端本地资源 key（assets/legacy/img 下相对路径）。
 const banners = [
-  { image: 'xc/xc_guangzhou.jpg', title: '广州', subtitle: '珠水夜韵 · 羊城新貌', sort: 0 },
-  { image: 'xc/xc_shenzhen.jpg', title: '深圳', subtitle: '湾区之光 · 创新之城', sort: 1 },
-  { image: 'xc/xc_zhuhai.jpg', title: '珠海', subtitle: '日月贝畔 · 浪漫滨海', sort: 2 },
-  { image: 'xc/xc_chaozhou.jpeg', title: '潮州', subtitle: '韩江古城 · 千年潮韵', sort: 3 },
+  { image: 'banner/green_life', title: '绿色生活', subtitle: '低碳环保 · 从我做起', sort: 0 },
+  { image: 'banner/carbon_neutral', title: '碳中和之路', subtitle: '2030碳达峰 · 2060碳中和', sort: 1 },
+  { image: 'banner/ecology', title: '生态保护', subtitle: '绿水青山 · 金山银山', sort: 2 },
+  { image: 'banner/clean_energy', title: '清洁能源', subtitle: '新能源革命 · 零碳未来', sort: 3 },
 ];
 
 // 景点。section=home：hot=true 进首页人气榜大横卡，hot=false 进首页瀑布流；
@@ -90,92 +98,92 @@ function scenicPrice(city: string): number {
 
 // 首页知识小课堂答题卡。
 const quizzes = [
-  { tag: '积分翻倍场', title: '非遗文化挑战', desc: '限时答题赢最高 88 积分，适合新手快速上分', btn: '立即开始挑战', sort: 0 },
-  { tag: '经典问答', title: '粤剧知识问答', desc: '边看边答，解锁戏台幕后冷知识，累计非遗积分', btn: '进入答题房间', sort: 1 },
-  { tag: '进阶挑战', title: '广绣工艺挑战', desc: '模拟绣线步骤答题，通关可解锁专属勋章与好礼', btn: '去闯关赢好礼', sort: 2 },
-  { tag: '人气专场', title: '岭南美食问答', desc: '一边馋一边答，解锁早茶、煲汤与街头小吃冷知识', btn: '马上去答题', sort: 3 },
+  { tag: '碳积分专场', title: '碳排放知识挑战', desc: '答题赢碳积分，了解你的碳足迹数据', btn: '开始挑战', sort: 0 },
+  { tag: '趣味问答', title: '垃圾分类知多少', desc: '你能分清可回收物、有害垃圾和厨余垃圾吗？', btn: '开始分类', sort: 1 },
+  { tag: '进阶挑战', title: '生态系统知识赛', desc: '从雨林到海洋，测试你的生态环保知识', btn: '去闯关', sort: 2 },
+  { tag: '能源专场', title: '清洁能源知多少', desc: '太阳能、风能、水能……你的新能源知识达标吗？', btn: '马上答题', sort: 3 },
 ];
 
 // 社区动态作者（演示用户，密码统一 123456）。
 const communityAuthors = [
-  { username: '岭南阿May', email: 'amay@tripgo.demo' },
-  { username: '老广日记', email: 'laoguang@tripgo.demo' },
-  { username: '潮味食客', email: 'chaowei@tripgo.demo' },
-  { username: '山客随行', email: 'shanke@tripgo.demo' },
-  { username: '骑楼下的猫', email: 'qilou@tripgo.demo' },
-  { username: '早茶续命中', email: 'zaocha@tripgo.demo' },
-  { username: '龙舟少年', email: 'longzhou@tripgo.demo' },
-  { username: '醒狮阿强', email: 'xingshi@tripgo.demo' },
+  { username: '绿色生活家', email: 'greenlife@tripgo.demo' },
+  { username: '低碳日记', email: 'lowcarbon@tripgo.demo' },
+  { username: '零废弃达人', email: 'zerowaste@tripgo.demo' },
+  { username: '骑行侠阿风', email: 'biker@tripgo.demo' },
+  { username: '阳台农夫', email: 'farmer@tripgo.demo' },
+  { username: '自然观察员', email: 'nature@tripgo.demo' },
+  { username: '环保极客', email: 'ecogeek@tripgo.demo' },
+  { username: '山海守护人', email: 'ocean@tripgo.demo' },
 ];
 
-// 社区动态——非遗文化传承主题。images 为前端本地资源 key；authorIdx 指向 communityAuthors。
+// 社区动态——绿色低碳生活主题。images 为前端本地资源 key；authorIdx 指向 communityAuthors。
 const storyDefs = [
   {
     authorIdx: 0,
-    title: '粤剧后台探班：一勾脸，半世纪功夫',
+    title: '我的第一次垃圾分类挑战：从手忙脚乱到得心应手',
     content:
-      '红船弟子的油彩一层层叠上去，凤冠珠串轻轻一晃就是百年。老倌说唱念做打里最难的是「做」——一个水袖甩出去，台下要看得懂悲喜。这门戏，值得被更多年轻人接住。',
-    images: ['xc/xc_guangzhou.jpg'],
+      '刚开始分的时候真的是手忙脚乱——外卖盒子是可回收还是其他？奶茶杯要洗吗？坚持了一个月之后已经本能反应了，连家里小朋友都会提醒大人「这个是可回收的」。垃圾分类真的不难，难的是迈出第一步。',
+    images: ['story/waste_sort'],
   },
   {
     authorIdx: 1,
-    title: '跟广绣阿姨学了一下午，才绣完半片木棉',
+    title: '骑行通勤一个月，减碳数据超乎想象',
     content:
-      '广绣的针脚细到要眯着眼找，一根丝线劈成十六分之一才够细。阿姨绣了四十年，木棉花在她手里像会呼吸。她说手艺不怕慢，怕没人学。',
-    images: ['jd/gzcl.png'],
-  },
-  {
-    authorIdx: 3,
-    title: '醒狮采青，鼓点一响整条街都醒了',
-    content:
-      '狮头一抬一探，眼睛会眨、耳朵会动，全靠舞狮人腰马的功夫。最震撼是采青那一跳，桩与桩之间一丈来宽，落点稳得像生了根。岭南人过节的精气神都在这鼓点里。',
-    images: ['changlong.png'],
-  },
-  {
-    authorIdx: 2,
-    title: '潮州工夫茶：三杯之间，皆是规矩',
-    content:
-      '关公巡城、韩信点兵，斟茶的手法一点不能马虎。老伯说工夫茶喝的不是茶，是待客的心意。一壶单丛冲到第七道还有余香，时间都泡在杯里了。',
-    images: ['xc/xc_chaozhou.jpeg'],
-  },
-  {
-    authorIdx: 5,
-    title: '龙舟下水前，先给龙头簪花挂红',
-    content:
-      '端午前的祠堂，老人给龙头点睛、簪花、挂上红绸。一村人扛着龙舟往河里走，号子一喊，几十支桨同时入水。这条河，他们划了几百年。',
-    images: ['xc/xc_dongguan.jpg'],
+      '把车钥匙放家里，换上骑行服通勤了一个月。月末一算：每天来回 12 公里代替开车，一个月少排了约 110 kg CO₂，还省了 800 多块油钱。大腿明显紧实了，人也精神了不少。低碳生活其实挺省钱的。',
+    images: ['story/bike_commute'],
   },
   {
     authorIdx: 4,
-    title: '香云纱晒莨：阳光和河泥染出的「软黄金」',
+    title: '阳台种菜记：从种子到餐桌的零碳旅程',
     content:
-      '一匹香云纱要过三十几道工序，薯莨汁浸、河泥涂、草地上晾晒，全看天吃饭。师傅说这布越穿越亮，是大自然亲手染的，摸上去像凉玉。',
-    images: ['xc/xc_huizhou.jpg'],
+      '在阳台用废弃的泡沫箱种了生菜、小番茄和薄荷。用的都是厨余堆肥，零化肥零农药。第一茬生菜摘下来拌沙拉的时候，那种成就感比外卖好吃一百倍。不仅省了买菜钱，还减少了食物运输的碳排放。',
+    images: ['story/balcony_farm'],
   },
   {
-    authorIdx: 6,
-    title: '广彩瓷：在白瓷上画一座岭南城',
+    authorIdx: 3,
+    title: '旧衣改造：一条牛仔裤的第二人生',
     content:
-      '描金的笔尖比头发还细，金线绕着花鸟一圈圈铺开，行内叫「织金彩瓷」。画师说一只杯子要烧三次、画十几天，急不得。出窑那一刻整间作坊都亮了。',
-    images: ['dgypzzbwg.png'],
+      '把压箱底的三条旧牛仔裤裁成了两个托特包 + 一个围裙，加上之前剩的扣子和碎花布做成装饰。朋友以为我买了什么设计师品牌。快时尚每年扔掉 9200 万吨纺织废弃物——其实好面料值得被重新利用。',
+    images: ['story/upcycle'],
+  },
+  {
+    authorIdx: 1,
+    title: '家庭节电大作战：一个月省了 100 度电',
+    content:
+      '换了全屋 LED 灯泡、给空调设了定时、热水器加了定时开关、所有待机电器拔插头。一个月下来电费单少了 100 多度，按一度电 0.9 kg CO₂ 算，我们一家四口这个月减排了 90 kg。关键在于养成习惯！',
+    images: ['story/save_energy'],
   },
   {
     authorIdx: 2,
-    title: '英歌舞：揭阳少年的脸谱与槌声',
+    title: '拒绝一次性塑料的第 30 天',
     content:
-      '一百零八条好汉的脸谱画在年轻人脸上，木槌相击，地动山摇。领舞的少年才十六岁，他说爷爷跳过、爸爸跳过，现在轮到他。这股劲，叫传承。',
-    images: ['xc/xc_jieyang.jpeg'],
+      '挑战一个月不用一次性塑料：自带水杯、购物袋、餐具、硅胶保鲜盖。最难的是外卖——跟店家说不要餐具说了 20 次有 10 次还是放了。不过总体算下来这个月少扔了约 5 kg 塑料垃圾，坚持就是改变。',
+    images: ['story/no_plastic'],
+  },
+  {
+    authorIdx: 7,
+    title: '周末净山行动：我们 12 个人捡了 20 公斤垃圾',
+    content:
+      '组织了一次社区净山，12 个人两小时在城郊的山道上捡了 20 多公斤垃圾——最多的就是塑料瓶和零食包装。捡完后站在山顶往下看，心里特别踏实。以后每月组织一次，欢迎附近的朋友一起加入！',
+    images: ['story/cleanup'],
+  },
+  {
+    authorIdx: 6,
+    title: '碳足迹计算器让我看到了惊人的数字',
+    content:
+      '用 App 的碳足迹功能算了一下自己一年的排放：燃油车通勤 2.5 吨、红肉消费 1.1 吨、飞了两次国内航班 0.8 吨……总共一年排放约 8 吨 CO₂，远高于中国人均排放目标。看完数据我决定从下个月开始改变。',
+    images: ['story/carbon'],
   },
 ];
 
-// 评论文案池——贴合非遗传承主题。
+// 评论文案池——贴合绿色低碳主题。
 const commentTexts = [
-  '这门手艺真该好好传下去',
-  '看得人起鸡皮疙瘩，太震撼了',
-  '请问这个工坊可以预约体验吗？',
-  '岭南的非遗越了解越着迷',
-  '为坚守的手艺人点赞',
-  '已收藏，下次带孩子一起去看',
+  '太棒了！我也要开始这样的绿色生活',
+  '看完觉得环保真的可以从身边小事做起',
+  '请问这个活动在哪里参加的？想加入',
+  '越了解碳足迹越觉得自己该行动了',
+  '为坚持低碳生活的每一个普通人点赞',
+  '已收藏，带着家人一起行动起来',
 ];
 
 // 社区动态相关数据（作者 upsert 保留已注册账号，动态/点赞/评论清空重插）。
@@ -345,12 +353,12 @@ const studyTopics = studyTopicSeed.map((t) => ({
 
 // 文化内容：VR全景场景
 const vrScenes = [
-  { category: 'vr_scene', title: '广州塔 360°', subtitle: '珠江新城天际线', content: '{"lat":23.1065,"lng":113.3245}', icon: 'eye', color: '#E05C3A', sort: 0 },
-  { category: 'vr_scene', title: '丹霞山全景', subtitle: '世界自然遗产', content: '{"lat":25.0132,"lng":113.7387}', icon: 'mountain', color: '#5C8A6D', sort: 1 },
-  { category: 'vr_scene', title: '开平碉楼', subtitle: '世界文化遗产', content: '{"lat":22.2865,"lng":112.6991}', icon: 'home', color: '#8E6B3F', sort: 2 },
-  { category: 'vr_scene', title: '珠江夜景', subtitle: '两岸璀璨灯火', content: '{"lat":23.1134,"lng":113.2594}', icon: 'moon', color: '#3B7CB6', sort: 3 },
-  { category: 'vr_scene', title: '粤剧艺术博物馆', subtitle: '岭南园林中的非遗', content: '{"lat":23.1228,"lng":113.2485}', icon: 'business', color: '#7B68AE', sort: 4 },
-  { category: 'vr_scene', title: '潮州古城', subtitle: '千年古韵广济桥', content: '{"lat":23.6665,"lng":116.6437}', icon: 'flag', color: '#C0392B', sort: 5 },
+  { category: 'vr_scene', title: '神农架原始森林 360°', subtitle: '华中绿肺 · 生物多样性宝库', content: '{"lat":31.4650,"lng":110.4987}', icon: 'leaf', color: '#2D6A4F', sort: 0 },
+  { category: 'vr_scene', title: '西溪湿地全景', subtitle: '城市之肾 · 湿地生态保育', content: '{"lat":30.2718,"lng":120.0658}', icon: 'water', color: '#40916C', sort: 1 },
+  { category: 'vr_scene', title: '光伏电站', subtitle: '清洁能源 · 沙漠变绿洲', content: '{"lat":40.0465,"lng":94.8029}', icon: 'sunny', color: '#E8A838', sort: 2 },
+  { category: 'vr_scene', title: '张家界国家森林公园', subtitle: '奇峰三千 · 苍翠欲滴', content: '{"lat":29.3527,"lng":110.4555}', icon: 'mountain', color: '#1B4332', sort: 3 },
+  { category: 'vr_scene', title: '九寨沟', subtitle: '人间仙境 · 青山碧水', content: '{"lat":33.2614,"lng":103.9199}', icon: 'images', color: '#52B788', sort: 4 },
+  { category: 'vr_scene', title: '海上风电场', subtitle: '绿色能源 · 零碳未来', content: '{"lat":21.5650,"lng":111.8320}', icon: 'flash', color: '#74C69D', sort: 5 },
 ];
 
 const allCultural = [...cantonesePhrases, ...cantoneseLessons, ...studyTopics, ...vrScenes];

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -34,10 +34,10 @@ interface Review {
   author: { username: string };
 }
 
-const TYPE_LABELS = ['全部', '古筝', '曲艺', '技艺', '美术', '民俗', '特产'];
+const TYPE_LABELS = ['全部', '餐具', '家居', '清洁', '再生', '有机', '数码'];
 
 export default function ProductDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, autoBuy } = useLocalSearchParams<{ id: string; autoBuy?: string }>();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -101,6 +101,16 @@ export default function ProductDetailScreen() {
       setBuying(false);
     }
   }, [data, buying, token, router]);
+
+  // AI 语音助手 autoBuy：数据加载完成后自动触发下单
+  const autoBuyTriggered = useRef(false);
+  useEffect(() => {
+    if (autoBuy === '1' && data && !loading && !autoBuyTriggered.current && token) {
+      autoBuyTriggered.current = true;
+      const t = setTimeout(() => handleBuy(), 500);
+      return () => clearTimeout(t);
+    }
+  }, [autoBuy, data, loading, token, handleBuy]);
 
   // --- Loading state ---
   if (loading) {
@@ -259,7 +269,7 @@ export default function ProductDetailScreen() {
             <Text className="text-[14px] leading-6 text-[#666]">
               {data.description?.trim()
                 ? data.description
-                : '这是一件精美的岭南非遗文创作品，由非遗传承人纯手工制作，承载着匠人的心血与岭南文化的独特韵味。'}
+                : '这是一件精心挑选的绿色环保好物，采用可持续材料与环保工艺制造，践行低碳生活理念，为地球减负贡献一份力量。'}
             </Text>
           </View>
         </View>

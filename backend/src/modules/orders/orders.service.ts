@@ -26,8 +26,11 @@ export class OrdersService {
 
   // 服务端定价下单：价格/标题/图片全部由后端按 itemType 取真实数据（不信任客户端），
   // 在事务内校验余额 → 扣余额 → 建订单 → 写流水，保证一致性。
+  // 以旧换新：tradeIn=true 时额外奖励碳积分。
   async create(userId: string, dto: CreateOrderDto) {
     const item = await this.resolveItem(dto.itemType, dto.itemId);
+    const tradeIn = dto.tradeIn === true;
+    const carbonAward = tradeIn ? 50 : 0;
 
     return this.prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({
@@ -40,7 +43,10 @@ export class OrdersService {
       }
       await tx.user.update({
         where: { id: userId },
-        data: { balance: { decrement: item.price } },
+        data: {
+          balance: { decrement: item.price },
+          ...(carbonAward > 0 ? { carbonCredits: { increment: carbonAward } } : {}),
+        },
       });
       const order = await tx.order.create({
         data: {
@@ -52,17 +58,30 @@ export class OrdersService {
           oriPrice: item.price,
           finalPrice: item.price,
           status: '已支付',
+          tradeIn,
+          carbonCreditsAwarded: carbonAward,
         },
       });
       await tx.transaction.create({
         data: {
           userId,
           type: 'out',
-          title: item.title,
+          title: `${item.title}${tradeIn ? '（以旧换新）' : ''}`,
           amount: `-${item.price.toFixed(2)}`,
         },
       });
-      return order;
+      // 以旧换新加碳积分流水
+      if (carbonAward > 0) {
+        await tx.transaction.create({
+          data: {
+            userId,
+            type: 'in',
+            title: `以旧换新碳积分奖励`,
+            amount: `+${carbonAward} 碳积分`,
+          },
+        });
+      }
+      return { ...order, carbonAward };
     });
   }
 
@@ -84,7 +103,7 @@ export class OrdersService {
         price,
         title: dest.title,
         image: dest.image,
-        orderType: '文创产品',
+        orderType: '生态良品',
       };
     }
     const scenic = await this.prisma.scenic.findUnique({

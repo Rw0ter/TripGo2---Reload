@@ -1,111 +1,78 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
 import { apiRequest } from '@/lib/api';
 
-interface RankUser { id: string; username: string; points: number; }
-interface LeaderboardData { list: RankUser[]; self: RankUser | null; }
+interface RankUser {
+  rank: number;
+  id: string;
+  username: string;
+  points: number;
+  carbonCredits: number;
+  score: number;
+}
 
-const CHINESE_NUMS = ['四', '五', '六', '七', '八', '九', '十'];
-const PODIUM_TITLES = ['状元', '榜眼', '探花'];
-const PODIUM_SIZES = {
-  center: { height: 172, avatarSize: 64, flex: 1.2, maxWidth: 140 },
-  left:   { height: 148, avatarSize: 48, flex: 1,   maxWidth: 110 },
-  right:  { height: 130, avatarSize: 48, flex: 1,   maxWidth: 110 },
-};
+interface LeaderboardData {
+  list: RankUser[];
+  total: number;
+  page: number;
+  pageSize: number;
+  self: RankUser | null;
+}
 
-function PodiumCard({
-  user,
-  pos,
-}: {
-  user: RankUser | null;
-  pos: 'left' | 'center' | 'right';
-}) {
-  const sz = PODIUM_SIZES[pos];
-  const title = PODIUM_TITLES[pos === 'center' ? 0 : pos === 'left' ? 1 : 2];
-  const isChampion = pos === 'center';
-  const ringWidth = isChampion ? 3 : 2;
+// ── 绿色主题色 ──
+const GD = '#1B4332';
+const GM = '#2D6A4F';
+const GL = '#40916C';
+const GA = '#95D5B2';
+const BG = '#F5FAF5';
+const CARD = '#FFFFFF';
 
-  if (!user) {
-    return <View style={{ flex: sz.flex }} />;
-  }
+function PodiumCard({ user, rank, cw }: { user: RankUser | null; rank: 1 | 2 | 3; cw: number }) {
+  const heights = { 1: 160, 2: 130, 3: 110 };
+  const sizes = { 1: 58, 2: 44, 3: 40 };
+  const medals = { 1: '#F59E0B', 2: '#94A3B8', 3: '#D97706' };
+  const labels = { 1: '碳路先锋', 2: '减排能手', 3: '绿色卫士' };
+  const h = heights[rank];
+  const s = sizes[rank];
+
+  if (!user) return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end' }} />;
 
   return (
-    <View style={{ flex: sz.flex }} className="flex-col items-center justify-end">
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end' }}>
       <View
-        className="relative items-center overflow-hidden rounded-xl"
+        className="rounded-2xl items-center overflow-hidden"
         style={{
-          height: sz.height,
+          height: h,
           width: '100%',
-          maxWidth: sz.maxWidth,
-          backgroundColor: 'rgba(255,255,255,0.9)',
-          borderWidth: 1,
-          borderColor: 'rgba(212,167,106,0.3)',
+          maxWidth: cw,
+          backgroundColor: CARD,
+          shadowColor: '#000',
+          shadowOpacity: 0.06,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: 2 },
+          elevation: 3,
         }}
       >
-        {/* Top accent bar: red -> gold -> green */}
-        <LinearGradient
-          colors={['#8B2E2E', '#D4A76A', '#5B8C5A']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4 }}
-        />
-
-        {/* Rank title pill */}
+        {/* Rank badge */}
         <View
-          className="absolute top-2 z-10 rounded px-2 py-0.5"
-          style={{ backgroundColor: 'rgba(139,46,46,0.9)' }}
+          className="rounded-full items-center justify-center mt-4"
+          style={{ width: s, height: s, backgroundColor: medals[rank] + '18' }}
         >
-          <Text className="text-xs font-bold text-white">{title}</Text>
+          <Text style={{ fontSize: s * 0.45, fontWeight: '800', color: medals[rank] }}>{rank}</Text>
         </View>
 
-        {/* Avatar circle */}
-        <View
-          className="mt-8 items-center justify-center rounded-full bg-[#F8F4E9]"
-          style={{
-            width: sz.avatarSize + ringWidth * 2,
-            height: sz.avatarSize + ringWidth * 2,
-            borderWidth: ringWidth,
-            borderColor: '#D4A76A',
-          }}
-        >
-          <Ionicons name="person-circle" size={sz.avatarSize} color="#8B2E2E" />
-        </View>
-
-        {/* Name */}
-        <Text
-          numberOfLines={1}
-          className="mt-2 font-bold text-[#3A3226]"
-          style={{ fontSize: isChampion ? 16 : 13 }}
-        >
+        <Text numberOfLines={1} className="mt-2 text-sm font-semibold text-[#2D2D2D] px-2">
           {user.username}
         </Text>
-
-        {/* Points */}
-        <Text
-          className="text-[#D4A76A]"
-          style={{
-            fontSize: isChampion ? 13 : 11,
-            marginBottom: isChampion ? 20 : 12,
-          }}
-        >
-          {user.points} 分
-        </Text>
-
-        {/* Bottom gradient bar */}
-        <LinearGradient
-          colors={[
-            'rgba(91,140,90,0.3)',
-            'rgba(212,167,106,0.3)',
-            'rgba(139,46,46,0.3)',
-          ]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3 }}
-        />
+        <Text className="text-[11px] text-[#6B7280] mt-0.5">{labels[rank]}</Text>
+        <View className="flex-row items-center mt-1.5 space-x-2">
+          <Text className="text-xs text-[#40916C] font-bold">{user.points} 分</Text>
+          <Text className="text-[11px] text-[#95D5B2]">{user.carbonCredits} 碳</Text>
+        </View>
       </View>
     </View>
   );
@@ -116,281 +83,182 @@ export default function LeaderboardScreen() {
   const router = useRouter();
   const [data, setData] = useState<LeaderboardData | null>(null);
   const [error, setError] = useState(false);
+  const [page, setPage] = useState(1);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (p = 1) => {
     try {
       setError(false);
-      setData(
-        await apiRequest<LeaderboardData>('/leaderboard', { auth: true }),
-      );
+      const res = await apiRequest<LeaderboardData>(`/leaderboard?page=${p}&pageSize=20`, { auth: true });
+      setData(res);
+      setPage(p);
     } catch {
       setError(true);
     }
   }, []);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      void load(1);
+    }, [load]),
+  );
 
-  // Build podium layout: left=2nd, center=1st, right=3rd
-  const top3 = data?.list?.slice(0, 3) ?? [];
-  let podium: (RankUser | null)[] = [];
-  if (top3.length === 0) {
-    podium = [null, null, null];
-  } else if (top3.length === 1) {
-    podium = [null, top3[0], null];
-  } else if (top3.length === 2) {
-    podium = [top3[1], top3[0], null];
-  } else {
-    podium = [top3[1] ?? null, top3[0] ?? null, top3[2] ?? null];
-  }
-
-  const ranks4to10 = data?.list?.slice(3, 10) ?? [];
   const loading = !data && !error;
-  const empty = data && data.list.length === 0;
+  const totalPages = data ? Math.ceil(data.total / data.pageSize) : 0;
 
-  // Find self rank position
-  const selfRankIdx =
-    data?.self
-      ? data.list.findIndex((u) => u.id === data.self!.id)
-      : -1;
-  const selfRankDisplay =
-    selfRankIdx >= 0 ? selfRankIdx + 1 : '未上榜';
+  // Build podium: 1st (center), 2nd (left), 3rd (right)
+  const sorted = data?.list ?? [];
+  const first = sorted.find((u) => u.rank === 1) ?? null;
+  const second = sorted.find((u) => u.rank === 2) ?? null;
+  const third = sorted.find((u) => u.rank === 3) ?? null;
+  const rest = sorted.filter((u) => u.rank > 3);
 
   return (
-    <View className="flex-1 bg-[#F8F4E9]">
-      {/* Back button */}
+    <View className="flex-1" style={{ backgroundColor: BG }}>
+      {/* Header */}
       <Pressable
         onPress={() => router.back()}
         className="absolute left-4 z-10"
         style={{ top: insets.top + 8 }}
       >
-        <Ionicons name="chevron-back" size={24} color="#8B2E2E" />
+        <Ionicons name="chevron-back" size={24} color={GM} />
       </Pressable>
 
-      {/* Main scrollable area */}
+      <View className="items-center" style={{ paddingTop: insets.top + 8 }}>
+        <Text className="text-2xl font-bold tracking-tight" style={{ color: GD }}>
+          绿色先锋榜
+        </Text>
+        <Text className="mt-1 text-xs" style={{ color: '#6B7280' }}>
+          践行低碳生活 守护绿水青山
+        </Text>
+      </View>
+
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) + 80 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Title */}
-        <View
-          className="items-center"
-          style={{ paddingTop: insets.top + 8 }}
-        >
-          <Text
-            className="text-3xl font-bold text-[#8B2E2E]"
-            style={{ fontFamily: 'serif' }}
-          >
-            锦绣山河榜
-          </Text>
-          <Text className="mt-1 text-sm text-[#D4A76A]">
-            万里江山如画 行者无疆
-          </Text>
-        </View>
+        {loading ? (
+          <View className="items-center py-20">
+            <ActivityIndicator size="large" color={GL} />
+          </View>
+        ) : error ? (
+          <View className="items-center py-20">
+            <Ionicons name="cloud-offline-outline" size={48} color="#9CA3AF" />
+            <Text className="mt-2 text-sm text-[#9CA3AF]">加载失败，请稍后重试</Text>
+          </View>
+        ) : sorted.length === 0 ? (
+          <View className="items-center py-20">
+            <Ionicons name="leaf-outline" size={48} color="#9CA3AF" />
+            <Text className="mt-2 text-sm text-[#9CA3AF]">暂无排行榜数据</Text>
+          </View>
+        ) : (
+          <>
+            {/* Podium */}
+            <View className="flex-row items-end justify-center mt-6 px-4" style={{ gap: 8 }}>
+              <PodiumCard user={second} rank={2} cw={88} />
+              <PodiumCard user={first} rank={1} cw={100} />
+              <PodiumCard user={third} rank={3} cw={88} />
+            </View>
 
-        <View className="mt-8 px-4">
-          {/* Loading state */}
-          {loading ? (
-            <View className="items-center py-16">
-              <ActivityIndicator size="large" color="#8B2E2E" />
-            </View>
-          ) : error ? (
-            /* Error state */
-            <View className="items-center py-16">
-              <Ionicons
-                name="cloud-offline-outline"
-                size={48}
-                color="#D4A76A"
-              />
-              <Text className="mt-2 text-sm text-[#D4A76A]">
-                加载失败，请稍后重试
-              </Text>
-            </View>
-          ) : empty ? (
-            /* Empty state */
-            <View className="items-center py-16">
-              <Ionicons name="trophy-outline" size={48} color="#D4A76A" />
-              <Text className="mt-2 text-sm text-[#D4A76A]">
-                暂无排行榜数据
-              </Text>
-            </View>
-          ) : (
-            <>
-              {/* Top-3 podium */}
+            {/* Rank list */}
+            <View className="mx-4 mt-6 rounded-2xl overflow-hidden" style={{ backgroundColor: CARD }}>
+              {/* Table header */}
               <View
-                className="flex-row items-end justify-center"
-                style={{ gap: 6 }}
+                className="flex-row items-center px-4 py-2.5"
+                style={{ backgroundColor: GD + '08', borderBottomWidth: 1, borderColor: '#F3F4F6' }}
               >
-                <PodiumCard user={podium[0]} pos="left" />
-                <PodiumCard user={podium[1]} pos="center" />
-                <PodiumCard user={podium[2]} pos="right" />
+                <Text className="text-xs font-medium text-[#9CA3AF] w-10 text-center">排名</Text>
+                <Text className="text-xs font-medium text-[#9CA3AF] flex-1 ml-2">用户</Text>
+                <Text className="text-xs font-medium text-[#9CA3AF] w-16 text-center">积分</Text>
+                <Text className="text-xs font-medium text-[#9CA3AF] w-16 text-center">碳积分</Text>
               </View>
 
-              {/* Ranks 4-10 */}
-              {ranks4to10.length > 0 && (
+              {rest.map((u, i) => (
                 <View
-                  className="mt-6 overflow-hidden rounded-xl px-3 py-4"
-                  style={{
-                    backgroundColor: 'rgba(255,255,255,0.8)',
-                    borderWidth: 1,
-                    borderColor: 'rgba(212,167,106,0.3)',
-                  }}
+                  key={u.id}
+                  className={`flex-row items-center px-4 py-3 ${i % 2 === 0 ? 'bg-[#F9FAFB]' : 'bg-white'}`}
+                  style={i < rest.length - 1 ? { borderBottomWidth: 1, borderColor: '#F3F4F6' } : undefined}
                 >
-                  {ranks4to10.map((u, i) => (
-                    <View key={u.id}>
-                      <View className="flex-row items-center px-2 py-3">
-                        {/* Chinese number badge */}
-                        <LinearGradient
-                          colors={['#D4A76A', '#8B2E2E']}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          className="items-center justify-center rounded-full"
-                          style={{ width: 36, height: 36 }}
-                        >
-                          <Text className="text-sm font-bold text-white">
-                            {CHINESE_NUMS[i]}
-                          </Text>
-                        </LinearGradient>
-
-                        {/* Avatar placeholder */}
-                        <View
-                          className="ml-3 items-center justify-center rounded-full bg-[#F8F4E9]"
-                          style={{
-                            width: 40,
-                            height: 40,
-                            borderWidth: 1,
-                            borderColor: 'rgba(212,167,106,0.2)',
-                          }}
-                        >
-                          <Ionicons
-                            name="person-circle"
-                            size={32}
-                            color="#8B2E2E"
-                          />
-                        </View>
-
-                        {/* Name */}
-                        <Text
-                          numberOfLines={1}
-                          className="ml-3 flex-1 text-sm font-medium text-[#33312E]"
-                        >
-                          {u.username}
-                        </Text>
-
-                        {/* Points pill */}
-                        <View
-                          className="rounded-full bg-[#F8F4E9] px-3 py-1"
-                          style={{
-                            borderWidth: 1,
-                            borderColor: 'rgba(212,167,106,0.1)',
-                          }}
-                        >
-                          <Text className="text-xs text-[#8B2E2E]">
-                            {u.points} 分
-                          </Text>
-                        </View>
-                      </View>
-
-                      {/* Decorative divider: gradient line fading at edges */}
-                      {i < ranks4to10.length - 1 && (
-                        <LinearGradient
-                          colors={[
-                            'rgba(212,167,106,0)',
-                            'rgba(212,167,106,0.5)',
-                            'rgba(212,167,106,0)',
-                          ]}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 0 }}
-                          style={{
-                            height: 1,
-                            marginLeft: '10%',
-                            marginRight: '10%',
-                          }}
-                        />
-                      )}
+                  <Text className="w-10 text-center text-sm font-semibold" style={{ color: u.rank <= 10 ? GM : '#9CA3AF' }}>
+                    {u.rank}
+                  </Text>
+                  <View className="flex-row items-center flex-1 ml-2">
+                    <View
+                      className="rounded-full items-center justify-center"
+                      style={{ width: 32, height: 32, backgroundColor: GA + '30' }}
+                    >
+                      <Ionicons name="person" size={16} color={GM} />
                     </View>
-                  ))}
+                    <Text numberOfLines={1} className="ml-2 text-sm text-[#2D2D2D]">
+                      {u.username}
+                    </Text>
+                  </View>
+                  <Text className="w-16 text-center text-sm font-medium text-[#40916C]">{u.points}</Text>
+                  <Text className="w-16 text-center text-sm font-medium text-[#95D5B2]">{u.carbonCredits}</Text>
+                </View>
+              ))}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <View className="flex-row items-center justify-center py-3 space-x-2" style={{ borderTopWidth: 1, borderColor: '#F3F4F6' }}>
+                  <Pressable
+                    onPress={() => page > 1 && load(page - 1)}
+                    disabled={page <= 1}
+                    className="px-3 py-1.5 rounded-lg"
+                    style={{ opacity: page <= 1 ? 0.3 : 1 }}
+                  >
+                    <Ionicons name="chevron-back" size={16} color={GM} />
+                  </Pressable>
+                  <Text className="text-xs text-[#6B7280]">
+                    {page} / {totalPages}
+                  </Text>
+                  <Pressable
+                    onPress={() => page < totalPages && load(page + 1)}
+                    disabled={page >= totalPages}
+                    className="px-3 py-1.5 rounded-lg"
+                    style={{ opacity: page >= totalPages ? 0.3 : 1 }}
+                  >
+                    <Ionicons name="chevron-forward" size={16} color={GM} />
+                  </Pressable>
                 </View>
               )}
-            </>
-          )}
-
-          {/* Footer */}
-          <View className="mt-8 mb-4 items-center">
-            <Text className="text-xs text-[#D4A76A]/80">
-              岁次乙巳年 锦绣山河榜
-            </Text>
-          </View>
-        </View>
+            </View>
+          </>
+        )}
       </ScrollView>
 
-      {/* Fixed bottom bar: self info */}
-      {!loading && (
+      {/* Bottom self bar */}
+      {data?.self && (
         <View
-          className="absolute bottom-0 left-0 right-0 border-t bg-white/90"
+          className="absolute bottom-0 left-0 right-0 border-t bg-white/95"
           style={{
-            borderColor: 'rgba(212,167,106,0.2)',
+            borderColor: '#F3F4F6',
             paddingBottom: Math.max(insets.bottom, 8),
+            shadowColor: '#000',
+            shadowOpacity: 0.04,
+            shadowRadius: 4,
+            shadowOffset: { width: 0, height: -2 },
+            elevation: 4,
           }}
         >
-          {data?.self ? (
-            <View className="flex-row items-center px-4 py-3">
-              {/* Avatar */}
-              <View
-                className="items-center justify-center rounded-full bg-[#F8F4E9]"
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderWidth: 1,
-                  borderColor: 'rgba(212,167,106,0.2)',
-                }}
-              >
-                <Ionicons
-                  name="person-circle"
-                  size={36}
-                  color="#8B2E2E"
-                />
-              </View>
-
-              {/* Name + rank */}
-              <View className="ml-3 min-w-0 flex-1">
-                <Text
-                  numberOfLines={1}
-                  className="text-sm font-medium text-[#3A3226]"
-                >
-                  {data.self.username}
-                </Text>
-                <Text className="text-xs text-[#D4A76A]">
-                  我的排名：
-                  <Text className="font-semibold text-[#8B2E2E]">
-                    {selfRankDisplay}
-                  </Text>
-                </Text>
-              </View>
-
-              {/* Points */}
-              <View
-                className="rounded-full bg-[#F8F4E9] px-3 py-1"
-                style={{
-                  borderWidth: 1,
-                  borderColor: 'rgba(212,167,106,0.1)',
-                }}
-              >
-                <Text className="text-xs text-[#8B2E2E]">
-                  当前积分：
-                  <Text className="font-semibold">{data.self.points}</Text> 分
-                </Text>
-              </View>
+          <View className="flex-row items-center px-4 py-3">
+            <View
+              className="rounded-full items-center justify-center"
+              style={{ width: 42, height: 42, backgroundColor: GA + '30' }}
+            >
+              <Ionicons name="person-circle" size={34} color={GM} />
             </View>
-          ) : (
-            <View className="px-4 py-3">
-              <Text className="text-sm text-[#D4A76A]">
-                未登录或获取信息失败，无法展示本地用户。
+            <View className="ml-3 flex-1">
+              <Text numberOfLines={1} className="text-sm font-medium text-[#2D2D2D]">
+                {data.self.username}
               </Text>
+              <View className="flex-row items-center space-x-3 mt-0.5">
+                <Text className="text-xs text-[#40916C]">排名 {data.self.rank}</Text>
+                <Text className="text-xs text-[#6B7280]">{data.self.points} 积分</Text>
+                <Text className="text-xs text-[#95D5B2]">{data.self.carbonCredits} 碳积分</Text>
+              </View>
             </View>
-          )}
+          </View>
         </View>
       )}
     </View>

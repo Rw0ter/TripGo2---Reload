@@ -105,6 +105,20 @@ export const legacyImages: Record<string, ImageSourcePropType> = {
   '/resources/img/wccpImg/yjlpzs.png': require('../assets/legacy/img/wccpImg/yjlpzs.png'),
   '/resources/img/wccpImg/zhbkmskh.png': require('../assets/legacy/img/wccpImg/zhbkmskh.png'),
   '/resources/img/wccpImg/zsjqyjzgj.png': require('../assets/legacy/img/wccpImg/zsjqyjzgj.png'),
+  // 社区故事配图（本地）
+  'story/waste_sort': require('../assets/images/stories/story_waste_sort.jpg'),
+  'story/bike_commute': require('../assets/images/stories/story_bike_commute.jpg'),
+  'story/balcony_farm': require('../assets/images/stories/story_balcony_farm.jpg'),
+  'story/upcycle': require('../assets/images/stories/story_upcycle.jpg'),
+  'story/save_energy': require('../assets/images/stories/story_save_energy.jpg'),
+  'story/no_plastic': require('../assets/images/stories/story_no_plastic.jpg'),
+  'story/cleanup': require('../assets/images/stories/story_cleanup.jpg'),
+  'story/carbon': require('../assets/images/stories/story_carbon.jpg'),
+  // 首页轮播
+  'banner/green_life': require('../assets/images/banners/banner_green_life.jpg'),
+  'banner/carbon_neutral': require('../assets/images/banners/banner_carbon_neutral.jpg'),
+  'banner/ecology': require('../assets/images/banners/banner_ecology.jpg'),
+  'banner/clean_energy': require('../assets/images/banners/banner_clean_energy.jpg'),
 };
 
 // 按 key 取本地图；key 未登记时返回占位图并告警，

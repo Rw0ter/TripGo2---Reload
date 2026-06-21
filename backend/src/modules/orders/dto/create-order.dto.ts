@@ -1,11 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, Min } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsOptional, Min } from 'class-validator';
 
 export class CreateOrderDto {
   @ApiProperty({
     enum: ['destination', 'scenic'],
-    description: '下单对象类型：文创产品 / 景点预订',
+    description: '下单对象类型：生态良品 / 景点预订',
   })
   @IsIn(['destination', 'scenic'])
   itemType: 'destination' | 'scenic';
@@ -15,4 +15,10 @@ export class CreateOrderDto {
   @IsInt()
   @Min(1)
   itemId: number;
+
+  @ApiPropertyOptional({ description: '以旧换新：回收旧物获得碳积分奖励', default: false })
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  tradeIn?: boolean;
 }

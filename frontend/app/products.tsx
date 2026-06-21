@@ -46,37 +46,37 @@ interface Product {
 }
 
 // 分类下标 i 即 type i（0=全部=不传 type）。切换分类重新拉取。
-const CATS = ['全部', '古筝', '曲艺', '技艺', '美术', '民俗', '特产'];
+const CATS = ['全部', '餐具', '家居', '清洁', '再生', '有机', '数码'];
 
 // type → 卡片角标 / 区头文案。
 const TYPE_LABELS: Record<number, string> = {
-  1: '古筝工艺',
-  2: '曲艺传承',
-  3: '传统技艺',
-  4: '岭南美术',
-  5: '民俗文化',
-  6: '地道风味',
+  1: '环保餐具',
+  2: '绿色家居',
+  3: '清洁用品',
+  4: '再生制品',
+  5: '有机食品',
+  6: '节能数码',
 };
 
-// type → 卡片角标渐变（品牌内多彩；活泼但不出戏）。下标 1–6 对应分类。
+// type → 卡片角标渐变（绿色系为主）。下标 1–6 对应分类。
 const TYPE_GRADIENTS: Record<number, readonly [string, string]> = {
-  1: ['#3E6B4F', '#5C8A6D'],
-  2: ['#B07F32', '#D4A76A'],
-  3: ['#4A7359', '#6E9B7B'],
-  4: ['#9C6F26', '#C79A4E'],
-  5: ['#386641', '#6E9B7B'],
-  6: ['#A9772F', '#D4A76A'],
+  1: ['#2D6A4F', '#40916C'],
+  2: ['#1B4332', '#2D6A4F'],
+  3: ['#40916C', '#52B788'],
+  4: ['#2D6A4F', '#95D5B2'],
+  5: ['#52B788', '#74C69D'],
+  6: ['#1B4332', '#40916C'],
 };
 
 // 左侧分类栏每项的图标 + 前景色：下标与 CATS 对齐（含「全部」）。
 const CAT_STYLE: { icon: keyof typeof Ionicons.glyphMap; fg: string }[] = [
-  { icon: 'apps', fg: '#386641' },
-  { icon: 'musical-notes', fg: '#9C6F26' },
-  { icon: 'mic', fg: '#3E6B4F' },
-  { icon: 'construct', fg: '#A9772F' },
-  { icon: 'color-palette', fg: '#4A7359' },
-  { icon: 'flower', fg: '#B07F32' },
-  { icon: 'fast-food', fg: '#9C6F26' },
+  { icon: 'apps', fg: '#2D6A4F' },
+  { icon: 'restaurant', fg: '#40916C' },
+  { icon: 'home', fg: '#1B4332' },
+  { icon: 'sparkles', fg: '#52B788' },
+  { icon: 'refresh', fg: '#2D6A4F' },
+  { icon: 'leaf', fg: '#40916C' },
+  { icon: 'flash', fg: '#1B4332' },
 ];
 
 // 右栏排序键（纯前端，不改后端契约、不新增字段）：
@@ -166,12 +166,12 @@ export default function ProductsScreen() {
           <Pressable
             onPress={() => router.push('/search')}
             accessibilityRole="search"
-            accessibilityLabel="搜索文创好物"
+            accessibilityLabel="搜索生态良品"
             style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
             className="ml-1 h-9 flex-1 flex-row items-center rounded-full bg-white/95 px-3.5">
             <Ionicons name="search" size={15} color={PRIMARY} />
             <Text className="ml-2 text-[13px]" style={{ color: '#8f988e' }}>
-              搜索文创好物 · 把广东带回家
+              搜索生态良品 · 绿色生活之选
             </Text>
           </Pressable>
 
@@ -245,7 +245,7 @@ export default function ProductsScreen() {
             className="flex-row items-center px-3.5"
             style={{ height: 38, borderBottomWidth: 1, borderBottomColor: HAIRLINE }}>
             <Text className="text-[14px] font-extrabold" style={{ color: INK }}>
-              {type === 0 ? '岭南匠造 · 全部好物' : `${CATS[type]} · ${TYPE_LABELS[type] ?? ''}`}
+              {type === 0 ? '生态良品 · 全部好物' : `${CATS[type]} · ${TYPE_LABELS[type] ?? ''}`}
             </Text>
             {count > 0 ? (
               <Text className="ml-2 text-[11px]" style={{ color: MUTE }}>
@@ -322,7 +322,7 @@ export default function ProductsScreen() {
                 该分类暂无产品
               </Text>
               <Text className="mt-1 text-center text-[13px]" style={{ color: '#a8a08d' }}>
-                换个分类，再逛逛岭南匠造
+                换个分类，再逛逛生态良品
               </Text>
             </View>
           ) : (
@@ -433,7 +433,7 @@ function SortTab({
   );
 }
 
-// ── 文创网格卡：等高方图 + 热销角标 + type 渐变角标 + 标题 + ¥红价/已售 ──
+// ── 生态良品网格卡：等高方图 + 热销角标 + type 渐变角标 + 标题 + ¥红价/已售 ──
 // 规整等高卡（非瀑布流交错）；按压缩放微交互 + FadeIn 入场。
 function ProductCard({
   product: p,
@@ -467,7 +467,7 @@ function ProductCard({
           transform: pressed ? [{ scale: 0.97 }] : [],
         })}
         className="overflow-hidden rounded-2xl bg-white">
-        {/* 真实文创图打底（已注册到 legacy-images.ts）*/}
+        {/* 生态良品图打底 */}
         <View style={{ width, height: imgH }}>
           <Image
             source={resolveLegacyImage(p.image)}

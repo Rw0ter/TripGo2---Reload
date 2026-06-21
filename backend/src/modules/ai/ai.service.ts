@@ -23,36 +23,41 @@ export interface PlanInput {
 
 // ── Prompts（提示词收口在后端，前端不持有）──────────────────
 export const CHAT_SYSTEM_PROMPT =
-  '你是「文脉粤游」App 的智能旅行助手，专注广东 / 岭南文化旅游：非遗（粤剧、醒狮、广绣、工夫茶等）、' +
-  '美食（广府菜、潮汕菜、顺德菜、客家菜）、景点与行程规划。回答务必准确、简洁、实用，' +
-  '使用 Markdown 排版（标题、列表、加粗）。默认回答与广东旅游和文化相关的问题，';
+  '你是「绿途」App 内置的智能语音助手，拥有真实的页面跳转和下单能力（通过 JSON 指令驱动 App）。\n' +
+  '严格遵守：禁止使用任何 emoji 表情符号（如 😊🌱✅🎉 等）。\n\n' +
+  '规则：\n' +
+  '1. 普通对话 → 纯 Markdown 文本，绝对不输出 JSON\n' +
+  '2. 用户要求下单 → 文本确认 + {"command":"buy","productId":"<ID>"}\n' +
+  '3. 用户要求打开页面 → 文本确认 + {"command":"open_page","page":"/<路由>"}\n' +
+  '4. 仅用户明确告别时说"再见/拜拜" → {"command":"end"}\n' +
+  '5. 看到"[系统]"消息 = 操作已执行，后续回答必须承认这个事实\n\n' +
+  'open_page 路由（仅此12个）：\n' +
+  '/products /green /checkin /leaderboard /orders /vr /ai/assistant /map /wallet /messages /mine /community\n' +
+  '商品详情用 buy 指令，不要拼 /product/ID 路由。\n\n' +
+  '产品ID：79=天然竹纤维餐具套装(68元), 80=不锈钢环保吸管套装(38元), 81=麦秆纤维便携餐盒(45元), 82=可降解玉米淀粉杯(25元), 83=木质便携筷子礼盒(35元), 84=硅胶折叠咖啡杯(79元), 85=有机棉四件套床品(328元), 86=LED智能护眼台灯(198元), 87=天然乳胶枕(168元), 88=太阳能户外壁灯(88元), 89=水培室内绿植套装(99元), 90=天然除湿竹炭包(29元), 91=可降解垃圾袋(19.9元), 92=无患子天然洗涤剂(32元), 93=天然海绵沐浴球(28元), 94=柠檬酸除垢清洁剂(15元), 95=竹纤维洗碗布(18元), 96=固体洗发皂(45元), 97=回收PET双肩包(158元), 98=再生纸手工笔记本(28元), 99=旧轮胎再生橡胶地垫(68元), 100=回收牛仔布托特包(88元), 101=再生塑料环保笔(12元), 102=回收玻璃花瓶(58元), 103=有机冷压椰子油(89元), 104=高山有机绿茶(128元), 105=公平贸易咖啡豆(98元), 106=有机杂粮礼盒(158元), 107=野生蓝莓干(45元), 108=蜂蜡保鲜布套装(58元), 109=太阳能充电宝(168元), 110=可充电锂电池套装(89元), 111=低功耗蓝牙温湿度计(49元), 112=可降解植物基手机壳(78元), 113=智能节能插座(128元), 114=手摇发电应急收音机(158元)。';
 
-// 注意：开头沿用 CHAT_SYSTEM_PROMPT 同款「智能旅行助手」框架——实测该框架下模型会忠实
-// follow 用户消息里的目的地；而换成「岭南行程规划师 + ①②③④ 固定模板」的重措辞会触发
-// 模型的「广州样板行程」先验，时而把目的地（如潮州）改写成广州甚至无关城市。结构要求放轻、
-// 让目的地主语（在用户消息里）主导。
+// Plan prompt 重新定位为环保活动规划助手（替代原旅行行程规划）。
 export const PLAN_SYSTEM_PROMPT =
-  '你是「文脉粤游」App 的智能旅行助手，专注广东 / 岭南文化旅游。请严格按用户消息中明确指定的目的地与出发地生成行程：' +
-  '目的地是唯一安排游览（景点、美食、住宿）的城市，出发地只用于第一天的来程交通与最后一天的返程交通，除交通外不要在出发地安排游览。' +
-  '用 Markdown 输出：先写一行用 > 引用的概览；再按「### 第 N 天」分天（每天含上午 / 午餐 / 下午 / 晚上，首日含来程、末日含返程）；' +
-  '然后给「### 💰 预算明细」表格；最后给「### 📝 行前贴士」列表。景点与美食贴合目的地真实情况，只输出 Markdown 行程、不要寒暄。';
+  '你是「绿途」App 的绿色生活规划助手，帮助用户制定低碳环保行动计划。' +
+  '根据用户输入的目标和偏好，制定具体的绿色行动方案：节能减排目标、绿色出行计划、' +
+  '垃圾分类习惯养成、环保消费选择等。' +
+  '用 Markdown 输出：先写一行用 > 引用的目标概览；再按「### 行动计划」列出具体步骤；' +
+  '然后给「### 📊 预期减排效果」表格；最后给「### 📝 小贴士」列表。' +
+  '内容贴合用户实际情况，只输出 Markdown 方案、不要寒暄。';
 
-// 普通话/任意中文 → 地道粤语文字翻译的系统提示（粤语课堂用）。
+// 环保术语翻译提示（替代原粤语翻译）。
 export const TRANSLATE_PROMPT =
-  '你是粤语翻译助手。把用户输入的内容翻译成地道的粤语口语，使用粤语用字' +
-  '（如 係 / 喺 / 嘅 / 咗 / 唔 / 嗰 / 啲 / 乜嘢 等）。' +
-  '只输出粤语译文本身（一行即可）；不要解释、不要注音、不要加引号或多余说明。';
+  '你是环保术语中英翻译助手。把用户输入的内容翻译成对应的环保/绿色低碳专业术语或英文表达。' +
+  '只输出翻译结果本身（一行即可）；不要解释、不要注音、不要加引号或多余说明。' +
+  '如果是中文输入请翻译成英文；如果是英文输入请翻译成中文。';
 
-// 把规划表单拼成发给模型的用户消息。导出为纯函数便于单测。
+// 把环保规划表单拼成发给模型的用户消息。导出为纯函数便于单测。
 export function buildPlanPrompt(dto: PlanInput): string {
-  const tags = dto.tags && dto.tags.length > 0 ? dto.tags.join('、') : '综合体验';
-  // 把目的地作为请求主语（模仿用户自然提问），出发地仅作来回交通——
-  // 否则模型会锚定「出发地」当成游览城市（实测 from=广州 时整份行程被写成广州）。
+  const tags = dto.tags && dto.tags.length > 0 ? dto.tags.join('、') : '综合方案';
   return [
-    `请为我规划一份【${dto.to}】的 ${dto.days} 天旅行行程。`,
-    `这是一趟「${dto.to}」之旅：全部景点、餐饮、住宿、活动都必须安排在 ${dto.to}，不要写成其它城市的行程。`,
-    `我从 ${dto.from} 出发——请在第 1 天安排「从 ${dto.from} 到 ${dto.to}」的来程交通、最后一天安排返回 ${dto.from} 的返程交通；除交通外不要在 ${dto.from} 安排游览。`,
-    `人均预算：¥${dto.budget}；旅行偏好：${tags}；补充说明：${dto.notes?.trim() || '无'}。`,
+    `请为我制定一份绿色低碳行动计划。`,
+    `行动周期：${dto.days} 天；预算参考：¥${dto.budget}；关注领域：${tags}。`,
+    `补充说明：${dto.notes?.trim() || '无'}。`,
   ].join('\n');
 }
 
@@ -61,7 +66,7 @@ export function buildSystemWithContext(base: string, context: string[]): string 
   if (!context || context.length === 0) return base;
   const refs = context.map((c, i) => `[${i + 1}] ${c}`).join('\n');
   return (
-    `${base}\n\n以下是与用户问题相关的「文脉粤游」知识库参考资料，` +
+    `${base}\n\n以下是与用户问题相关的「绿途」知识库参考资料，` +
     `回答时优先采用其中信息，但请用自己的话组织、不要照搬：\n${refs}`
   );
 }
@@ -167,6 +172,29 @@ export class AiService {
     return json?.choices?.[0]?.message?.content?.trim() ?? '';
   }
 
+  // TTS 语音合成：调用本地 Piper 引擎（极速 <0.05s），返回 base64 WAV
+  async speak(text: string): Promise<{ audio: string }> {
+    const { execSync } = require('child_process');
+    const { readFileSync, unlinkSync } = require('fs');
+    const { tmpdir } = require('os');
+    const path = require('path');
+    const ttsDir = path.resolve(process.cwd(), 'tts');
+    const piperExe = path.join(ttsDir, 'piper', 'piper', 'piper.exe');
+    const model = path.join(ttsDir, 'zh_CN-huayan-medium.onnx');
+    const tmpWav = path.join(tmpdir(), `tts_${Date.now()}.wav`);
+    try {
+      execSync(`"${piperExe}" --model "${model}" --output_file "${tmpWav}"`, {
+        input: text, timeout: 5000, shell: 'cmd.exe',
+      });
+      const buf = readFileSync(tmpWav);
+      unlinkSync(tmpWav);
+      return { audio: buf.toString('base64') };
+    } catch (e: any) {
+      this.logger.error(`Piper TTS 失败: ${e?.message}`);
+      throw new ServiceUnavailableException('语音合成暂不可用');
+    }
+  }
+
   // 把一段对话转发给 DeepSeek 的流式补全接口，并把增量 token 以 SSE 写回 res。
   // 约定（CLAUDE.md §8）：直接操作 response 流，不经过 TransformInterceptor。
   private async streamChat(messages: ChatMessage[], res: Response): Promise<void> {
@@ -188,6 +216,11 @@ export class AiService {
     res.setHeader('X-Accel-Buffering', 'no'); // 关掉反向代理缓冲
     res.flushHeaders();
 
+    const abort = new AbortController();
+    const req = res.req;
+    const onClose = () => { abort.abort(); };
+    req?.on('close', onClose);
+
     let upstream: Awaited<ReturnType<typeof fetch>>;
     try {
       upstream = await fetch(`${baseUrl}/chat/completions`, {
@@ -197,8 +230,11 @@ export class AiService {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({ model, messages, stream: true }),
+        signal: abort.signal,
       });
-    } catch (err) {
+    } catch (err: any) {
+      req?.off('close', onClose);
+      if (err?.name === 'AbortError') { res.end(); return; }
       this.logger.error(`DeepSeek 请求失败: ${String(err)}`);
       this.writeError(res, 'AI 服务暂时不可用，请稍后再试');
       return;
@@ -221,7 +257,6 @@ export class AiService {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
-        // SSE 事件以空行分隔；保留最后一段不完整事件等待下次拼接
         const events = buffer.split('\n\n');
         buffer = events.pop() ?? '';
         for (const event of events) {
@@ -230,15 +265,17 @@ export class AiService {
           }
         }
       }
-      // 收尾：flush 残留缓冲
       for (const delta of extractDeltas(buffer)) {
         res.write(`data: ${JSON.stringify({ delta })}\n\n`);
       }
       res.write('data: [DONE]\n\n');
       res.end();
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.name === 'AbortError') { res.end(); return; }
       this.logger.error(`DeepSeek 流读取失败: ${String(err)}`);
       this.writeError(res, 'AI 输出中断，请重试');
+    } finally {
+      req?.off('close', onClose);
     }
   }
 

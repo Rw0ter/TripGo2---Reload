@@ -16,9 +16,10 @@ model User {
   email       String   @unique
   password    String
   avatar      String?
-  points      Int      @default(0)
-  balance     Float    @default(200) // 钱包余额（新用户礼包）
-  couponCount Int      @default(2) // 可用券数（新用户礼包）
+  points        Int      @default(0)
+  carbonCredits Int      @default(0) // 碳积分（环保活动/以旧换新获得）
+  balance       Float    @default(200) // 钱包余额（新用户礼包）
+  couponCount   Int      @default(2) // 可用券数（新用户礼包）
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   addresses Address[]
@@ -30,7 +31,8 @@ model User {
   checkins     Checkin[]
   transactions Transaction[]
   favorites    Favorite[]
-  reviews      Review[]
+  reviews       Review[]
+  ecoActivities EcoActivity[]
 }
 
 model Address {
@@ -64,6 +66,8 @@ model Order {
   pointsDeduct Int      @default(0)
   finalPrice   Float
   status       String   @default("待支付")
+  tradeIn             Boolean  @default(false) // 以旧换新订单
+  carbonCreditsAwarded Int     @default(0) // 该笔订单奖励的碳积分
   meta         Json? // 各类订单的附加字段：date / participants / routeName / startDate / endDate / travelers
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId       String
@@ -207,6 +211,18 @@ model Destination {
   type        Int
   description String  @default("") // 产品详情描述
   detail      String  @default("") // 产品规格/参数
+}
+
+// 环保活动记录（绿色行动、植树、低碳出行等）
+model EcoActivity {
+  id           Int      @id @default(autoincrement())
+  type         String   // plant_tree / green_travel / waste_sort / eco_quiz / share_green / trade_in
+  points       Int      @default(0) // 获得的普通积分
+  carbonSaved  Float    @default(0) // 减排二氧化碳(kg)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  date         String   // YYYY-MM-DD（北京时间的日期）
+  createdAt    DateTime @default(now())
 }
 
 // 文化内容（粤语短语/课程/学习主题/VR场景）

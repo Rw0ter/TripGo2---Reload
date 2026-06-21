@@ -63,25 +63,25 @@ interface Message { role: 'user' | 'assistant'; text: string; }
 // ── Constants ──────────────────────────────────────────────
 const WELCOME_MSG: Message = {
   role: 'assistant',
-  text: '你好！我是文脉粤游的智能旅行助手。\n\n我可以帮你规划岭南地区的旅行行程，介绍非遗文化和美食，推荐景点和路线。\n\n💡 试试切换到「行程规划」模式，输入出发地和目的地，我就能为你生成一份完整的旅行计划。',
+  text: '你好！我是绿途的智能低碳生活助手。\n\n我可以帮你了解绿色环保知识、制定节能减排计划、推荐生态良品、计算碳足迹，以及解答关于碳中和、垃圾分类、可再生能源等环保话题。\n\n💡 试试切换到「绿色方案」模式，输入你的环保目标，我将为你生成一份个性化的绿色行动计划。',
 };
 
 const SUGGESTIONS = [
-  { text: '推荐一个广州三日游行程', icon: 'compass-outline' },
-  { text: '广东有什么非遗文化？', icon: 'library-outline' },
-  { text: '潮汕地区有什么好吃的？', icon: 'restaurant-outline' },
-  { text: '开平碉楼在哪里？怎么去？', icon: 'home-outline' },
-  { text: '佛山醒狮表演在哪里看？', icon: 'paw-outline' },
-  { text: '广东有哪些世界文化遗产？', icon: 'globe-outline' },
+  { text: '如何减少日常碳足迹？', icon: 'leaf-outline' },
+  { text: '垃圾分类有什么技巧？', icon: 'trash-outline' },
+  { text: '推荐一些节能家电', icon: 'flash-outline' },
+  { text: '绿色出行有哪些方式？', icon: 'bicycle-outline' },
+  { text: '家庭节水小妙招', icon: 'water-outline' },
+  { text: '碳中和是什么意思？', icon: 'earth-outline' },
 ];
 
 const PREFERENCES = [
-  { key: 'nature', label: '自然风光', icon: 'leaf-outline' },
-  { key: 'culture', label: '历史文化', icon: 'library-outline' },
-  { key: 'food', label: '美食之旅', icon: 'restaurant-outline' },
-  { key: 'heritage', label: '非遗体验', icon: 'color-palette-outline' },
-  { key: 'family', label: '亲子游玩', icon: 'people-outline' },
-  { key: 'photo', label: '摄影打卡', icon: 'camera-outline' },
+  { key: 'energy', label: '节能减排', icon: 'flash-outline' },
+  { key: 'recycle', label: '循环利用', icon: 'refresh-outline' },
+  { key: 'diet', label: '低碳饮食', icon: 'restaurant-outline' },
+  { key: 'travel', label: '绿色出行', icon: 'bicycle-outline' },
+  { key: 'home', label: '绿色家居', icon: 'home-outline' },
+  { key: 'nature', label: '生态保护', icon: 'leaf-outline' },
 ];
 
 // ── Chat Bubble ────────────────────────────────────────────
@@ -318,7 +318,15 @@ export default function AIAssistantScreen() {
     history.push({ role: 'user', content: text });
 
     // UI：追加用户气泡 + 一个空助手气泡用于流式填充
-    setMsgs((m) => [...m, { role: 'user', text }, { role: 'assistant', text: '' }]);
+    setMsgs((m) => {
+      const next = [
+        ...m,
+        { role: 'user' as const, text },
+        { role: 'assistant' as const, text: '' },
+      ];
+      if (next.length > 60) next.splice(0, next.length - 50); // 保持最近 50 条
+      return next;
+    });
     setInput('');
     setChatLoading(true);
 

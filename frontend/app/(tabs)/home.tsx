@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -26,23 +26,19 @@ import { resolveLegacyImage } from '@/lib/legacy-images';
 // 四宫格 / 五项入口是 App 导航菜单（非后端数据），保持静态。
 const GRID4 = [
   { icon: require('../../assets/legacy/img/index_list_4combo/qd.png'), label: '签到' },
-  { icon: require('../../assets/legacy/img/lxwd.png'), label: '研学智囊团' },
+  { icon: require('../../assets/legacy/img/lxwd.png'), label: '绿色行动' },
   { icon: require('../../assets/legacy/img/index_list_4combo/phb.png'), label: '排行榜' },
   { icon: require('../../assets/legacy/img/VR.png'), label: 'VR' },
 ];
 
 const ENTRY5 = [
-  { icon: require('../../assets/legacy/img/pipa1.png'), label: '文创产品' },
-  { icon: require('../../assets/legacy/img/lxdt3.png'), label: '旅行地图' },
+  { icon: require('../../assets/legacy/img/pipa1.png'), label: '生态良品' },
+  { icon: require('../../assets/legacy/img/lxdt3.png'), label: '绿色地图' },
   { icon: require('../../assets/legacy/img/zhushou.png'), label: '智能助手' },
-  { icon: require('../../assets/legacy/img/people_dance.png'), label: '学习小课堂' },
-  { icon: require('../../assets/legacy/img/tieding1.png'), label: '粤语课堂' },
+  { icon: require('../../assets/legacy/img/people_dance.png'), label: '环保学堂' },
+  { icon: require('../../assets/legacy/img/tieding1.png'), label: '知识库' },
 ];
 
-const quizIcon = require('../../assets/legacy/img/count.png');
-
-// 瀑布流卡片高度池——交错取值制造「高低落差」。
-const MASONRY_HEIGHTS = [212, 166, 196, 236, 172, 204, 184, 224];
 
 // 顶部轮播图：高清广东城市大图 + 名称浮层，每 4 秒自动切换、可手动滑动。
 function Carousel({
@@ -177,128 +173,36 @@ function SectionHeader({
   );
 }
 
-// 知识小课堂答题卡。
+// 答题卡配图 — 按 tag 关键词匹配，不受 re-seed 影响
+const QUIZ_IMAGES: [string, ReturnType<typeof require>][] = [
+  ['碳', require('../../assets/images/home/quiz_carbon.jpg')],
+  ['垃圾', require('../../assets/images/home/quiz_waste.jpg')],
+  ['生态', require('../../assets/images/home/quiz_eco.jpg')],
+  ['能源', require('../../assets/images/home/quiz_energy.jpg')],
+];
+function quizImage(tag: string, title: string) {
+  const haystack = tag + title;
+  for (const [k, v] of QUIZ_IMAGES) if (haystack.includes(k)) return v;
+  return require('../../assets/images/home/quiz_default.jpg');
+}
+
 function QuizCard({ item, width }: { item: Quiz; width: number }) {
   const router = useRouter();
+  const img = quizImage(item.tag, item.title);
   return (
     <Pressable
       onPress={() => router.push({ pathname: '/quiz/[id]', params: { id: item.id } })}
-      accessibilityRole="button"
-      accessibilityLabel={item.title}
-      style={{ width, boxShadow: '0px 4px 12px rgba(148,116,52,0.18)' }}
-      className="mr-3 rounded-2xl bg-white p-3.5">
-      <View className="flex-row items-center justify-between">
-        <View className="flex-1 pr-2">
-          <View className="self-start overflow-hidden rounded-full">
-            <LinearGradient
-              colors={['#f97316', '#ef4444']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{ paddingHorizontal: 10, paddingVertical: 3 }}>
-              <Text className="text-[11px] font-semibold text-white">
-                {item.tag}
-              </Text>
-            </LinearGradient>
-          </View>
-          <Text className="mt-1.5 text-[15px] font-extrabold text-[#3b2f16]">
-            {item.title}
-          </Text>
-          <Text className="mt-1 text-[12px] leading-5 text-[#7d7b6a]">
-            {item.desc}
-          </Text>
-          <View className="mt-2 self-start overflow-hidden rounded-full">
-            <LinearGradient
-              colors={['#f97316', '#facc15']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={{ paddingHorizontal: 12, paddingVertical: 5 }}>
-              <Text className="text-[12px] font-bold text-white">
-                {item.btn}
-              </Text>
-            </LinearGradient>
-          </View>
+      style={{ width, borderRadius: 16, overflow: 'hidden', marginRight: 10,
+        shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 5 }}>
+      <Image source={img} style={{ width, height: 120 }} resizeMode="cover" />
+      <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.55)']}
+        style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 80 }} />
+      <View className="absolute left-3 bottom-3 right-3">
+        <View className="self-start rounded-full bg-[#40916C] px-2.5 py-0.5 mb-1.5">
+          <Text className="text-[10px] font-bold text-white">{item.tag}</Text>
         </View>
-        <Image
-          source={quizIcon}
-          resizeMode="contain"
-          style={{ width: 52, height: 52 }}
-        />
-      </View>
-    </Pressable>
-  );
-}
-
-// 热门景点大横卡。
-function HotCard({ item, width }: { item: Scenic; width: number }) {
-  const router = useRouter();
-  return (
-    <Pressable
-      onPress={() => router.push({ pathname: '/scenic/[id]', params: { id: item.id } })}
-      accessibilityRole="button"
-      accessibilityLabel={item.name}
-      style={{ width, height: 130 }}
-      className="mr-3 overflow-hidden rounded-2xl">
-      <Image
-        source={resolveLegacyImage(item.image)}
-        resizeMode="cover"
-        style={{ width, height: 130 }}
-      />
-      <LinearGradient
-        colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.72)']}
-        style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: 0 }}
-      />
-      <View className="absolute right-2.5 top-2.5 rounded-full bg-[#f97316] px-2 py-0.5">
-        <Text className="text-[10px] font-bold text-white">热门</Text>
-      </View>
-      <View className="absolute bottom-2.5 left-3 right-3">
-        <Text className="text-base font-bold text-white">{item.name}</Text>
-        <Text numberOfLines={1} className="mt-0.5 text-[11px] text-white/85">
-          {item.summary}
-        </Text>
-      </View>
-    </Pressable>
-  );
-}
-
-// 城市精选瀑布流卡：整图铺底 + 底部渐隐浮层，高度交错。
-function MasonryCard({
-  item,
-  width,
-  height,
-}: {
-  item: Scenic;
-  width: number;
-  height: number;
-}) {
-  const router = useRouter();
-  return (
-    <Pressable
-      onPress={() => router.push({ pathname: '/guide/[city]', params: { city: item.city || item.name } })}
-      accessibilityRole="button"
-      accessibilityLabel={item.name}
-      style={{ width, height, boxShadow: '0px 5px 14px rgba(0,0,0,0.16)' }}
-      className="mb-3 overflow-hidden rounded-2xl">
-      <Image
-        source={resolveLegacyImage(item.image)}
-        resizeMode="cover"
-        style={{ width, height }}
-      />
-      <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.72)']}
-        style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '66%' }}
-      />
-      <View className="absolute left-0 right-0 top-0 flex-row justify-start p-2">
-        <View className="rounded-md bg-white/22 px-1.5 py-0.5">
-          <Text className="text-[10px] font-medium text-white">广东 · 城市</Text>
-        </View>
-      </View>
-      <View className="absolute bottom-2.5 left-3 right-3">
-        <Text className="text-[15px] font-extrabold text-white">
-          {item.name}
-        </Text>
-        <Text numberOfLines={2} className="mt-0.5 text-[11px] leading-4 text-white/82">
-          {item.summary}
-        </Text>
+        <Text className="text-[15px] font-extrabold text-white">{item.title}</Text>
+        <Text className="text-[11px] text-white/70 mt-0.5" numberOfLines={1}>{item.desc}</Text>
       </View>
     </Pressable>
   );
@@ -331,10 +235,15 @@ function EntryItem({
   );
 }
 
+interface EcoStats { carbonCredits: number; points: number; totalCarbonSaved: number; treesPlanted: number; }
+interface Story { id: number; title: string; content: string; images: string[]; author: { username: string }; createdAt: string; }
+
 interface HomeData {
   banners: Banner[];
   hot: Scenic[];
   masonry: Scenic[];
+  eco: EcoStats | null;
+  stories: Story[];
   quizzes: Quiz[];
 }
 
@@ -349,21 +258,23 @@ export default function HomeScreen() {
 
   const quizCardW = Math.round(width * 0.66);
   const hotCardW = Math.round(width * 0.62);
-  const colW = Math.floor((width - 32 - 12) / 2);
-
   const load = useCallback(async () => {
     setError(false);
     try {
-      const [banners, scenic, quizzes] = await Promise.all([
+      const [banners, scenic, quizzes, eco, stories] = await Promise.all([
         apiRequest<Banner[]>('/banners'),
         apiRequest<Scenic[]>('/scenic?section=home'),
         apiRequest<Quiz[]>('/quiz'),
+        apiRequest<EcoStats>('/eco/status', { auth: true }).catch(() => null),
+        apiRequest<Story[]>('/stories').catch(() => [] as Story[]),
       ]);
       setData({
         banners,
         hot: scenic.filter((s) => s.hot),
         masonry: scenic.filter((s) => !s.hot),
         quizzes,
+        eco,
+        stories: (stories ?? []).slice(0, 5),
       });
     } catch {
       setError(true);
@@ -373,25 +284,6 @@ export default function HomeScreen() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  // 把瀑布流条目按「较矮列优先」分到两列，制造交错。
-  const columns = useMemo(() => {
-    const colA: { item: Scenic; h: number }[] = [];
-    const colB: { item: Scenic; h: number }[] = [];
-    let hA = 0;
-    let hB = 0;
-    (data?.masonry ?? []).forEach((item, i) => {
-      const h = MASONRY_HEIGHTS[i % MASONRY_HEIGHTS.length];
-      if (hA <= hB) {
-        colA.push({ item, h });
-        hA += h;
-      } else {
-        colB.push({ item, h });
-        hB += h;
-      }
-    });
-    return { colA, colB };
-  }, [data?.masonry]);
 
   return (
     <View className="flex-1 bg-[#F4F1E4]">
@@ -406,9 +298,9 @@ export default function HomeScreen() {
             className="px-4 pb-2">
             <View className="flex-row items-end justify-center gap-12">
               <Text className="text-lg font-bold text-white">发现</Text>
-              <Pressable onPress={() => comingSoon('非遗文化')}>
+              <Pressable onPress={() => comingSoon('绿色专区')}>
                 <Text className="pb-0.5 text-sm font-bold text-white/65">
-                  非遗
+                  绿色
                 </Text>
               </Pressable>
             </View>
@@ -419,7 +311,7 @@ export default function HomeScreen() {
               className="mt-3 h-11 flex-row items-center rounded-full bg-white px-4">
               <Ionicons name="search" size={16} color="#5C8A6D" />
               <Text className="ml-2 text-sm text-[#9aa39b]">
-                搜索目的地 / 景点 / 酒店
+                搜索生态良品 / 环保知识 / 活动
               </Text>
             </Pressable>
           </Animated.View>
@@ -447,7 +339,7 @@ export default function HomeScreen() {
             className="mx-4 rounded-2xl bg-white pb-2 pt-3">
             <View className="flex-row justify-around px-2">
               {GRID4.map((it) => {
-                const routes: Record<string, string> = { '签到': '/checkin', '研学智囊团': '/study', '排行榜': '/leaderboard', 'VR': '/vr' };
+                const routes: Record<string, string> = { '签到': '/checkin', '绿色行动': '/green', '排行榜': '/leaderboard', 'VR': '/vr' };
                 const target = routes[it.label];
                 return (
                   <EntryItem
@@ -466,7 +358,7 @@ export default function HomeScreen() {
             />
             <View className="flex-row justify-around px-1">
               {ENTRY5.map((it) => {
-                const routes: Record<string, string> = { '文创产品': '/products', '旅行地图': '/map', '智能助手': '/ai/assistant', '学习小课堂': '/study', '粤语课堂': '/cantonese' };
+                const routes: Record<string, string> = { '生态良品': '/products', '绿色地图': '/map', '智能助手': '/ai/assistant', '环保学堂': '/green', '知识库': '/cantonese' };
                 const target = routes[it.label];
                 return (
                   <EntryItem
@@ -497,18 +389,45 @@ export default function HomeScreen() {
             </View>
           ) : (
             <>
-              {/* 知识小课堂 */}
-              <Animated.View
-                entering={FadeInDown.delay(220).duration(450)}
-                className="mt-5">
-                <SectionHeader
-                  title="知识小课堂"
-                  subtitle="答题赢积分"
-                  onMore={() => router.push('/study')}
-                />
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
+              {/* 今日碳足迹 —— 带背景图的优雅统计面板 */}
+              {data.eco && (
+                <Animated.View entering={FadeInDown.delay(220).duration(450)} className="mt-5">
+                  <SectionHeader title="今日碳足迹" subtitle="每一步都算数" />
+                  <View className="mx-4 rounded-2xl overflow-hidden" style={{ shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 5 }}>
+                    <Image source={require('../../assets/images/home/eco_forest.jpg')}
+                      style={{ position: 'absolute', width: '100%', height: '100%' }} resizeMode="cover" />
+                    <LinearGradient colors={['rgba(27,67,50,0.88)', 'rgba(27,67,50,0.75)']}
+                      style={{ padding: 18 }}>
+                      <View className="flex-row justify-between">
+                        <View className="items-center flex-1">
+                          <Text className="text-3xl font-extrabold text-white">{data.eco.carbonCredits}</Text>
+                          <Text className="text-[11px] text-white/65 mt-0.5">碳积分</Text>
+                        </View>
+                        <View style={{ width: 1, height: 40, backgroundColor: 'rgba(255,255,255,0.15)' }} />
+                        <View className="items-center flex-1">
+                          <Text className="text-3xl font-extrabold text-white">{data.eco.totalCarbonSaved.toFixed(1)}</Text>
+                          <Text className="text-[11px] text-white/65 mt-0.5">累计减排 kg</Text>
+                        </View>
+                        <View style={{ width: 1, height: 40, backgroundColor: 'rgba(255,255,255,0.15)' }} />
+                        <View className="items-center flex-1">
+                          <Text className="text-3xl font-extrabold text-white">{data.eco.treesPlanted}</Text>
+                          <Text className="text-[11px] text-white/65 mt-0.5">已种虚拟树</Text>
+                        </View>
+                        <View style={{ width: 1, height: 40, backgroundColor: 'rgba(255,255,255,0.15)' }} />
+                        <View className="items-center flex-1">
+                          <Text className="text-3xl font-extrabold text-white">{data.eco.points}</Text>
+                          <Text className="text-[11px] text-white/65 mt-0.5">可用积分</Text>
+                        </View>
+                      </View>
+                    </LinearGradient>
+                  </View>
+                </Animated.View>
+              )}
+
+              {/* 答题挑战 —— Unsplash 真实配图 */}
+              <Animated.View entering={FadeInDown.delay(280).duration(450)} className="mt-5">
+                <SectionHeader title="答题挑战" subtitle="环保知识小考" onMore={() => router.push('/green')} />
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}
                   contentContainerStyle={{ paddingHorizontal: 16 }}>
                   {data.quizzes.map((it) => (
                     <QuizCard key={it.id} item={it} width={quizCardW} />
@@ -516,49 +435,88 @@ export default function HomeScreen() {
                 </ScrollView>
               </Animated.View>
 
-              {/* 热门景点 */}
-              <Animated.View
-                entering={FadeInDown.delay(300).duration(450)}
-                className="mt-6">
-                <SectionHeader title="热门景点" subtitle="广东人气榜" />
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ paddingHorizontal: 16 }}>
-                  {data.hot.map((it) => (
-                    <HotCard key={it.id} item={it} width={hotCardW} />
-                  ))}
-                </ScrollView>
-              </Animated.View>
+              {/* 社区精选 —— Hero大图 + 双列瀑布流 */}
+              {data.stories.length > 0 && (() => {
+                const fallbackImgs = [
+                  require('../../assets/images/home/eco_wind.jpg'),
+                  require('../../assets/images/home/eco_trees.jpg'),
+                  require('../../assets/images/home/eco_mountain.jpg'),
+                  require('../../assets/images/home/eco_sunlight.jpg'),
+                ];
+                const storyData = data.stories.map((s, idx) => ({
+                  s,
+                  img: s.images?.[0] ? resolveLegacyImage(s.images[0]) : fallbackImgs[idx % 4],
+                }));
+                const hero = storyData[0];
+                const rest = storyData.slice(1);
+                const colW = Math.floor((width - 32 - 10) / 2);
+                const heights = [196, 172, 210, 184];
+                const leftCol: { s: Story; img: any; h: number }[] = [];
+                const rightCol: { s: Story; img: any; h: number }[] = [];
+                let hL = 0, hR = 0;
+                rest.forEach((sd, i) => {
+                  const h = heights[i % heights.length];
+                  if (hL <= hR) { leftCol.push({ ...sd, h }); hL += h; }
+                  else { rightCol.push({ ...sd, h }); hR += h; }
+                });
+                return (
+                  <Animated.View entering={FadeInDown.delay(340).duration(450)} className="mt-5 mb-4">
+                    <SectionHeader title="社区精选" subtitle="绿色生活日记" onMore={() => router.push('/community')} />
 
-              {/* 城市精选 —— 高低落差瀑布流 */}
-              <Animated.View
-                entering={FadeInDown.delay(380).duration(450)}
-                className="mt-6">
-                <SectionHeader title="城市精选" subtitle="发现岭南" />
-                <View className="flex-row gap-3 px-4">
-                  <View className="flex-1">
-                    {columns.colA.map(({ item, h }) => (
-                      <MasonryCard
-                        key={item.id}
-                        item={item}
-                        width={colW}
-                        height={h}
-                      />
-                    ))}
-                  </View>
-                  <View className="flex-1">
-                    {columns.colB.map(({ item, h }) => (
-                      <MasonryCard
-                        key={item.id}
-                        item={item}
-                        width={colW}
-                        height={h}
-                      />
-                    ))}
-                  </View>
-                </View>
-              </Animated.View>
+                    {/* Hero 大图卡 —— 首条占整行 */}
+                    <Pressable
+                      onPress={() => router.push({ pathname: '/story/[id]', params: { id: hero.s.id } })}
+                      className="mx-4 rounded-2xl overflow-hidden active:scale-[0.98]"
+                      style={{ height: 200, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 6 }}>
+                      <Image source={hero.img} style={{ width: width - 32, height: 200 }} resizeMode="cover" />
+                      <LinearGradient colors={['transparent', 'rgba(0,0,0,0.78)']}
+                        style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 130 }} />
+                      <View className="absolute bottom-4 left-4 right-4">
+                        <Text numberOfLines={2} className="text-white font-extrabold text-[17px] leading-tight">{hero.s.title}</Text>
+                        <Text className="text-white/55 text-[12px] mt-1.5">{hero.s.author?.username ?? '绿途用户'}</Text>
+                      </View>
+                    </Pressable>
+
+                    {/* 双列瀑布流 —— 剩余 3 条 */}
+                    {rest.length > 0 && (
+                      <View className="flex-row px-4 mt-2.5" style={{ gap: 10 }}>
+                        <View className="flex-1" style={{ gap: 10 }}>
+                          {leftCol.map((entry) => (
+                            <Pressable key={entry.s.id}
+                              onPress={() => router.push({ pathname: '/story/[id]', params: { id: entry.s.id } })}
+                              className="rounded-2xl overflow-hidden active:scale-[0.98]"
+                              style={{ width: colW, height: entry.h, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 4 }}>
+                              <Image source={entry.img} style={{ width: colW, height: entry.h }} resizeMode="cover" />
+                              <LinearGradient colors={['transparent', 'rgba(0,0,0,0.72)']}
+                                style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '60%' }} />
+                              <View className="absolute bottom-3 left-3 right-3">
+                                <Text numberOfLines={2} className="text-white font-extrabold text-[13px] leading-tight">{entry.s.title}</Text>
+                                <Text className="text-white/55 text-[10px] mt-1">{entry.s.author?.username ?? '绿途用户'}</Text>
+                              </View>
+                            </Pressable>
+                          ))}
+                        </View>
+                        <View className="flex-1" style={{ gap: 10 }}>
+                          {rightCol.map((entry) => (
+                            <Pressable key={entry.s.id}
+                              onPress={() => router.push({ pathname: '/story/[id]', params: { id: entry.s.id } })}
+                              className="rounded-2xl overflow-hidden active:scale-[0.98]"
+                              style={{ width: colW, height: entry.h, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 4 }}>
+                              <Image source={entry.img} style={{ width: colW, height: entry.h }} resizeMode="cover" />
+                              <LinearGradient colors={['transparent', 'rgba(0,0,0,0.72)']}
+                                style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '60%' }} />
+                              <View className="absolute bottom-3 left-3 right-3">
+                                <Text numberOfLines={2} className="text-white font-extrabold text-[13px] leading-tight">{entry.s.title}</Text>
+                                <Text className="text-white/55 text-[10px] mt-1">{entry.s.author?.username ?? '绿途用户'}</Text>
+                              </View>
+                            </Pressable>
+                          ))}
+                        </View>
+                      </View>
+                    )}
+                  </Animated.View>
+                );
+              })()}
             </>
           )}
         </View>
