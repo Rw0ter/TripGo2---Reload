@@ -52,6 +52,22 @@ function getGreenIndex(name: string): { value: string; label: string } {
   return { value: String(score), label };
 }
 
+// 由城市名稳定派生「距您」公里数（演示用，无真实定位）。
+function getDistance(city: string): string {
+  let h = 0;
+  for (let i = 0; i < city.length; i += 1) h = (h * 31 + city.charCodeAt(i)) & 0xffff;
+  return `${8 + (h % 120)}.${h % 10}`;
+}
+
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+// 顶部快捷卡（参考携程「相册/必去理由/达人实拍/园内必玩」→ 绿色化）。
+const QUICK: { label: string; icon: IoniconName; tab: number }[] = [
+  { label: '相册', icon: 'images', tab: 0 },
+  { label: '生态亮点', icon: 'sparkles', tab: 0 },
+  { label: '低碳玩法', icon: 'bicycle', tab: 1 },
+  { label: '绿色到达', icon: 'navigate', tab: 2 },
+];
+
 // ── component ────────────────────────────────────────────────────────
 
 export default function ScenicDetailScreen() {
@@ -244,44 +260,82 @@ export default function ScenicDetailScreen() {
           }}
           className="bg-white px-5 pb-16 pt-4"
         >
-          {/* Name + Green index — 绿色地标主信息 */}
+          {/* 快捷卡行（参考携程 相册/必去理由/达人实拍/园内必玩 → 绿色化），overlap 卡片顶部 */}
+          <View className="-mt-12 mb-4 flex-row gap-2.5">
+            {QUICK.map((q, i) => (
+              <Pressable
+                key={q.label}
+                onPress={() => setActiveTab(q.tab)}
+                accessibilityRole="button"
+                className="flex-1 overflow-hidden rounded-2xl"
+                style={{ boxShadow: '0px 6px 16px rgba(0,0,0,0.18)' }}
+              >
+                <Image source={resolveLegacyImage(carouselImages[i % carouselImages.length])} style={{ width: '100%', height: 72 }} resizeMode="cover" />
+                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(27,67,50,0.45)' }} className="items-center justify-center">
+                  <Ionicons name={q.icon} size={18} color="#fff" />
+                  <Text className="mt-0.5 text-[11px] font-bold text-white">{q.label}</Text>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+
+          {/* 标题 + 绿色地标/热度 + 生态指数 */}
           <View className="flex-row items-start justify-between">
-            <View className="flex-1 pr-4">
-              <Text className="text-[24px] font-bold text-[#333]">{data.name}</Text>
-            </View>
-            {/* 生态指数取代旅游价格 */}
-            <View className="items-end">
-              <Text style={{ color: '#2D6A4F', fontSize: 26, fontWeight: 'bold' }}>{greenIndex.value}</Text>
-              <Text className="text-[11px] text-[#52B788]">生态指数</Text>
-            </View>
-          </View>
-
-          {/* 绿色地标标识 + 生态评价 */}
-          <View className="mt-1.5 flex-row items-center">
-            <View className="flex-row items-center rounded-full bg-[#D8F3DC] px-2.5 py-1">
-              <Ionicons name="leaf" size={12} color="#2D6A4F" />
-              <Text className="ml-1 text-[12px] font-semibold text-[#2D6A4F]">绿色地标</Text>
-            </View>
-            <Text className="ml-2 text-[13px] text-[#52B788]">{greenIndex.label}</Text>
-          </View>
-
-          {/* Tag + City badge */}
-          <View className="mt-2.5 flex-row items-center gap-2">
-            <View className="rounded-full bg-[#E8F5E9] px-2.5 py-0.5">
-              <Text className="text-[11px] font-medium text-[#2D6A4F]">{data.tag}</Text>
-            </View>
-            <Text className="text-[12px] text-[#999]">{data.city}</Text>
-          </View>
-
-          {/* Summary note — keep from existing */}
-          {data.note ? (
-            <View className="mt-3 rounded-xl bg-[#F8F5E6] px-3.5 py-2.5">
-              <View className="flex-row items-center">
-                <Ionicons name="information-circle-outline" size={16} color="#C9A24B" />
-                <Text className="ml-1.5 text-[13px] font-medium text-[#8C7640]">{data.note}</Text>
+            <View className="flex-1 pr-3">
+              <Text className="text-[24px] font-extrabold text-[#1B4332]">{data.name}</Text>
+              <View className="mt-2 flex-row flex-wrap items-center gap-2">
+                <View className="flex-row items-center rounded-md bg-[#D8F3DC] px-2 py-0.5">
+                  <Ionicons name="leaf" size={11} color="#2D6A4F" />
+                  <Text className="ml-1 text-[11px] font-bold text-[#2D6A4F]">绿色地标</Text>
+                </View>
+                <View className="flex-row items-center rounded-md px-2 py-0.5" style={{ backgroundColor: '#FFF1E6' }}>
+                  <Ionicons name="flame" size={11} color="#E8853D" />
+                  <Text className="ml-0.5 text-[11px] font-bold" style={{ color: '#E8853D' }}>{greenIndex.value}</Text>
+                </View>
+                <Text className="text-[12px] text-[#9CB3A6]">{data.tag || data.city}</Text>
               </View>
             </View>
-          ) : null}
+            <View className="items-center rounded-2xl bg-[#EAF7EF] px-3.5 py-2">
+              <Text className="text-[20px] font-extrabold text-[#1B4332]">{greenIndex.value}</Text>
+              <Text className="text-[10px] text-[#52B788]">生态指数</Text>
+            </View>
+          </View>
+
+          {/* 榜单 banner */}
+          <View className="mt-3 flex-row items-center rounded-xl px-3 py-2.5" style={{ backgroundColor: '#F3FAF5' }}>
+            <Ionicons name="trophy" size={15} color="#C9A24B" />
+            <Text className="ml-2 flex-1 text-[13px] font-semibold text-[#1B4332]">2026 绿色低碳生态地标推荐榜</Text>
+            <Ionicons name="chevron-forward" size={15} color="#9CB3A6" />
+          </View>
+
+          {/* 信息胶囊行（开放 / 生态评价 / 出行） */}
+          <View className="mt-3 flex-row gap-2.5">
+            <View className="flex-1 rounded-xl border border-[#E4EFE7] px-3 py-2">
+              <View className="flex-row items-center"><Ionicons name="time-outline" size={13} color="#40916C" /><Text className="ml-1 text-[12px] font-bold text-[#2D6A4F]">全天开放</Text></View>
+              <Text className="mt-0.5 text-[11px] text-[#9CB3A6]">户外生态地标</Text>
+            </View>
+            <View className="flex-1 rounded-xl border border-[#E4EFE7] px-3 py-2">
+              <View className="flex-row items-center"><Ionicons name="leaf-outline" size={13} color="#40916C" /><Text className="ml-1 text-[12px] font-bold text-[#2D6A4F]">{greenIndex.label}</Text></View>
+              <Text className="mt-0.5 text-[11px] text-[#9CB3A6]">生态指数 {greenIndex.value}</Text>
+            </View>
+            <View className="flex-1 rounded-xl border border-[#E4EFE7] px-3 py-2">
+              <View className="flex-row items-center"><Ionicons name="bicycle-outline" size={13} color="#40916C" /><Text className="ml-1 text-[12px] font-bold text-[#2D6A4F]">出行友好</Text></View>
+              <Text className="mt-0.5 text-[11px] text-[#9CB3A6]" numberOfLines={1}>{getGreenTransit(data)}</Text>
+            </View>
+          </View>
+
+          {/* 距离 + 地图 */}
+          <View className="mt-3 flex-row items-center rounded-xl bg-[#F7FAF5] px-3.5 py-3">
+            <Ionicons name="location-outline" size={16} color="#40916C" />
+            <View className="ml-2 flex-1">
+              <Text className="text-[13px] font-semibold text-[#1B4332]">距您约 {getDistance(data.city)} km</Text>
+              <Text className="mt-0.5 text-[12px] text-[#9CB3A6]" numberOfLines={1}>广东省{data.city}市 · 建议{getGreenTransit(data)}</Text>
+            </View>
+            <Pressable onPress={() => router.push('/map')} accessibilityLabel="地图" className="items-center px-2">
+              <Ionicons name="map" size={20} color="#40916C" />
+              <Text className="mt-0.5 text-[10px] text-[#52B788]">地图</Text>
+            </Pressable>
+          </View>
 
           {/* Tabs — 生态简介 / 低碳玩法 / 到达方式 */}
           <View className="mt-5 flex-row border-b border-[#eee]">
