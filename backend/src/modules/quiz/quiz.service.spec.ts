@@ -11,7 +11,7 @@ function mockPrisma() {
 describe('QuizService.findOne — 下发不含正确答案', () => {
   it('题目剥离 answer 字段', async () => {
     const prisma = mockPrisma();
-    prisma.quiz.findUnique.mockResolvedValue({ id: 1, tag: '粤剧', title: '粤剧问答' });
+    prisma.quiz.findUnique.mockResolvedValue({ id: 1, tag: '碳积分专场', title: '碳排放知识挑战' });
     const svc = new QuizService(prisma);
     const res = await svc.findOne(1);
     expect(res.questions.length).toBeGreaterThan(0);
@@ -33,16 +33,16 @@ describe('QuizService.findOne — 下发不含正确答案', () => {
 describe('QuizService.check — 逐题校验', () => {
   it('答对返回 correct:true + 正确答案', async () => {
     const prisma = mockPrisma();
-    prisma.quiz.findUnique.mockResolvedValue({ id: 1, tag: '粤剧', title: '粤剧问答' });
+    prisma.quiz.findUnique.mockResolvedValue({ id: 1, tag: '碳积分专场', title: '碳排放知识挑战' });
     const svc = new QuizService(prisma);
-    // 粤剧第 0 题正确答案为 1
+    // 碳积分专场第 0 题正确答案为 1
     expect(await svc.check(1, 0, 1)).toEqual({ correct: true, answer: 1 });
     expect(await svc.check(1, 0, 3)).toEqual({ correct: false, answer: 1 });
   });
 
   it('题号越界 → 400', async () => {
     const prisma = mockPrisma();
-    prisma.quiz.findUnique.mockResolvedValue({ id: 1, tag: '粤剧', title: '粤剧问答' });
+    prisma.quiz.findUnique.mockResolvedValue({ id: 1, tag: '碳积分专场', title: '碳排放知识挑战' });
     const svc = new QuizService(prisma);
     await expect(svc.check(1, 99, 0)).rejects.toBeInstanceOf(BadRequestException);
   });
@@ -51,22 +51,22 @@ describe('QuizService.check — 逐题校验', () => {
 describe('QuizService.submit — 服务端判分发积分', () => {
   it('按答对数计分并 increment 积分', async () => {
     const prisma = mockPrisma();
-    prisma.quiz.findUnique.mockResolvedValue({ id: 1, tag: '粤剧', title: '粤剧问答' });
+    prisma.quiz.findUnique.mockResolvedValue({ id: 1, tag: '碳积分专场', title: '碳排放知识挑战' });
     const svc = new QuizService(prisma);
-    // 粤剧答案 [1,2,0]，全对 → correct 3, score 30
-    const res = await svc.submit(1, 'u1', [1, 2, 0]);
-    expect(res).toEqual({ total: 3, correct: 3, score: 30 });
+    // 碳积分专场答案 [1,1,2,2,1]，全对 → correct 5, score 50
+    const res = await svc.submit(1, 'u1', [1, 1, 2, 2, 1]);
+    expect(res).toEqual({ total: 5, correct: 5, score: 50 });
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'u1' },
-      data: { points: { increment: 30 } },
+      data: { points: { increment: 50 } },
     });
   });
 
   it('全错 → score 0，不发积分', async () => {
     const prisma = mockPrisma();
-    prisma.quiz.findUnique.mockResolvedValue({ id: 1, tag: '粤剧', title: '粤剧问答' });
+    prisma.quiz.findUnique.mockResolvedValue({ id: 1, tag: '碳积分专场', title: '碳排放知识挑战' });
     const svc = new QuizService(prisma);
-    const res = await svc.submit(1, 'u1', [0, 0, 3]);
+    const res = await svc.submit(1, 'u1', [0, 0, 0, 0, 0]);
     expect(res.correct).toBe(0);
     expect(res.score).toBe(0);
     expect(prisma.user.update).not.toHaveBeenCalled();
