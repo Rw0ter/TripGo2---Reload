@@ -69,10 +69,13 @@
    新增 `locateAt` 指令把坐标喂进 iframe；失败退回 IP 兜底。（地图依赖腾讯 GL + 浏览器定位权限，无前端单测；CI 仅 tsc+lint。）
 
 **六轮：首页重设计 + CI 安卓打包（2026-06-21）**
-1. **首页重设计（分支 feat/home-redesign）**：① 搜索框升级为"图标胶囊 + 搜索按钮"高级感样式；
-   ② 轮播改"露边卡片"现代样式（卡片窄于屏、右侧露出下一张、大圆角 + 分类胶囊 + snapToInterval 吸附）；
-   ③ 上图下文功能入口换掉旧版岭南 PNG（琵琶/铁鼎/people_dance）→ 浅色磁贴 + Ionicons 矢量图标（项目图标标准），
-   9 项 5 列两排列对齐、生态配色。已截图验证。
+1. **首页重设计（分支 feat/home-redesign → 精修 feat/home-icons-polish）**：
+   ① 搜索框：最终为"圆角药丸 + 绿色放大镜 + 扫码图标"的电商级样式（弃掉一眼像 AI 的方块胶囊+按钮）；
+   ② 轮播：露边卡片 + **无缝循环**——数据头尾各克隆一张 [末,…原,首]，滑到克隆边缘瞬时复位，
+   左右两端自然衔接，不再"最后一张突然跳回第一张"；
+   ③ 功能入口：换掉旧版岭南 PNG（琵琶/铁鼎/people_dance）→ **真实彩色扁平插画**（Icons8 Color 集，下载本地，
+   见 icons/CREDITS.md，Icons8 免费授权需署名），**直接呈现、无任何背景容器**（用户反馈"圆角半透明背景一眼像 AI"），
+   9 项 5 列两排列对齐。已截图验证。
 2. **CI 安卓 APK 打包（分支 ci/android-apk-build，PR #91）**：ci.yml 增 android-apk job（expo prebuild + gradlew assembleDebug，
    自包含、无需 EAS/签名密钥），app.json 补 android.package。
 

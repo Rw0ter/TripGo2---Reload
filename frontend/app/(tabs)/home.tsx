@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
+  type ImageSourcePropType,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   Pressable,
@@ -22,30 +23,30 @@ import type { Banner, Quiz, Scenic } from '@/lib/api-types';
 import { comingSoon } from '@/lib/coming-soon';
 import { resolveLegacyImage } from '@/lib/legacy-images';
 
-// 首页功能入口（App 导航菜单，非后端数据）。图标统一用 @expo/vector-icons 的 Ionicons（项目标准，
-// 矢量、清晰、可主题化），每个入口配一种生态色，呈"浅色圆角磁贴 + 饱和图标"的现代超级 App 质感，
-// 替换旧版岭南主题 PNG（琵琶 / 铁鼎 / people_dance 等与绿色低碳无关的图）。
+// 首页功能入口（App 导航菜单，非后端数据）。图标为真实彩色扁平插画（Icons8 Color 集，下载到本地，
+// 见 assets/images/home/icons/CREDITS.md），直接呈现、不加任何背景容器，替换旧版岭南主题 PNG
+// （琵琶 / 铁鼎 / people_dance 等与绿色低碳无关的图）。
 type EntryDef = {
   label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  color: string;
+  icon: ImageSourcePropType;
   route: string | null;
 };
 const ENTRIES: EntryDef[] = [
-  { label: '签到', icon: 'calendar-clear', color: '#2E9E5B', route: '/checkin' },
-  { label: '绿色行动', icon: 'leaf', color: '#4CAF7D', route: '/green' },
-  { label: '排行榜', icon: 'trophy', color: '#E0A93B', route: '/leaderboard' },
-  { label: 'VR', icon: 'glasses', color: '#3A8DDE', route: '/vr' },
-  { label: '生态良品', icon: 'storefront', color: '#18A999', route: '/products' },
-  { label: '绿色地图', icon: 'map', color: '#5AA06E', route: '/map' },
-  { label: '智能助手', icon: 'sparkles', color: '#6C7BE0', route: '/ai/assistant' },
-  { label: '环保学堂', icon: 'school', color: '#EF9A4D', route: '/green' },
-  { label: '知识库', icon: 'library', color: '#C77B53', route: '/cantonese' },
+  { label: '签到', icon: require('../../assets/images/home/icons/checkin.png'), route: '/checkin' },
+  { label: '绿色行动', icon: require('../../assets/images/home/icons/green-action.png'), route: '/green' },
+  { label: '排行榜', icon: require('../../assets/images/home/icons/ranking.png'), route: '/leaderboard' },
+  { label: 'VR', icon: require('../../assets/images/home/icons/vr.png'), route: '/vr' },
+  { label: '生态良品', icon: require('../../assets/images/home/icons/eco-shop.png'), route: '/products' },
+  { label: '绿色地图', icon: require('../../assets/images/home/icons/green-map.png'), route: '/map' },
+  { label: '智能助手', icon: require('../../assets/images/home/icons/ai-assistant.png'), route: '/ai/assistant' },
+  { label: '环保学堂', icon: require('../../assets/images/home/icons/eco-school.png'), route: '/green' },
+  { label: '知识库', icon: require('../../assets/images/home/icons/knowledge.png'), route: '/cantonese' },
 ];
 
 
-// 顶部轮播图：现代"露边卡片"样式 —— 卡片窄于屏宽、右侧露出下一张边缘，
-// 大圆角 + 分类胶囊 + 双向渐变标题；snapToInterval 吸附，4.5s 自动轮播，可手滑。
+// 顶部轮播图：现代"露边卡片"样式 + 无缝循环。
+// 无缝：数据头尾各克隆一张 [末, ...原, 首]，滑到克隆边缘后瞬时复位到对应真实图，
+// 左右两端都自然衔接，不会再"最后一张突然跳回第一张"。
 function Carousel({
   banners,
   pageWidth,
@@ -54,32 +55,57 @@ function Carousel({
   pageWidth: number;
 }) {
   const scrollRef = useRef<ScrollView>(null);
-  const [index, setIndex] = useState(0);
-  const indexRef = useRef(0);
+  const [real, setReal] = useState(0);
+  const vRef = useRef(1); // 当前虚拟下标（data 下标，真实第一张在 1）
+  const initedRef = useRef(false);
+  const count = banners.length;
   const SIDE = 16;
   const GAP = 12;
   const cardW = pageWidth - SIDE * 2 - 22; // 右侧露出 ~22px 提示可滑动
   const interval = cardW + GAP;
-  const count = banners.length;
+
+  // 头尾克隆：[最后一张, ...原图, 第一张]
+  const data =
+    count > 1 ? [banners[count - 1], ...banners, banners[0]] : banners;
+
+  // 初次定位到第一张真实图（data 下标 1）。
+  const positionStart = () => {
+    if (initedRef.current || count < 2) return;
+    initedRef.current = true;
+    scrollRef.current?.scrollTo({ x: interval, animated: false });
+  };
 
   useEffect(() => {
     if (count < 2) return;
     const timer = setInterval(() => {
-      const next = (indexRef.current + 1) % count;
-      indexRef.current = next;
-      setIndex(next);
+      const next = vRef.current + 1;
+      vRef.current = next;
+      setReal((next - 1 + count) % count);
       scrollRef.current?.scrollTo({ x: next * interval, animated: true });
+      // 到达"末尾克隆（首图副本）"→ 动画结束后瞬时跳回真实首图，肉眼无缝。
+      if (next === count + 1) {
+        setTimeout(() => {
+          vRef.current = 1;
+          scrollRef.current?.scrollTo({ x: interval, animated: false });
+        }, 450);
+      }
     }, 4500);
     return () => clearInterval(timer);
   }, [interval, count]);
 
-  // snapToInterval 吸附后实时更新指示器（跟手）。
-  function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
-    const i = Math.round(e.nativeEvent.contentOffset.x / interval);
-    if (i !== indexRef.current && i >= 0 && i < count) {
-      indexRef.current = i;
-      setIndex(i);
+  // 手动滑动结束：落在克隆边缘则瞬时复位到对应真实图。
+  function onMomentumEnd(e: NativeSyntheticEvent<NativeScrollEvent>) {
+    if (count < 2) return;
+    let j = Math.round(e.nativeEvent.contentOffset.x / interval);
+    if (j <= 0) {
+      j = count; // 克隆的末图（最左）→ 真实末图
+      scrollRef.current?.scrollTo({ x: j * interval, animated: false });
+    } else if (j >= count + 1) {
+      j = 1; // 克隆的首图（最右）→ 真实首图
+      scrollRef.current?.scrollTo({ x: j * interval, animated: false });
     }
+    vRef.current = j;
+    setReal((j - 1 + count) % count);
   }
 
   return (
@@ -89,14 +115,18 @@ function Carousel({
         horizontal
         showsHorizontalScrollIndicator={false}
         snapToInterval={interval}
+        disableIntervalMomentum
         decelerationRate="fast"
         scrollEventThrottle={16}
-        onScroll={onScroll}
+        contentOffset={{ x: count > 1 ? interval : 0, y: 0 }}
+        onLayout={positionStart}
+        onContentSizeChange={positionStart}
+        onMomentumScrollEnd={onMomentumEnd}
         contentContainerStyle={{ paddingHorizontal: SIDE }}>
-        {banners.map((b, i) => (
+        {data.map((b, i) => (
           <View
-            key={b.id}
-            style={{ width: cardW, marginRight: i === count - 1 ? 0 : GAP }}>
+            key={i}
+            style={{ width: cardW, marginRight: i === data.length - 1 ? 0 : GAP }}>
             <View
               style={{ height: 190, boxShadow: '0px 10px 24px rgba(0,0,0,0.30)' }}
               className="overflow-hidden rounded-[26px]">
@@ -131,11 +161,10 @@ function Carousel({
           <View
             key={b.id}
             style={{
-              width: i === index ? 18 : 6,
+              width: i === real ? 18 : 6,
               height: 6,
               borderRadius: 3,
-              backgroundColor:
-                i === index ? '#ffffff' : 'rgba(255,255,255,0.45)',
+              backgroundColor: i === real ? '#ffffff' : 'rgba(255,255,255,0.45)',
             }}
           />
         ))}
@@ -227,12 +256,8 @@ function EntryItem({
       accessibilityRole="button"
       accessibilityLabel={entry.label}
       style={{ width }}
-      className="items-center py-2">
-      <View
-        style={{ backgroundColor: entry.color + '1F' }}
-        className="h-[52px] w-[52px] items-center justify-center rounded-2xl">
-        <Ionicons name={entry.icon} size={26} color={entry.color} />
-      </View>
+      className="items-center py-2.5">
+      <Image source={entry.icon} resizeMode="contain" style={{ width: 46, height: 46 }} />
       <Text className="mt-1.5 text-[12px] text-[#4a4a42]">{entry.label}</Text>
     </Pressable>
   );
@@ -310,17 +335,19 @@ export default function HomeScreen() {
             <Pressable
               onPress={() => router.push('/search')}
               accessibilityRole="search"
-              style={{ boxShadow: '0px 4px 14px rgba(0,0,0,0.16)' }}
-              className="mt-3 h-12 flex-row items-center rounded-2xl bg-white py-1.5 pl-1.5 pr-1.5">
-              <View className="h-9 w-9 items-center justify-center rounded-xl bg-[#E6F2EA]">
-                <Ionicons name="search" size={17} color="#40916C" />
-              </View>
+              style={{ boxShadow: '0px 5px 16px rgba(0,0,0,0.15)' }}
+              className="mt-3 h-11 flex-row items-center rounded-full bg-white pl-4 pr-3.5">
+              <Ionicons name="search" size={18} color="#40916C" />
               <Text className="ml-2.5 flex-1 text-[13px] text-[#9aa39b]">
                 搜索生态良品 / 环保知识 / 活动
               </Text>
-              <View className="rounded-xl bg-[#40916C] px-3.5 py-2">
-                <Text className="text-[12px] font-bold text-white">搜索</Text>
-              </View>
+              <View style={{ width: 1, height: 18, backgroundColor: '#ECEFEA' }} />
+              <Ionicons
+                name="scan-outline"
+                size={18}
+                color="#7FA890"
+                style={{ marginLeft: 12 }}
+              />
             </Pressable>
           </Animated.View>
 
