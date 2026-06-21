@@ -27,6 +27,7 @@ export function AuthButton({ label, onPress, loading = false }: AuthButtonProps)
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
+          boxShadow: '0px 10px 26px rgba(45,106,79,0.45)',
         }}>
         <Text className="text-[16px] font-bold text-white">{label}</Text>
         {loading ? (
