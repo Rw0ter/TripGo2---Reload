@@ -1,5 +1,5 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as Speech from 'expo-speech';
 import { Ionicons } from '@expo/vector-icons';
@@ -132,16 +132,38 @@ function resolveRoute(page: string): string | null {
   return null;
 }
 
-/** 发送文字到 AI，携带完整对话历史 */
+// 路由 → 友好界面名（深度融合：让 AI 知道用户当前在哪个界面）。
+const SCREEN_NAMES: Record<string, string> = {
+  '/home': '首页', '/itinerary': '绿色能量森林', '/products': '生态良品商城', '/green': '绿色资讯',
+  '/checkin': '每日签到', '/leaderboard': '减排排行榜', '/orders': '我的订单', '/vr': 'VR 生态全景',
+  '/map': '绿色地图', '/wallet': '钱包', '/messages': '消息', '/mine': '我的', '/community': '社区',
+  '/ai/assistant': 'AI 助手', '/cantonese': '翻译',
+};
+function screenNameOf(pathname: string): string {
+  if (SCREEN_NAMES[pathname]) return SCREEN_NAMES[pathname];
+  if (pathname.startsWith('/scenic/')) return '绿色地标详情';
+  if (pathname.startsWith('/product/')) return '商品详情';
+  if (pathname.startsWith('/quiz/')) return '环保答题';
+  if (pathname.startsWith('/guide/')) return '城市低碳指南';
+  if (pathname.startsWith('/story/')) return '社区故事';
+  return '绿途';
+}
+
+/** 发送文字到 AI，携带完整对话历史 + 当前界面上下文，执行指令时放慢节奏让自动化"看得见" */
 async function sendToAI(
   text: string,
   history: { role: string; text: string }[],
   addMessage: (m: any) => void,
   router: ReturnType<typeof useRouter>,
   hide: () => void,
+  currentScreen: string,
 ) {
   addMessage({ role: 'user', text });
-  const chatMessages = [...buildHistory(history), { role: 'user' as const, content: text }];
+  // 深度融合：把"用户当前所在界面"作为上下文喂给 AI（不污染可见气泡）。
+  const ctx = currentScreen ? `${text}\n\n[场景上下文：用户当前正在「${currentScreen}」界面]` : text;
+  const chatMessages = [...buildHistory(history), { role: 'user' as const, content: ctx }];
+  const va = useVoiceAssistant.getState();
+  const stopGlow = () => va.setAutomating(false);
   try {
     let fullResponse = '';
     await new Promise<void>((resolve) => {
@@ -156,41 +178,59 @@ async function sendToAI(
     const { cmd, params, displayText } = extractCommand(fullResponse);
     if (cmd) {
       addMessage({ role: 'assistant', text: displayText, isCommand: true });
-      // 点亮页面四周 RGB 流光灯带，提示「助手正在替你操作」
-      useVoiceAssistant.getState().setAutomating(true);
-      setTimeout(() => useVoiceAssistant.getState().setAutomating(false), 1800);
+      // 点亮页面四周 RGB 流光灯带；放慢执行让用户看清"助手在替我操作"。
+      va.setAutomating(true);
       if (cmd === 'open_page' && params.page) {
         const route = resolveRoute(params.page);
         if (route) {
-          setTimeout(() => router.push(route as never), 600);
-          addMessage({ role: 'assistant', text: `[系统] 已执行：打开页面 ${route}`, isCommand: true });
+          const label = SCREEN_NAMES[route] ?? '目标页面';
+          addMessage({ role: 'assistant', text: `正在为你打开「${label}」…`, isCommand: true });
+          await new Promise((r) => setTimeout(r, 1100));
+          router.push(route as never);
+          await new Promise((r) => setTimeout(r, 900));
+          addMessage({ role: 'assistant', text: `[系统] 已到达「${label}」`, isCommand: true });
+          stopGlow();
         } else {
           addMessage({ role: 'assistant', text: `[系统] 未能识别页面「${params.page}」，请换个说法`, isCommand: true });
+          stopGlow();
         }
       } else if (cmd === 'buy' && params.productId) {
         const pid = params.productId.replace(/^\/+/, '');
-        setTimeout(() => router.push(`/product/${pid}?autoBuy=1` as any), 600);
-        addMessage({ role: 'assistant', text: `[系统] 已执行：跳转商品页并自动下单，productId=${pid}，订单已支付`, isCommand: true });
+        addMessage({ role: 'assistant', text: '正在为你打开商品并下单…', isCommand: true });
+        await new Promise((r) => setTimeout(r, 1100));
+        router.push(`/product/${pid}?autoBuy=1` as any);
+        await new Promise((r) => setTimeout(r, 900));
+        addMessage({ role: 'assistant', text: `[系统] 已下单（商品 ${pid}），订单已支付`, isCommand: true });
+        stopGlow();
       } else if (cmd === 'collect_energy' && params.activity) {
         const names: Record<string, string> = {
           green_travel: '绿色出行', waste_sort: '垃圾分类', eco_quiz: '环保答题',
           share_green: '分享绿色', trade_in: '以旧换新',
         };
         const name = names[params.activity] ?? '绿色任务';
+        addMessage({ role: 'assistant', text: `正在为你完成「${name}」…`, isCommand: true });
+        await new Promise((r) => setTimeout(r, 900));
         try {
           await apiRequest('/eco/activity', { method: 'POST', body: { type: params.activity }, auth: true });
           addMessage({ role: 'assistant', text: `[系统] 已完成「${name}」，绿色能量与碳积分已到账`, isCommand: true });
         } catch (err) {
           addMessage({ role: 'assistant', text: `[系统] 收集失败：${err instanceof Error ? err.message : '请稍后再试'}`, isCommand: true });
         }
+        await new Promise((r) => setTimeout(r, 600));
+        stopGlow();
       } else if (cmd === 'plant_tree') {
+        addMessage({ role: 'assistant', text: '正在为小树浇灌…', isCommand: true });
+        await new Promise((r) => setTimeout(r, 900));
         try {
           const r = await apiRequest<{ message?: string }>('/eco/plant', { method: 'POST', auth: true });
           addMessage({ role: 'assistant', text: `[系统] ${r?.message ?? '浇灌成功，碳积分已到账'}`, isCommand: true });
         } catch (err) {
           addMessage({ role: 'assistant', text: `[系统] 浇灌失败：${err instanceof Error ? err.message : '请稍后再试'}`, isCommand: true });
         }
+        await new Promise((r) => setTimeout(r, 600));
+        stopGlow();
       } else if (cmd === 'query_profile') {
+        addMessage({ role: 'assistant', text: '正在为你查询账户数据…', isCommand: true });
         try {
           const s = await apiRequest<{ carbonCredits: number; points: number; treesPlanted: number; totalCarbonSaved: number }>('/eco/progress', { auth: true });
           const name = useAuthStore.getState().user?.username ?? '你';
@@ -198,7 +238,9 @@ async function sendToAI(
         } catch (err) {
           addMessage({ role: 'assistant', text: `[系统] 查询失败：${err instanceof Error ? err.message : '请先登录'}`, isCommand: true });
         }
+        stopGlow();
       } else if (cmd === 'query_rank') {
+        addMessage({ role: 'assistant', text: '正在为你查询排名…', isCommand: true });
         try {
           const r = await apiRequest<{ self?: { rank: number; score: number; carbonCredits: number } }>('/leaderboard', { auth: true });
           if (r.self) {
@@ -209,8 +251,9 @@ async function sendToAI(
         } catch (err) {
           addMessage({ role: 'assistant', text: `[系统] 查询失败：${err instanceof Error ? err.message : '请先登录'}`, isCommand: true });
         }
+        stopGlow();
       } else if (cmd === 'end') {
-        // 用 getState() 绕开闭包读最新消息
+        stopGlow();
         const currentState = useVoiceAssistant.getState();
         const userMsgs = currentState.messages.filter((m) => m.role === 'user');
         const lastUserMsg = userMsgs[userMsgs.length - 1]?.text || '';
@@ -219,6 +262,8 @@ async function sendToAI(
           addMessage({ role: 'assistant', text: '再见！低碳生活，从每一天开始。', isCommand: true });
           setTimeout(() => hide(), 900);
         }
+      } else {
+        stopGlow();
       }
     } else {
       addMessage({ role: 'assistant', text: fullResponse });
@@ -226,12 +271,14 @@ async function sendToAI(
       speakText(fullResponse.replace(/[*#`>\[\]_-]/g, ''));
     }
   } catch {
+    stopGlow();
     addMessage({ role: 'assistant', text: '抱歉，AI 服务暂不可用。' });
   }
 }
 
 function VoiceAssistantOverlay() {
   const router = useRouter();
+  const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { visible, listening, transcript, setListening, setTranscript, clearTranscript, addMessage, hide } = useVoiceAssistant();
   const inputRef = useRef<TextInput>(null);
@@ -267,7 +314,7 @@ function VoiceAssistantOverlay() {
         // 使用 getState() 读最新消息，避免 useCallback 闭包陷阱
         const currentState = useVoiceAssistant.getState();
         const history = [...currentState.messages];
-        await sendToAI(text.trim(), history, addMessage, router, hide);
+        await sendToAI(text.trim(), history, addMessage, router, hide, screenNameOf(pathname));
       } else {
         setListening(false);
         addMessage({ role: 'assistant', text: '我没有听清，请再试一次或直接在下方输入文字。' });
@@ -276,7 +323,7 @@ function VoiceAssistantOverlay() {
       setListening(false);
       addMessage({ role: 'assistant', text: `语音识别失败：${e?.message || '未知错误'}。请尝试使用文字输入。` });
     }
-  }, [setListening, clearTranscript, setTranscript, addMessage, hide, router]);
+  }, [setListening, clearTranscript, setTranscript, addMessage, hide, router, pathname]);
 
   const handleToggle = useCallback(() => {
     if (!listening) startVoice();
@@ -291,8 +338,8 @@ function VoiceAssistantOverlay() {
     clearTranscript();
     setListening(false);
     const history = [...s.messages];
-    await sendToAI(text, history, addMessage, router, hide);
-  }, [clearTranscript, setListening, addMessage, hide, router]);
+    await sendToAI(text, history, addMessage, router, hide, screenNameOf(pathname));
+  }, [clearTranscript, setListening, addMessage, hide, router, pathname]);
 
   if (!visible) return null;
 
@@ -315,7 +362,7 @@ function VoiceAssistantOverlay() {
           ref={inputRef}
           placeholder={listening ? '正在聆听...' : '输入文字或点击上方球体说话...'}
           placeholderTextColor="#9CA3AF"
-          value={listening ? transcript : ''}
+          value={transcript}
           onChangeText={(t) => setTranscript(t)}
           onSubmitEditing={handleTextSubmit}
           returnKeyType="send"

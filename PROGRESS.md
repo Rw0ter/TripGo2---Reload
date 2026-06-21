@@ -3,7 +3,7 @@
 > 项目的"活文档"。每个 AI 会话**开始时读它、结束时更新它**（用法见 CLAUDE.md 第 12 / 14 节）。
 > **真相来源是代码 + `git log`**，不是本文件的叙述。发现不一致，以代码为准并立刻订正这里。
 
-**最后更新：2026-06-21**（绿色深化三轮：登录玻璃化 / 助手增强 / 真实景点照片 / 生态VR / 景点详情重构；分支 `feat/green-polish-2`。一、二轮已合并 PR #85、#86）
+**最后更新：2026-06-21**（四轮·AI 深度融合：助手输入修复 / 自动化节奏 / 场景感知 / 大厂级 system prompt / 离线本地模型兜底 / 灯带优化；分支 `feat/ai-deep-integration`。一~三轮已合并 PR #85、#86、#87、#88）
 
 ## 当前阶段
 
@@ -51,13 +51,26 @@
    并修复原 vr.tsx 引用全景文件不存在(全 404)的 bug。
 5. **scenic 详情重构**：参考携程布局 → 快捷卡 + 标题/热度/榜单 + 信息胶囊 + 距离地图 + 分区，绿色地标主题。
 
+**四轮：AI 深度融合 + 离线兜底（2026-06-21，分支 feat/ai-deep-integration）**
+1. **修助手输入框无法输入**：`value={listening ? transcript : ''}` 强制清空 → 改为 `value={transcript}`（已截图验证）。
+2. **自动化"看得见"**：执行指令时分步提示「正在为你打开「X」…」→ 跳转 →「[系统] 已到达「X」」，跳转放慢到 ~2s（不再一闪而过）。
+3. **场景感知（深度融合）**：`usePathname` → `screenNameOf` 把"用户当前所在界面"作为上下文喂给 AI（不污染气泡），prompt 新增【场景感知】段。
+4. **大厂级 system prompt 重写**：参考 docs 模板，CHAT/PLAN/TRANSLATE 全部改结构化（身份→表达规范→指令协议→场景感知→路由表→商品表→边界）；
+   保留全部功能契约（命令/路由/商品ID/[系统]反馈/禁 emoji），并删掉 PLAN 残留的 📊📝 emoji + 修陈旧"岭南/粤语"注释。
+5. **离线本地小模型兜底**：`ai.service` 抽 `buildProviders()`（DeepSeek 优先 → 本地 OpenAI 兼容端点），`streamChat` 改 `pipeProvider` 提供方轮询；
+   无法 fetch DeepSeek（断网/无 key/上游错误）时自动回退本地（Ollama 等，`.env` 配 `LOCAL_AI_URL`/`LOCAL_AI_MODEL`）；translate 同步兜底；新增 2 个回退单测（后端共 65 测试过）。
+6. **灯带优化**：VoiceAutomationGlow 三层（弥散柔光晕 + 过渡 + 清晰灯带 + boxShadow glow），RGB 每通道严格落 [30,185] 哑光霓虹；3.6s 缓转 + 呼吸（已 eval 验证渲染）。
+7. **删加号菜单「规划行程」**：create-action-sheet 去掉「新建绿色计划」(/trip/create)，仅留发布故事 + AI 语音助手（已截图验证）。
+
 ## 进行中
-- 暂无（三轮收尾：待提交、PR、过 CI、合并）。
+- 暂无（四轮收尾：待提交、PR、过 CI、合并）。
 
 ## 下一步（按优先级）
-1. cultural 后端数据为非遗内容、study 页已删，已成孤儿——评估移除或改造。
-2. 真机原生构建前确认 expo-speech-recognition 的 config plugin（CI 仅跑 web）。
-3. 部分景点照片为 CC-BY(-SA)，已在 CREDITS 署名；如需更严格可换 CC0/PD。
+1. **本批次剩余 3 项（下一轮）**：① 地图腾讯 GL 右上角指南针/控件与顶部搜索框 + 在线离线切换冲突、web 端定位补全；
+   ② /home 顶部轮播+搜索框样式/逻辑重设计 + 上图下文功能按钮换联网真实图标；③ CI/CD 增加 APK 打包测试（正式进安卓）。
+2. cultural 后端数据为非遗内容、study 页已删，已成孤儿——评估移除或改造。
+3. 真机原生构建前确认 expo-speech-recognition 的 config plugin（CI 仅跑 web）。
+4. 部分景点照片为 CC-BY(-SA)，已在 CREDITS 署名；如需更严格可换 CC0/PD。
 
 ## 已知问题 / 坑
 - RAG / AI 需后端 `.env` 配 `DEEPSEEK_API_KEY`，缺失时 AI 接口 503。

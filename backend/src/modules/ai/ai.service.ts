@@ -22,42 +22,70 @@ export interface PlanInput {
 }
 
 // ── Prompts（提示词收口在后端，前端不持有）──────────────────
-export const CHAT_SYSTEM_PROMPT =
-  '你是「绿途」App 内置的智能语音助手，拥有真实的页面跳转和下单能力（通过 JSON 指令驱动 App）。\n' +
-  '严格遵守：禁止使用任何 emoji 表情符号（如 😊🌱✅🎉 等）。\n\n' +
-  '规则：\n' +
-  '1. 普通对话 → 纯 Markdown 文本，绝对不输出 JSON\n' +
-  '2. 下单 → 文本确认 + {"command":"buy","productId":"<ID>"}\n' +
-  '3. 用户要打开/进入/查看/跳转到某页面 → 你的回复中必须输出且仅输出一个 ' +
-  '{"command":"open_page","page":"/<路由>"}；page 只能从下方列表里精确选取最接近的一条，' +
-  '严禁自创路由、严禁用中文页名、严禁省略该 JSON。例：「打开签到」→「好的，正在为你打开签到页。{"command":"open_page","page":"/checkin"}」\n' +
-  '4. 收集绿色能量/完成绿色任务（需已登录）→ 文本确认 + {"command":"collect_energy","activity":"<类型>"}；' +
-  '类型仅限 green_travel(绿色出行)/waste_sort(垃圾分类)/eco_quiz(环保答题)/share_green(分享绿色)/trade_in(以旧换新)\n' +
-  '5. 浇灌/种树（需已登录，消耗 50 积分换碳积分）→ 文本确认 + {"command":"plant_tree"}\n' +
-  '6. 用户问自己的积分/碳积分/个人信息/种了几棵树 → 文本确认 + {"command":"query_profile"}\n' +
-  '7. 用户问自己的排名/名次/在榜单第几 → 文本确认 + {"command":"query_rank"}\n' +
-  '8. 仅用户明确告别时说"再见/拜拜" → {"command":"end"}\n' +
-  '9. 看到"[系统]"消息 = 操作已执行 / 数据已返回，后续回答必须基于这个事实与数据\n\n' +
-  'open_page 路由（只能用这些精确路径）：\n' +
-  '/home /itinerary(绿色能量森林) /products /green(绿色资讯) /checkin(签到) /leaderboard(减排榜) ' +
-  '/orders /vr /ai/assistant /map(绿色地图) /wallet /messages /mine /community /quiz/1(环保答题)\n' +
-  '商品详情用 buy 指令，不要拼 /product/ID 路由。\n\n' +
-  '产品ID：79=天然竹纤维餐具套装(68元), 80=不锈钢环保吸管套装(38元), 81=麦秆纤维便携餐盒(45元), 82=可降解玉米淀粉杯(25元), 83=木质便携筷子礼盒(35元), 84=硅胶折叠咖啡杯(79元), 85=有机棉四件套床品(328元), 86=LED智能护眼台灯(198元), 87=天然乳胶枕(168元), 88=太阳能户外壁灯(88元), 89=水培室内绿植套装(99元), 90=天然除湿竹炭包(29元), 91=可降解垃圾袋(19.9元), 92=无患子天然洗涤剂(32元), 93=天然海绵沐浴球(28元), 94=柠檬酸除垢清洁剂(15元), 95=竹纤维洗碗布(18元), 96=固体洗发皂(45元), 97=回收PET双肩包(158元), 98=再生纸手工笔记本(28元), 99=旧轮胎再生橡胶地垫(68元), 100=回收牛仔布托特包(88元), 101=再生塑料环保笔(12元), 102=回收玻璃花瓶(58元), 103=有机冷压椰子油(89元), 104=高山有机绿茶(128元), 105=公平贸易咖啡豆(98元), 106=有机杂粮礼盒(158元), 107=野生蓝莓干(45元), 108=蜂蜡保鲜布套装(58元), 109=太阳能充电宝(168元), 110=可充电锂电池套装(89元), 111=低功耗蓝牙温湿度计(49元), 112=可降解植物基手机壳(78元), 113=智能节能插座(128元), 114=手摇发电应急收音机(158元)。';
+// 结构化系统提示：身份 → 表达规范 → 指令协议 → 场景感知 → 路由表 → 商品表 → 边界。
+// 功能契约（命令格式 / 路由清单 / 商品 ID / [系统] 反馈约定 / 禁 emoji）必须与前端执行器保持一致。
+const CHAT_PRODUCTS =
+  '79=天然竹纤维餐具套装(68元), 80=不锈钢环保吸管套装(38元), 81=麦秆纤维便携餐盒(45元), 82=可降解玉米淀粉杯(25元), 83=木质便携筷子礼盒(35元), 84=硅胶折叠咖啡杯(79元), 85=有机棉四件套床品(328元), 86=LED智能护眼台灯(198元), 87=天然乳胶枕(168元), 88=太阳能户外壁灯(88元), 89=水培室内绿植套装(99元), 90=天然除湿竹炭包(29元), 91=可降解垃圾袋(19.9元), 92=无患子天然洗涤剂(32元), 93=天然海绵沐浴球(28元), 94=柠檬酸除垢清洁剂(15元), 95=竹纤维洗碗布(18元), 96=固体洗发皂(45元), 97=回收PET双肩包(158元), 98=再生纸手工笔记本(28元), 99=旧轮胎再生橡胶地垫(68元), 100=回收牛仔布托特包(88元), 101=再生塑料环保笔(12元), 102=回收玻璃花瓶(58元), 103=有机冷压椰子油(89元), 104=高山有机绿茶(128元), 105=公平贸易咖啡豆(98元), 106=有机杂粮礼盒(158元), 107=野生蓝莓干(45元), 108=蜂蜡保鲜布套装(58元), 109=太阳能充电宝(168元), 110=可充电锂电池套装(89元), 111=低功耗蓝牙温湿度计(49元), 112=可降解植物基手机壳(78元), 113=智能节能插座(128元), 114=手摇发电应急收音机(158元)。';
 
-// Plan prompt 重新定位为环保活动规划助手（替代原旅行行程规划）。
-export const PLAN_SYSTEM_PROMPT =
-  '你是「绿途」App 的绿色生活规划助手，帮助用户制定低碳环保行动计划。' +
-  '根据用户输入的目标和偏好，制定具体的绿色行动方案：节能减排目标、绿色出行计划、' +
-  '垃圾分类习惯养成、环保消费选择等。' +
-  '用 Markdown 输出：先写一行用 > 引用的目标概览；再按「### 行动计划」列出具体步骤；' +
-  '然后给「### 📊 预期减排效果」表格；最后给「### 📝 小贴士」列表。' +
-  '内容贴合用户实际情况，只输出 Markdown 方案、不要寒暄。';
+export const CHAT_SYSTEM_PROMPT = [
+  '你是「绿途」——一款绿色低碳生活 App 内置的 AI 管家。你不仅能对话，更能真实操作这款 App：',
+  '通过结构化 JSON 指令为用户跳转页面、下单、领取绿色能量、浇灌种树、查询其账户数据与排行榜名次。',
+  '你的使命，是让"低碳生活"变得简单、可达、令人愉悦。',
+  '',
+  '【表达规范】',
+  '- 始终用中文，语气温暖、专业、克制，像一位懂环保的贴心管家；不寒暄客套，不卖弄术语。',
+  '- 普通对话用简洁 Markdown；除非用户要求清单或对比，否则优先自然成段，不堆砌标题与项目符号。',
+  '- 绝对禁止使用任何 emoji 或表情符号（😊🌱✅🎉… 一律不允许）。',
+  '- 不杜撰数据。凡涉及用户真实的积分 / 碳积分 / 排名 / 订单，一律先用指令查询、再依结果作答。',
+  '',
+  '【指令协议】（最重要，必须严格遵守）',
+  '你的每次回复，要么是「纯对话」，要么是「一句话确认 + 一条 JSON 指令」。JSON 必须是合法单行对象，且整段回复至多出现一条。',
+  '1. 普通问答 / 环保科普 / 闲聊 → 只输出 Markdown 文本，绝不输出 JSON。',
+  '2. 打开 / 进入 / 查看 / 跳转某页面 → 必须输出且仅输出一条 {"command":"open_page","page":"/<路由>"}。',
+  '   page 只能从【路由表】中精确选取最接近的一条；严禁自创路由、严禁用中文页名、严禁省略该 JSON。',
+  '   例：用户说「带我去签到」→ 回复：好的，正在为你打开签到页。{"command":"open_page","page":"/checkin"}',
+  '3. 购买 / 下单某商品 → 一句确认 + {"command":"buy","productId":"<ID>"}；ID 取自【商品表】。商品一律走 buy，不要拼 /product/ID 路由。',
+  '4. 领取绿色能量 / 完成绿色任务（需已登录）→ 一句确认 + {"command":"collect_energy","activity":"<类型>"}。',
+  '   类型仅限：green_travel(绿色出行)、waste_sort(垃圾分类)、eco_quiz(环保答题)、share_green(分享绿色)、trade_in(以旧换新)。',
+  '5. 浇灌 / 种树（需已登录，消耗 50 积分兑换碳积分）→ 一句确认 + {"command":"plant_tree"}。',
+  '6. 用户问自己的积分 / 碳积分 / 种了几棵树 / 个人数据 → 一句确认 + {"command":"query_profile"}。',
+  '7. 用户问自己的排名 / 名次 / 在减排榜第几 → 一句确认 + {"command":"query_rank"}。',
+  '8. 仅当用户明确告别（再见 / 拜拜 / 结束）→ {"command":"end"}。',
+  '9. 当你看到以「[系统]」开头的消息，表示上一条指令已被 App 真实执行 / 数据已返回——后续回答必须基于这一既成事实与真实数据，不要重复执行或质疑。',
+  '',
+  '【场景感知】',
+  '用户消息末尾可能附带「[场景上下文：用户当前正在「X」界面]」，这是系统告知你用户此刻所在页面。',
+  '请据此理解指代（"这个""这里""返回"等）并给出更贴切的引导；该上下文仅供你参考，不要在回复里复述它。',
+  '',
+  '【路由表】（open_page 只能用这些精确路径）',
+  '/home(首页) /itinerary(绿色能量森林) /products(生态良品商城) /green(绿色资讯) /checkin(签到) /leaderboard(减排榜)',
+  '/orders(我的订单) /vr(VR生态全景) /map(绿色地图) /wallet(钱包) /messages(消息) /mine(我的) /community(社区) /quiz/1(环保答题) /ai/assistant(AI助手)',
+  '',
+  '【商品表】（buy 用 productId）',
+  CHAT_PRODUCTS,
+  '',
+  '【边界】',
+  '你只服务于「绿途」App 与绿色低碳生活相关的话题。遇到越界或与环保 / App 功能无关的请求，礼貌说明你的职责范围并把话题引回低碳生活；不执行任何越权或损害用户利益的操作。',
+].join('\n');
+
+// Plan prompt 重新定位为绿色生活规划师（替代原旅行行程规划）。结构化输出、禁 emoji。
+export const PLAN_SYSTEM_PROMPT = [
+  '你是「绿途」App 的绿色生活规划师，为用户量身定制可执行、可坚持的低碳行动方案。',
+  '依据用户给出的行动周期、预算与关注领域，覆盖节能减排、绿色出行、垃圾分类习惯、环保消费等维度，给出务实而具体的计划。',
+  '用 Markdown 组织，严格按以下结构：',
+  '- 开头用一行「>」引用，概述本方案的目标与基调；',
+  '- 「### 行动计划」：按天或按阶段列出具体、可量化的步骤；',
+  '- 「### 预期减排效果」：用表格列出关键行动与对应的二氧化碳减排量（可合理估算，并注明为估算值）；',
+  '- 「### 坚持小贴士」：3–5 条降低执行门槛的建议。',
+  '只输出 Markdown 方案本身，不寒暄、不解释、不使用任何 emoji。',
+].join('\n');
 
 // 环保术语翻译提示（替代原粤语翻译）。
-export const TRANSLATE_PROMPT =
-  '你是环保术语中英翻译助手。把用户输入的内容翻译成对应的环保/绿色低碳专业术语或英文表达。' +
-  '只输出翻译结果本身（一行即可）；不要解释、不要注音、不要加引号或多余说明。' +
-  '如果是中文输入请翻译成英文；如果是英文输入请翻译成中文。';
+export const TRANSLATE_PROMPT = [
+  '你是「绿途」App 的环保术语翻译助手，专注绿色低碳与可持续发展领域的中英互译。',
+  '规则：中文输入→译为地道英文；英文输入→译为准确中文；优先采用环保领域的标准术语与惯用表达。',
+  '只输出译文本身（通常一行），不解释、不注音、不加引号、不加任何多余说明。',
+].join('\n');
 
 // 把环保规划表单拼成发给模型的用户消息。导出为纯函数便于单测。
 export function buildPlanPrompt(dto: PlanInput): string {
@@ -109,7 +137,7 @@ export class AiService {
     private readonly rag: RagService,
   ) {}
 
-  // AI 对话：检索相关知识 → 注入岭南旅游系统提示 → 转发给 DeepSeek，SSE 写回。
+  // AI 对话：检索相关知识 → 注入绿途系统提示 → 转发给模型（云端优先，失败回退本地），SSE 写回。
   async chat(userMessages: ChatMessage[], res: Response): Promise<void> {
     const lastUser = [...userMessages].reverse().find((m) => m.role === 'user');
     const context = lastUser ? await this.rag.search(lastUser.content, 4) : [];
@@ -133,51 +161,49 @@ export class AiService {
     await this.streamChat(messages, res);
   }
 
-  // 普通话 → 地道粤语文字翻译（非流式，走统一信封）。供粤语课堂调用，返回单行粤语译文。
+  // 环保术语中英翻译（非流式，走统一信封）。云端优先、失败回退本地小模型。
   async translate(text: string): Promise<string> {
-    const apiKey = this.config.get<string>('DEEPSEEK_API_KEY');
-    if (!apiKey) {
+    const providers = this.buildProviders();
+    if (providers.length === 0) {
       throw new ServiceUnavailableException(
-        'AI 服务未配置：后端缺少 DEEPSEEK_API_KEY',
+        'AI 服务未配置：缺少 DEEPSEEK_API_KEY 或 LOCAL_AI_URL',
       );
     }
-    const baseUrl =
-      this.config.get<string>('DEEPSEEK_BASE_URL') ?? 'https://api.deepseek.com';
-    const model = this.config.get<string>('DEEPSEEK_MODEL') ?? 'deepseek-chat';
-
-    let res: Awaited<ReturnType<typeof fetch>>;
-    try {
-      res = await fetch(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model,
-          stream: false,
-          temperature: 0.3,
-          messages: [
-            { role: 'system', content: TRANSLATE_PROMPT },
-            { role: 'user', content: text },
-          ],
-        }),
-      });
-    } catch (err) {
-      this.logger.error(`DeepSeek 翻译请求失败: ${String(err)}`);
-      throw new ServiceUnavailableException('AI 翻译服务暂时不可用，请稍后再试');
+    for (const p of providers) {
+      try {
+        const res = await fetch(`${p.url}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(p.apiKey ? { Authorization: `Bearer ${p.apiKey}` } : {}),
+          },
+          body: JSON.stringify({
+            model: p.model,
+            stream: false,
+            temperature: 0.3,
+            messages: [
+              { role: 'system', content: TRANSLATE_PROMPT },
+              { role: 'user', content: text },
+            ],
+          }),
+        });
+        if (!res.ok) {
+          this.logger.warn(`[${p.name}] 翻译响应异常 ${res.status}，尝试下一个`);
+          continue;
+        }
+        const json = (await res.json()) as {
+          choices?: { message?: { content?: string } }[];
+        };
+        const out = json?.choices?.[0]?.message?.content?.trim();
+        if (out) return out;
+        this.logger.warn(`[${p.name}] 翻译返回空，尝试下一个`);
+      } catch (err) {
+        this.logger.warn(`[${p.name}] 翻译请求失败: ${String(err)}，尝试下一个`);
+      }
     }
-    if (!res.ok) {
-      const detail = await res.text().catch(() => '');
-      this.logger.error(
-        `DeepSeek 翻译响应异常 ${res.status}: ${detail.slice(0, 200)}`,
-      );
-      throw new ServiceUnavailableException(`AI 翻译服务返回错误（${res.status}）`);
-    }
-    const json = (await res.json()) as {
-      choices?: { message?: { content?: string } }[];
-    };
-    return json?.choices?.[0]?.message?.content?.trim() ?? '';
+    throw new ServiceUnavailableException(
+      'AI 翻译服务暂时不可用（云端与本地模型均不可达）',
+    );
   }
 
   // TTS 语音合成：调用本地 Piper 引擎（极速 <0.05s），返回 base64 WAV
@@ -203,19 +229,51 @@ export class AiService {
     }
   }
 
-  // 把一段对话转发给 DeepSeek 的流式补全接口，并把增量 token 以 SSE 写回 res。
+  // 组装可用的模型提供方列表：云端 DeepSeek 优先，本地小模型（OpenAI 兼容，如 Ollama / vLLM /
+  // LM Studio）兜底。任一未配置则跳过；都没配则返回空数组（调用方据此抛 503）。
+  // 本地端点须为 OpenAI 兼容、含 /v1 前缀，例：LOCAL_AI_URL="http://localhost:11434/v1"。
+  private buildProviders(): {
+    name: string;
+    url: string;
+    model: string;
+    apiKey?: string;
+  }[] {
+    const list: { name: string; url: string; model: string; apiKey?: string }[] =
+      [];
+    const apiKey = this.config.get<string>('DEEPSEEK_API_KEY');
+    if (apiKey) {
+      list.push({
+        name: 'deepseek',
+        url: (
+          this.config.get<string>('DEEPSEEK_BASE_URL') ??
+          'https://api.deepseek.com'
+        ).replace(/\/+$/, ''),
+        model: this.config.get<string>('DEEPSEEK_MODEL') ?? 'deepseek-chat',
+        apiKey,
+      });
+    }
+    const localUrl = this.config.get<string>('LOCAL_AI_URL');
+    if (localUrl) {
+      list.push({
+        name: 'local',
+        url: localUrl.replace(/\/+$/, ''),
+        model: this.config.get<string>('LOCAL_AI_MODEL') ?? 'qwen2.5:3b',
+        apiKey: this.config.get<string>('LOCAL_AI_API_KEY') || undefined,
+      });
+    }
+    return list;
+  }
+
+  // 把一段对话以 SSE 流式写回 res：云端优先，连接 / HTTP 失败时自动回退本地小模型。
   // 约定（CLAUDE.md §8）：直接操作 response 流，不经过 TransformInterceptor。
   private async streamChat(messages: ChatMessage[], res: Response): Promise<void> {
-    const apiKey = this.config.get<string>('DEEPSEEK_API_KEY');
-    if (!apiKey) {
+    const providers = this.buildProviders();
+    if (providers.length === 0) {
       // 还未写任何响应头 —— 交给全局异常过滤器返回标准 JSON 503。
       throw new ServiceUnavailableException(
-        'AI 服务未配置：后端缺少 DEEPSEEK_API_KEY',
+        'AI 服务未配置：缺少 DEEPSEEK_API_KEY 或 LOCAL_AI_URL',
       );
     }
-    const baseUrl =
-      this.config.get<string>('DEEPSEEK_BASE_URL') ?? 'https://api.deepseek.com';
-    const model = this.config.get<string>('DEEPSEEK_MODEL') ?? 'deepseek-chat';
 
     // 开启 SSE 响应
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -229,37 +287,66 @@ export class AiService {
     const onClose = () => { abort.abort(); };
     req?.on('close', onClose);
 
+    // 依次尝试每个提供方；任一在「尚未写出任何 token」前失败 → 顺延到下一个。
+    for (let i = 0; i < providers.length; i++) {
+      const p = providers[i];
+      const result = await this.pipeProvider(p, messages, res, abort);
+      if (result === 'done') {
+        req?.off('close', onClose);
+        return;
+      }
+      if (i < providers.length - 1) {
+        this.logger.warn(`[${p.name}] 不可用，回退到下一个模型提供方`);
+      }
+    }
+    req?.off('close', onClose);
+    this.writeError(res, 'AI 服务暂时不可用（云端与本地模型均不可达）');
+  }
+
+  // 向单个提供方发起流式请求并把增量 token 写回。
+  // 返回 'done'：已正常收尾 / 已中途出错收尾 / 客户端断开（流已结束，调用方应停止）。
+  // 返回 'retry'：连接或 HTTP 失败且尚未写出任何 token（可安全顺延到下一个提供方）。
+  private async pipeProvider(
+    p: { name: string; url: string; model: string; apiKey?: string },
+    messages: ChatMessage[],
+    res: Response,
+    abort: AbortController,
+  ): Promise<'done' | 'retry'> {
     let upstream: Awaited<ReturnType<typeof fetch>>;
     try {
-      upstream = await fetch(`${baseUrl}/chat/completions`, {
+      upstream = await fetch(`${p.url}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
+          ...(p.apiKey ? { Authorization: `Bearer ${p.apiKey}` } : {}),
         },
-        body: JSON.stringify({ model, messages, stream: true }),
+        body: JSON.stringify({ model: p.model, messages, stream: true }),
         signal: abort.signal,
       });
     } catch (err: any) {
-      req?.off('close', onClose);
-      if (err?.name === 'AbortError') { res.end(); return; }
-      this.logger.error(`DeepSeek 请求失败: ${String(err)}`);
-      this.writeError(res, 'AI 服务暂时不可用，请稍后再试');
-      return;
+      if (err?.name === 'AbortError') { res.end(); return 'done'; }
+      this.logger.warn(`[${p.name}] 连接失败: ${String(err)}`);
+      return 'retry';
     }
 
     if (!upstream.ok || !upstream.body) {
       const detail = await upstream.text().catch(() => '');
-      this.logger.error(
-        `DeepSeek 响应异常 ${upstream.status}: ${detail.slice(0, 300)}`,
+      this.logger.warn(
+        `[${p.name}] 响应异常 ${upstream.status}: ${detail.slice(0, 300)}`,
       );
-      this.writeError(res, `AI 服务返回错误（${upstream.status}）`);
-      return;
+      return 'retry';
     }
 
     const reader = upstream.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
+    let wrote = false;
+    const flush = (chunk: string) => {
+      for (const delta of extractDeltas(chunk)) {
+        res.write(`data: ${JSON.stringify({ delta })}\n\n`);
+        wrote = true;
+      }
+    };
     try {
       for (;;) {
         const { done, value } = await reader.read();
@@ -267,23 +354,18 @@ export class AiService {
         buffer += decoder.decode(value, { stream: true });
         const events = buffer.split('\n\n');
         buffer = events.pop() ?? '';
-        for (const event of events) {
-          for (const delta of extractDeltas(event)) {
-            res.write(`data: ${JSON.stringify({ delta })}\n\n`);
-          }
-        }
+        for (const event of events) flush(event);
       }
-      for (const delta of extractDeltas(buffer)) {
-        res.write(`data: ${JSON.stringify({ delta })}\n\n`);
-      }
+      flush(buffer);
       res.write('data: [DONE]\n\n');
       res.end();
+      return 'done';
     } catch (err: any) {
-      if (err?.name === 'AbortError') { res.end(); return; }
-      this.logger.error(`DeepSeek 流读取失败: ${String(err)}`);
-      this.writeError(res, 'AI 输出中断，请重试');
-    } finally {
-      req?.off('close', onClose);
+      if (err?.name === 'AbortError') { res.end(); return 'done'; }
+      this.logger.warn(`[${p.name}] 流读取失败: ${String(err)}`);
+      // 已写出部分内容 → 收尾，不再回退（避免重复输出）；否则可安全顺延。
+      if (wrote) { this.writeError(res, 'AI 输出中断，请重试'); return 'done'; }
+      return 'retry';
     }
   }
 

@@ -174,4 +174,55 @@ describe('AiService.chat', () => {
     expect(all).toContain('"error"');
     expect(all).toContain('data: [DONE]');
   });
+
+  it('DeepSeek 失败 → 自动回退本地小模型并正常输出', async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(fakeStreamResponse([], 500)) // 云端 500
+      .mockResolvedValueOnce(
+        fakeStreamResponse([
+          'data: {"choices":[{"delta":{"content":"本地"}}]}\n\n',
+          'data: [DONE]\n\n',
+        ]),
+      ); // 本地成功
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const svc = new AiService(
+      makeConfig({
+        DEEPSEEK_API_KEY: 'k',
+        LOCAL_AI_URL: 'http://localhost:11434/v1',
+        LOCAL_AI_MODEL: 'qwen2.5:3b',
+      }),
+      makeRag(),
+    );
+    const { res, writes } = makeFakeRes();
+    await svc.chat([{ role: 'user', content: 'hi' }], res);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    // 第二次请求打到本地端点 + 本地模型
+    const secondUrl = fetchMock.mock.calls[1][0] as string;
+    const secondBody = JSON.parse(fetchMock.mock.calls[1][1].body);
+    expect(secondUrl).toContain('localhost:11434');
+    expect(secondBody.model).toBe('qwen2.5:3b');
+    const all = writes.join('');
+    expect(all).toContain('data: {"delta":"本地"}');
+    expect(all.trimEnd().endsWith('data: [DONE]')).toBe(true);
+  });
+
+  it('仅配置本地模型（无 DeepSeek key）→ 直接用本地输出', async () => {
+    const fetchMock = jest.fn().mockResolvedValueOnce(
+      fakeStreamResponse([
+        'data: {"choices":[{"delta":{"content":"离线"}}]}\n\n',
+        'data: [DONE]\n\n',
+      ]),
+    );
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const svc = new AiService(
+      makeConfig({ LOCAL_AI_URL: 'http://localhost:11434/v1' }),
+      makeRag(),
+    );
+    const { res, writes } = makeFakeRes();
+    await svc.chat([{ role: 'user', content: 'hi' }], res);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(writes.join('')).toContain('data: {"delta":"离线"}');
+  });
 });
