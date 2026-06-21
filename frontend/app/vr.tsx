@@ -34,12 +34,12 @@ interface VRScene {
 
 // panoramaImage 为后端 /static/legacy/ 下的等距柱状(2:1) 360° 全景图，每个场景一张真实图。
 const SCENES: VRScene[] = [
-  { id: 'shennongjia', name: '神农架原始森林', subtitle: '华中绿肺 · 生物多样性宝库', city: '神农架', weather: '18°C', panoramaImage: 'vr-shennongjia.jpg', coverKey: 'jd/gz.jpg' },
-  { id: 'xixi',        name: '西溪湿地',       subtitle: '城市之肾 · 湿地生态保育',   city: '杭州',   weather: '26°C', panoramaImage: 'vr-xixi.jpg',        coverKey: 'jd/dxs.png' },
-  { id: 'solar',       name: '光伏电站',       subtitle: '清洁能源 · 沙漠变绿洲',     city: '敦煌',   weather: '35°C', panoramaImage: 'vr-solar.jpg',       coverKey: 'changlong.png' },
-  { id: 'zhangjiajie', name: '张家界国家森林公园', subtitle: '奇峰三千 · 苍翠欲滴',   city: '张家界', weather: '22°C', panoramaImage: 'vr-zhangjiajie.jpg', coverKey: 'gz2.jpg' },
-  { id: 'jiuzhaigou',  name: '九寨沟',         subtitle: '人间仙境 · 青山碧水',       city: '九寨沟', weather: '15°C', panoramaImage: 'vr-jiuzhaigou.jpg',  coverKey: 'gz3.jpg' },
-  { id: 'windfarm',    name: '海上风电场',     subtitle: '绿色能源 · 零碳未来',       city: '阳江',   weather: '28°C', panoramaImage: 'vr-windfarm.jpg',    coverKey: 'xc/xc_chaozhou.jpeg' },
+  { id: 'shennongjia', name: '神农架原始森林', subtitle: '华中绿肺 · 生物多样性宝库', city: '神农架', weather: '18°C', panoramaImage: 'vr-shennongjia.jpg', coverKey: 'vr/shennongjia' },
+  { id: 'xixi',        name: '西溪湿地',       subtitle: '城市之肾 · 湿地生态保育',   city: '杭州',   weather: '26°C', panoramaImage: 'vr-xixi.jpg',        coverKey: 'vr/xixi' },
+  { id: 'solar',       name: '光伏电站',       subtitle: '清洁能源 · 沙漠变绿洲',     city: '敦煌',   weather: '35°C', panoramaImage: 'vr-solar.jpg',       coverKey: 'vr/solar' },
+  { id: 'zhangjiajie', name: '张家界国家森林公园', subtitle: '奇峰三千 · 苍翠欲滴',   city: '张家界', weather: '22°C', panoramaImage: 'vr-zhangjiajie.jpg', coverKey: 'vr/zhangjiajie' },
+  { id: 'jiuzhaigou',  name: '九寨沟',         subtitle: '人间仙境 · 青山碧水',       city: '九寨沟', weather: '15°C', panoramaImage: 'vr-jiuzhaigou.jpg',  coverKey: 'vr/jiuzhaigou' },
+  { id: 'windfarm',    name: '海上风电场',     subtitle: '绿色能源 · 零碳未来',       city: '阳江',   weather: '28°C', panoramaImage: 'vr-windfarm.jpg',    coverKey: 'vr/windfarm' },
 ];
 
 const FEATURED = SCENES[0];

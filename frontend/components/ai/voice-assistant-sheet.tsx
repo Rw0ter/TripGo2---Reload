@@ -32,8 +32,8 @@ export function VoiceAssistantSheet() {
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-      {/* 对话气泡：display-only（pointerEvents none），让正常点击穿透到下层页面，不抢用户操作 */}
-      <View style={styles.bubblesWrap} pointerEvents="none">
+      {/* 对话气泡：box-none —— 气泡区内可滚动查看多轮历史，区外空白处点击穿透到下层页面 */}
+      <View style={styles.bubblesWrap} pointerEvents="box-none">
         <ScrollView
           ref={scrollRef}
           style={styles.scroll}
@@ -96,7 +96,7 @@ export function VoiceAssistantSheet() {
 
 const styles = StyleSheet.create({
   bubblesWrap: {
-    position: 'absolute', bottom: 180, left: 12, right: 12, maxHeight: 350,
+    position: 'absolute', bottom: 170, left: 12, right: 12, maxHeight: 420,
   },
   scroll: { flex: 1 },
   scrollContent: { gap: 8, paddingHorizontal: 4 },

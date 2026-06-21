@@ -6,28 +6,28 @@ import type { ImageSourcePropType } from 'react-native';
 export const legacyImages: Record<string, ImageSourcePropType> = {
   // 兜底占位图（见 resolveLegacyImage）
   'top_AD.png': require('../assets/legacy/img/top_AD.png'),
-  // 热门景点（首页大横卡）
-  'jd/gz.jpg': require('../assets/legacy/img/jd/gz.jpg'),
-  'jd/dxs.png': require('../assets/legacy/img/jd/dxs.png'),
-  'jd/gzcl.png': require('../assets/legacy/img/jd/gzcl.png'),
-  'changlong.png': require('../assets/legacy/img/changlong.png'),
+  // 热门景点（首页大横卡）——真实地点开放授权照片（Wikimedia Commons，见 assets/images/scenic/CREDITS.md）
+  'jd/gz.jpg': require('../assets/images/scenic/canton_tower.jpg'), // 广州塔
+  'jd/dxs.png': require('../assets/images/scenic/mount_danxia.jpg'), // 丹霞山（韶关）
+  'jd/gzcl.png': require('../assets/images/scenic/happy_valley_guangzhou.jpg'), // 广州欢乐谷
+  'changlong.png': require('../assets/images/scenic/chimelong_ocean_kingdom.jpg'), // 长隆海洋王国（珠海）
   // 行程城市精选 POI
-  'dghmdq.jpg': require('../assets/legacy/img/dghmdq.jpg'),
-  'dgypzzbwg.png': require('../assets/legacy/img/dgypzzbwg.png'),
-  'gysgjslgy.png': require('../assets/legacy/img/gysgjslgy.png'),
+  'dghmdq.jpg': require('../assets/images/scenic/humen_bridge.jpg'), // 虎门大桥（东莞）
+  'dgypzzbwg.png': require('../assets/images/scenic/opium_war_museum_humen.jpg'), // 鸦片战争/海战博物馆（东莞虎门）
+  'gysgjslgy.png': require('../assets/images/scenic/nanshe_ancient_village.jpg'), // 南社明清古村落（岭南古村）
   // 广东城市大图（首页轮播 + 城市精选瀑布流）
-  'xc/xc_guangzhou.jpg': require('../assets/legacy/img/xc/xc_guangzhou.jpg'),
-  'xc/xc_shenzhen.jpg': require('../assets/legacy/img/xc/xc_shenzhen.jpg'),
-  'xc/xc_zhuhai.jpg': require('../assets/legacy/img/xc/xc_zhuhai.jpg'),
-  'xc/xc_chaozhou.jpeg': require('../assets/legacy/img/xc/xc_chaozhou.jpeg'),
-  'xc/xc_dongguan.jpg': require('../assets/legacy/img/xc/xc_dongguan.jpg'),
-  'xc/xc_huizhou.jpg': require('../assets/legacy/img/xc/xc_huizhou.jpg'),
-  'xc/xc_jiangmen.jpg': require('../assets/legacy/img/xc/xc_jiangmen.jpg'),
-  'xc/xc_heyuan.png': require('../assets/legacy/img/xc/xc_heyuan.png'),
-  'xc/xc_qingyuan.jpg': require('../assets/legacy/img/xc/xc_qingyuan.jpg'),
-  'xc/xc_zhaoqing.jpg': require('../assets/legacy/img/xc/xc_zhaoqing.jpg'),
-  'xc/xc_jieyang.jpeg': require('../assets/legacy/img/xc/xc_jieyang.jpeg'),
-  'xc/xc_meizhou.jpg': require('../assets/legacy/img/xc/xc_meizhou.jpg'),
+  'xc/xc_guangzhou.jpg': require('../assets/images/scenic/city_guangzhou.jpg'),
+  'xc/xc_shenzhen.jpg': require('../assets/images/scenic/city_shenzhen.jpg'),
+  'xc/xc_zhuhai.jpg': require('../assets/images/scenic/city_zhuhai.jpg'),
+  'xc/xc_chaozhou.jpeg': require('../assets/images/scenic/city_chaozhou.jpg'),
+  'xc/xc_dongguan.jpg': require('../assets/images/scenic/city_dongguan.jpg'),
+  'xc/xc_huizhou.jpg': require('../assets/images/scenic/city_huizhou.jpg'),
+  'xc/xc_jiangmen.jpg': require('../assets/images/scenic/city_jiangmen.jpg'), // 开平碉楼
+  'xc/xc_heyuan.png': require('../assets/images/scenic/city_heyuan.jpg'),
+  'xc/xc_qingyuan.jpg': require('../assets/images/scenic/city_qingyuan.jpg'),
+  'xc/xc_zhaoqing.jpg': require('../assets/images/scenic/city_zhaoqing.jpg'), // 七星岩
+  'xc/xc_jieyang.jpeg': require('../assets/images/scenic/city_jieyang.jpg'),
+  'xc/xc_meizhou.jpg': require('../assets/images/scenic/city_meizhou.jpg'), // 围龙屋
   // 非遗学习页 (study)
   'fyxx/yuejufm.jpg': require('../assets/legacy/img/fyxx/yuejufm.jpg'),
   'fyxx/jianzhifm1.jpg': require('../assets/legacy/img/fyxx/jianzhifm1.jpg'),
@@ -59,11 +59,11 @@ export const legacyImages: Record<string, ImageSourcePropType> = {
   'study/longzhou_2.jpg': require('../assets/legacy/img/study/longzhou_2.jpg'),
   'study/lnjz_1.jpg': require('../assets/legacy/img/study/lnjz_1.jpg'),
   'study/lnjz_2.jpg': require('../assets/legacy/img/study/lnjz_2.jpg'),
-  // 景点详情页轮播兜底图（与旧版 xq.html 一致）
-  'gz.jpg': require('../assets/legacy/img/gz.jpg'),
-  'gz2.jpg': require('../assets/legacy/img/gz2.jpg'),
-  'gz3.jpg': require('../assets/legacy/img/gz3.jpg'),
-  'gz4.jpg': require('../assets/legacy/img/gz4.jpg'),
+  // 景点详情页轮播兜底图——广州塔不同角度真实开放授权照片（Wikimedia Commons）
+  'gz.jpg': require('../assets/images/scenic/canton_tower_carousel_1.jpg'),
+  'gz2.jpg': require('../assets/images/scenic/canton_tower_carousel_2.jpg'),
+  'gz3.jpg': require('../assets/images/scenic/canton_tower_carousel_3.jpg'),
+  'gz4.jpg': require('../assets/images/scenic/canton_tower_carousel_4.jpg'),
   // 文创产品（products 列表 + 搜索文创结果）——图随 App 打包，key 即后端 destination.image 全路径。
   '/resources/img/wccpImg/bj.png': require('../assets/legacy/img/wccpImg/bj.png'),
   '/resources/img/wccpImg/cscjbogz.png': require('../assets/legacy/img/wccpImg/cscjbogz.png'),
@@ -119,6 +119,13 @@ export const legacyImages: Record<string, ImageSourcePropType> = {
   'banner/carbon_neutral': require('../assets/images/banners/banner_carbon_neutral.jpg'),
   'banner/ecology': require('../assets/images/banners/banner_ecology.jpg'),
   'banner/clean_energy': require('../assets/images/banners/banner_clean_energy.jpg'),
+  // VR 全景场景封面（真实生态/自然/环境保护题材，Wikimedia 开放授权，见 scenic/CREDITS.md）
+  'vr/shennongjia': require('../assets/images/scenic/vr_shennongjia.jpg'),
+  'vr/xixi': require('../assets/images/scenic/vr_xixi.jpg'),
+  'vr/solar': require('../assets/images/scenic/vr_solar.jpg'),
+  'vr/zhangjiajie': require('../assets/images/scenic/vr_zhangjiajie.jpg'),
+  'vr/jiuzhaigou': require('../assets/images/scenic/vr_jiuzhaigou.jpg'),
+  'vr/windfarm': require('../assets/images/scenic/vr_windfarm.jpg'),
 };
 
 // 按 key 取本地图；key 未登记时返回占位图并告警，

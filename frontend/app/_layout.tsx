@@ -18,6 +18,7 @@ import { useVoiceAssistant } from '@/stores/voice-assistant';
 import { apiRequest } from '@/lib/api';
 import { streamChat } from '@/lib/ai';
 import { startListening } from '@/lib/voice-recognition';
+import { useAuthStore } from '@/stores/auth';
 
 /** 当前正在播放的 Audio 元素，用于停止 */
 let currentAudio: HTMLAudioElement | null = null;
@@ -94,6 +95,43 @@ function buildHistory(messages: { role: string; text: string }[]) {
   }));
 }
 
+// 跳转健壮性：把 AI 给的 page（可能是中文页名 / 非精确路径）归一化为合法路由，
+// 避免「没严格按规范用指令」导致跳转失败。识别不了返回 null。
+const ROUTE_KNOWN = ['home', 'itinerary', 'products', 'green', 'checkin', 'leaderboard', 'orders', 'vr', 'map', 'wallet', 'messages', 'mine', 'community', 'ai/assistant'];
+const ROUTE_ALIASES: Record<string, string> = {
+  首页: '/home', 主页: '/home',
+  森林: '/itinerary', 绿色能量森林: '/itinerary', 能量森林: '/itinerary', 行程: '/itinerary',
+  商城: '/products', 生态良品: '/products', 良品: '/products', 商品: '/products',
+  绿色资讯: '/green', 资讯: '/green', 头条: '/green',
+  签到: '/checkin', 打卡: '/checkin',
+  排行榜: '/leaderboard', 减排榜: '/leaderboard', 榜单: '/leaderboard', 排名: '/leaderboard',
+  订单: '/orders', 我的订单: '/orders',
+  全景: '/vr', vr全景: '/vr',
+  地图: '/map', 绿色地图: '/map', 低碳地图: '/map',
+  钱包: '/wallet', 余额: '/wallet',
+  消息: '/messages', 通知: '/messages',
+  我的: '/mine', 个人中心: '/mine', 我: '/mine',
+  社区: '/community',
+  答题: '/quiz/1', 环保答题: '/quiz/1', 测验: '/quiz/1',
+  助手: '/ai/assistant', ai助手: '/ai/assistant',
+};
+function resolveRoute(page: string): string | null {
+  const raw = (page || '').trim();
+  const p = raw.replace(/^\/+/, '').replace(/\/+$/, '');
+  if (!p) return null;
+  if (ROUTE_KNOWN.includes(p)) return `/${p}`;
+  if (/^quiz\/\d+$/.test(p)) return `/${p}`;
+  if (p === 'quiz') return '/quiz/1';
+  const prod = p.match(/^products?\/(\d+)$/);
+  if (prod) return `/product/${prod[1]}`;
+  if (ROUTE_ALIASES[p]) return ROUTE_ALIASES[p];
+  // 包含关键词兜底（如 "去森林看看" 里夹了别的字）
+  for (const k of Object.keys(ROUTE_ALIASES)) {
+    if (raw.includes(k)) return ROUTE_ALIASES[k];
+  }
+  return null;
+}
+
 /** 发送文字到 AI，携带完整对话历史 */
 async function sendToAI(
   text: string,
@@ -122,11 +160,13 @@ async function sendToAI(
       useVoiceAssistant.getState().setAutomating(true);
       setTimeout(() => useVoiceAssistant.getState().setAutomating(false), 1800);
       if (cmd === 'open_page' && params.page) {
-        let route = params.page.replace(/^\/+/, '');
-        // 纠正常见 AI 错误：/products/91 → /product/91（产品详情是单数路径）
-        route = route.replace(/^products\/(\d+)$/, 'product/$1');
-        setTimeout(() => router.push(`/${route}` as any), 600);
-        addMessage({ role: 'assistant', text: `[系统] 已执行：打开页面 /${route}`, isCommand: true });
+        const route = resolveRoute(params.page);
+        if (route) {
+          setTimeout(() => router.push(route as never), 600);
+          addMessage({ role: 'assistant', text: `[系统] 已执行：打开页面 ${route}`, isCommand: true });
+        } else {
+          addMessage({ role: 'assistant', text: `[系统] 未能识别页面「${params.page}」，请换个说法`, isCommand: true });
+        }
       } else if (cmd === 'buy' && params.productId) {
         const pid = params.productId.replace(/^\/+/, '');
         setTimeout(() => router.push(`/product/${pid}?autoBuy=1` as any), 600);
@@ -149,6 +189,25 @@ async function sendToAI(
           addMessage({ role: 'assistant', text: `[系统] ${r?.message ?? '浇灌成功，碳积分已到账'}`, isCommand: true });
         } catch (err) {
           addMessage({ role: 'assistant', text: `[系统] 浇灌失败：${err instanceof Error ? err.message : '请稍后再试'}`, isCommand: true });
+        }
+      } else if (cmd === 'query_profile') {
+        try {
+          const s = await apiRequest<{ carbonCredits: number; points: number; treesPlanted: number; totalCarbonSaved: number }>('/eco/progress', { auth: true });
+          const name = useAuthStore.getState().user?.username ?? '你';
+          addMessage({ role: 'assistant', text: `[系统] ${name} 的数据：碳积分 ${s.carbonCredits}、积分 ${s.points}、已种 ${s.treesPlanted} 棵真树、累计减排 ${s.totalCarbonSaved.toFixed(1)} kg`, isCommand: true });
+        } catch (err) {
+          addMessage({ role: 'assistant', text: `[系统] 查询失败：${err instanceof Error ? err.message : '请先登录'}`, isCommand: true });
+        }
+      } else if (cmd === 'query_rank') {
+        try {
+          const r = await apiRequest<{ self?: { rank: number; score: number; carbonCredits: number } }>('/leaderboard', { auth: true });
+          if (r.self) {
+            addMessage({ role: 'assistant', text: `[系统] 你当前在减排榜第 ${r.self.rank} 名，综合分 ${r.self.score}（碳积分 ${r.self.carbonCredits}）`, isCommand: true });
+          } else {
+            addMessage({ role: 'assistant', text: '[系统] 你还没进入榜单，多做绿色任务冲榜吧', isCommand: true });
+          }
+        } catch (err) {
+          addMessage({ role: 'assistant', text: `[系统] 查询失败：${err instanceof Error ? err.message : '请先登录'}`, isCommand: true });
         }
       } else if (cmd === 'end') {
         // 用 getState() 绕开闭包读最新消息
