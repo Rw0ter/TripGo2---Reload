@@ -85,10 +85,10 @@ export default function MyStoriesScreen() {
               style={{ marginTop: 40 }}
             />
             <Text className="mt-4 text-[16px] font-bold text-[#333]">
-              你的非遗故事
+              你的低碳故事
             </Text>
             <Text className="mt-2 text-center text-[14px] leading-5 text-[#999]">
-              发布你的岭南文化体验{'\n'}与更多人分享旅程中的感动
+              发布你的绿色低碳体验{'\n'}与更多人分享低碳生活中的感动
             </Text>
             <Pressable
               onPress={() => router.push('/post/story')}

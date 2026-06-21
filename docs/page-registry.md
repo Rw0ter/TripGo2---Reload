@@ -3,7 +3,7 @@
 > 这是前端重写的总调度表。用法见 CLAUDE.md 第 12 / 14 节。
 > 开工某页前，把"状态"列改成 `进行中(负责人名)`；完成后改 `完成`。**状态以代码为准**。
 >
-> **最后更新：2026-06-17**（绿色低碳主题转型：删除 study → 新增 green，全部页面主题更新为绿色低碳。此前 2026-06-09 对账重写。）
+> **最后更新：2026-06-21**（绿色低碳深化：行程→森林、答题重构、引导/认证重做、绿色地图、语音深化；分支 feat/green-deepening。此前 2026-06-17 转型、2026-06-09 对账。）
 
 ## 汇总
 
@@ -39,13 +39,13 @@
 
 | 文件 | 功能 | 类型 | 复用模式 | 依赖API | 状态 | 备注 |
 |------|------|------|----------|---------|------|------|
-| login.html | 账号登录 | 认证 | 单独实现 | auth | 完成 | Legacy 像素级复刻 |
-| register.html | 账号注册 | 认证 | 单独实现 | auth | 完成 | Legacy 像素级复刻 |
-| forget_sendEmail.html | 找回密码 | 认证 | Form组件 | auth | 待开始 | |
-| hello.html | 欢迎 / 隐私协议确认 | 静态文本 | 单独实现 | 无 | 完成 | 滚动到底才可同意；仅首启展示 |
+| login.html | 账号登录 | 认证 | 单独实现 | auth | 完成 | 2026-06-21 重做（森林背景+白色表单卡片+Ionicons 输入+密码显隐），复用 auth 逻辑 |
+| register.html | 账号注册 | 认证 | 单独实现 | auth | 完成 | 2026-06-21 重做（同登录新外壳，行内校验保留） |
+| forget_sendEmail.html | 找回密码 | 认证 | 单独实现 | auth | 完成 | 2026-06-21 新增 `(auth)/forgot`，后端 POST /auth/reset-password（用户名+邮箱核验，无邮件服务） |
+| hello.html | 欢迎 / 隐私协议确认 | 静态文本 | 单独实现 | 无 | 完成 | 滚动到底才可同意；仅首启；2026-06-21 背景换 CC0 绿色森林 |
 | index1.html | 首页（正式版） | 核心Tab | 单独实现 | banners/scenic/quiz | 完成 | `(tabs)/home.tsx`，接后端 + 改版升级 |
 | fywh.html | 首页·非遗文化 Tab | 核心Tab | 单独实现 | search 等 | 待开始 | 与 index1 关系待理清 |
-| itinerary.html | 行程 Tab | 核心Tab | 单独实现 | scenic | 完成 | `(tabs)/itinerary.tsx`，接后端 POI |
+| itinerary.html | 森林 Tab（绿色能量） | 核心Tab | 单独实现 | eco | 完成 | 2026-06-21 重做为蚂蚁森林式绿色能量森林（能量球/虚拟树/浇灌/今日任务/7日减排/森林广场），接 `/eco/*`；底部 tab 改「森林」 |
 | mine1.html | 我的 Tab（正式版） | 核心Tab | 单独实现 | auth | 完成 | `(tabs)/mine.tsx`，接 authStore + 改版 |
 | bianji.html | 编辑个人信息 | 表单 | Form组件 | auth | 完成 | `profile/edit.tsx`；PUT /auth/userinfo 失败有本地兜底，头像占位 |
 | search.html | 智能搜索 | 列表 | 单独实现 | search | 完成 | `search.tsx` 搜索工具式独立排版（搜索框即主角 + 悬浮历史/建议覆盖层 + 热搜榜 TOP10 编号榜 + 猜你想搜 chip；结果景点/文创真实图卡跳详情）；不沿用首页骨架 |
@@ -56,7 +56,7 @@
 | hotTrip.html | 城市攻略 / 景点列表 | 详情 | 详情组件 | scenic | 完成 | `guide/[city].tsx`，接 GET /scenic?city= |
 | MCP.html | AI 智能行程规划 | AI | 单独实现 | ai | 完成 | `ai/assistant.tsx` 规划模式，POST /ai/plan（SSE）；行程以目的地为主语（修出发地被当成游览城市的 bug），结果用 markdown 渲染 |
 | offline-ai.html | AI 研学对话 | AI | 单独实现 | ai | 完成 | 并入 `ai/assistant.tsx` 对话模式，POST /ai/chat（SSE）；回复用 react-native-markdown-display 渲染 |
-| map.html | 旅行地图 | 地图VR | 单独实现 | 腾讯GL SDK | 完成 | `map.tsx`，在线 GL + 离线兜底 |
+| map.html | 绿色低碳地图 | 地图VR | 单独实现 | 腾讯GL SDK | 完成 | 2026-06-21 重定位为绿色地图（回收点/充电站/公园/地铁/共享单车 快捷搜索），保留 GL 引擎 + 离线兜底 |
 | ksgh.html | 线路规划表单 | 表单 | Form组件 | trips | 部分 | `trip/create.tsx` 提供新建行程；完整线路规划待做 |
 | xlgh.html | 线路规划结果列表 | 列表 | 列表组件 | 新增:线路 | 待开始 | |
 | xlgh-xq.html | 线路详情 | 详情 | 详情组件 | 新增:线路 | 待开始 | |
@@ -70,9 +70,9 @@
 
 | 文件 | 功能 | 类型 | 复用模式 | 依赖API | 状态 | 备注 |
 |------|------|------|----------|---------|------|------|
-| login1.html | 启动闪屏 | 动画屏 | 单独实现 | 无 | 完成 | 复刻启动动画，仅首启展示 |
+| login1.html | 启动动画引导 | 动画屏 | 单独实现 | 无 | 完成 | 2026-06-21 贝塞尔(Easing.bezier)重写 + CC0 森林背景 Ken Burns + 品牌错峰浮入 + 跳过 |
 | welcome.html | 启动欢迎页 | 静态文本 | 单独实现 | 无 | 待开始 | 可用 Expo SplashScreen |
-| resetPW.html | 重置密码 | 认证 | Form组件 | auth | 待开始 | |
+| resetPW.html | 重置密码 | 认证 | 单独实现 | auth | 完成 | 已并入 `(auth)/forgot`（核验身份后直接设新密码） |
 | about_us.html | 关于我们 | 静态文本 | StaticPage组件 | 无 | 完成 | `app/about_us.tsx`，数据驱动 StaticPage（#71） |
 | xieyi.html | 用户服务协议 | 静态文本 | StaticPage组件 | 无 | 待开始 | |
 | yonghuxieyi.html | 用户协议 | 静态文本 | StaticPage组件 | 无 | 完成 | `app/yonghuxieyi.tsx`，采用 xieyi 服务协议文案（#71） |
@@ -95,7 +95,7 @@
 | add.html | 发布社区动态 | 表单 | 单独实现 | stories, auth | 完成 | `post/story.tsx`（仅预置图） |
 | message.html | 消息中心 | 列表 | 列表组件 | messages | 完成 | `messages.tsx`（DEMO 数据，非按用户） |
 | my_star.html | 收藏列表 | 列表 | 列表组件 | favorites | 完成 | `collections.tsx`（活动收藏，当前静态） |
-| history.html | 研学答题系统 | 复杂屏 | 单独实现 | quiz, auth(积分) | 完成 | `quiz/[id].tsx`，含离线兜底题库 |
+| history.html | 环保答题系统 | 复杂屏 | 单独实现 | quiz, auth(积分) | 完成 | 2026-06-21 企业级重构（分段进度/对错动效/正确率环）+ 真实绿色低碳题库（后端 4 卡×5 题），离线兜底改绿色 |
 | top_list.html | 积分排行榜 | 列表 | 列表组件 | leaderboard | 完成 | `leaderboard.tsx` |
 | qd.html | 签到福利中心 | 表单 | 单独实现 | checkin, auth | 完成 | `checkin.tsx`；签到按 UTC+8 判定当天 |
 | wallet.html | 钱包 / 流水 | 列表 | 列表组件 | transactions | 完成 | `wallet.tsx`（流水接后端，预算静态兜底） |

@@ -280,7 +280,7 @@ export default function StoryDetailScreen() {
               <View className="flex-row items-center rounded-full bg-[#E4EEE4] px-2.5 py-1">
                 <Ionicons name="ribbon-outline" size={12} color="#386641" />
                 <Text className="ml-1 text-[11px] font-semibold text-[#386641]">
-                  非遗手记
+                  低碳手记
                 </Text>
               </View>
             </View>
@@ -298,7 +298,7 @@ export default function StoryDetailScreen() {
                   {story.author.username}
                 </Text>
                 <Text className="text-[11px] text-[#9C8E7A]">
-                  岭南守艺人 · {timeAgo(story.createdAt)}
+                  低碳生活家 · {timeAgo(story.createdAt)}
                 </Text>
               </View>
               <Pressable

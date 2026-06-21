@@ -27,17 +27,17 @@ interface Budget {
 }
 
 const FALLBACK_TXNS: Transaction[] = [
-  { id: 1, title: '广州塔门票', time: '05-31 14:32', amount: -120.0 },
-  { id: 2, title: '岭南印象园车票', time: '05-30 09:15', amount: -6.0 },
+  { id: 1, title: '共享单车骑行', time: '05-31 14:32', amount: -1.5 },
+  { id: 2, title: '地铁绿色出行', time: '05-30 09:15', amount: -6.0 },
   { id: 3, title: '充值', time: '05-29 22:07', amount: 2000.0 },
-  { id: 4, title: '羊城通充值返现', time: '05-29 20:18', amount: 10.0 },
-  { id: 5, title: '购买广绣团扇', time: '05-28 15:30', amount: -128.0 },
+  { id: 4, title: '碳积分兑换返现', time: '05-29 20:18', amount: 10.0 },
+  { id: 5, title: '购买可降解环保餐具', time: '05-28 15:30', amount: -128.0 },
   { id: 6, title: '每日签到奖励', time: '05-28 08:00', amount: 10.0 },
 ];
 
 const FALLBACK_BUDGETS: Budget[] = [
-  { name: '广州三日游预算', spent: 3120, total: 5000 },
-  { name: '潮汕美食之旅预算', spent: 2150, total: 2000 },
+  { name: '本月绿色出行预算', spent: 3120, total: 5000 },
+  { name: '生态良品消费预算', spent: 2150, total: 2000 },
 ];
 
 export default function WalletScreen() {
@@ -154,7 +154,7 @@ export default function WalletScreen() {
         {/* 行程预算进度 */}
         <View className="px-4 pt-2">
           <Text className="mb-3 text-[16px] font-bold text-[#5b8bff]">
-            行程预算进度
+            绿色消费预算
           </Text>
           {budgets.map((b, i) => {
             const pct = Math.min(100, Math.round((b.spent / b.total) * 100));

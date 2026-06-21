@@ -109,7 +109,7 @@ function Hero({ insets, onExplore }: { insets: number; onExplore: () => void }) 
         style={{ position: 'absolute', inset: 0 }}
       />
 
-      <ScreenHeader title="全景漫游" subtitle="广东 · 岭南风光" tint="dark" />
+      <ScreenHeader title="全景漫游" subtitle="绿途 · 生态风光" tint="dark" />
 
       <View className="flex-1 justify-end px-5 pb-6">
         <Animated.View entering={FadeIn.delay(200).springify()}>

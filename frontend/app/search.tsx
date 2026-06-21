@@ -323,7 +323,7 @@ export default function SearchScreen() {
             onFocus={handleFocus}
             onBlur={handleBlur}
             onSubmitEditing={() => doSearch(q)}
-            placeholder="搜景点 · 文创 · 发现岭南"
+            placeholder="搜环保场所 · 生态良品 · 发现绿途"
             placeholderTextColor="#B7B09B"
             returnKeyType="search"
             className="ml-2.5 h-14 flex-1 text-[17px] font-medium"
@@ -435,7 +435,7 @@ export default function SearchScreen() {
                 <View className="mb-3 flex-row items-center">
                   <Ionicons name="bulb-outline" size={15} color={PRIMARY} />
                   <Text className="ml-1.5 text-[14px] font-bold" style={{ color: INK }}>猜你想搜</Text>
-                  <Text className="ml-2 text-[11px]" style={{ color: MUTE }}>随手探探岭南</Text>
+                  <Text className="ml-2 text-[11px]" style={{ color: MUTE }}>随手探探绿途</Text>
                 </View>
                 <View className="flex-row flex-wrap" style={{ gap: 9 }}>
                   {guessTags.map((tag, i) => {
@@ -545,7 +545,7 @@ export default function SearchScreen() {
             </View>
             <Text className="mt-4 text-[15px] font-semibold" style={{ color: '#7d7768' }}>没有「{q.trim()}」的结果</Text>
             <Text className="mt-1 text-center text-[13px] leading-5" style={{ color: '#a8a08d' }}>
-              试试更短的关键词，或从下方热搜榜挑一个，再探探岭南
+              试试更短的关键词，或从下方热搜榜挑一个，再探探绿途
             </Text>
           </View>
         ) : hasResults ? (
@@ -584,7 +584,7 @@ export default function SearchScreen() {
             {/* 文创：整齐双列商品卡（白底立卡，区别于景点行式与首页瀑布流）*/}
             {destinations.length > 0 ? (
               <Animated.View entering={FadeInDown.delay(100).duration(360)} className="mb-2">
-                <ResultGroupLabel category="product" title="文创好物" count={destinations.length} unit="件" />
+                <ResultGroupLabel category="product" title="生态良品" count={destinations.length} unit="件" />
                 <View className="flex-row" style={{ gap: 12 }}>
                   <View className="flex-1">
                     {destColumns.colA.map((item, i) => (
@@ -743,7 +743,7 @@ function DestinationCard({
           />
           {/* 类目徽标：暖金胶囊，一眼区分这是文创 */}
           <View className="absolute left-2 top-2 rounded-md px-1.5 py-0.5" style={{ backgroundColor: 'rgba(255,255,255,0.92)' }}>
-            <Text className="text-[9.5px] font-bold" style={{ color: CAT.product.ink }}>文创</Text>
+            <Text className="text-[9.5px] font-bold" style={{ color: CAT.product.ink }}>良品</Text>
           </View>
         </View>
         <View className="p-3">
