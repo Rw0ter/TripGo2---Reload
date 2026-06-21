@@ -372,7 +372,7 @@ export default function ScenicDetailScreen() {
           <View className="mt-4">
             {activeTab === 0 ? (
               <Text className="text-[15px] leading-7 text-[#555]">
-                {data.summary || `${data.name}位于广东省${data.city}，是岭南文化的代表性景点之一。这里融合了自然风光与人文历史，每年吸引大量游客前来观光体验。游客可以在此感受浓厚的岭南文化氛围，品味当地特色美食，体验非遗手工技艺，是来广东旅游不可错过的目的地。`}
+                {data.summary || `${data.name}位于${data.city}，是周边颇具代表性的绿色生态地标之一。这里自然风光优美、生态环境宜人，是亲近自然、绿色出行的理想去处。你可以在此呼吸新鲜空气、感受生态之美，体验低碳健行与自然教育，是绿色低碳出行不可错过的目的地。`}
               </Text>
             ) : activeTab === 1 ? (
               <View>
@@ -401,19 +401,19 @@ export default function ScenicDetailScreen() {
           <View className="mt-5 flex-row justify-between px-2">
             {/* Duration */}
             <View className="items-center">
-              <Text className="text-[24px]">{'⏱️'}</Text>
+              <Ionicons name="time-outline" size={24} color="#40916C" />
               <Text className="mt-1 text-[14px] font-bold text-[#333]">{getDuration(data)}</Text>
               <Text className="mt-0.5 text-[12px] text-[#999]">时长</Text>
             </View>
             {/* Distance */}
             <View className="items-center">
-              <Text className="text-[24px]">{'📍'}</Text>
+              <Ionicons name="location-outline" size={24} color="#40916C" />
               <Text className="mt-1 text-[14px] font-bold text-[#333]">{getDistance(data.city)}</Text>
               <Text className="mt-0.5 text-[12px] text-[#999]">距离</Text>
             </View>
             {/* Weather */}
             <View className="items-center">
-              <Text className="text-[24px]">{'☀️'}</Text>
+              <Ionicons name="partly-sunny-outline" size={24} color="#40916C" />
               <Text className="mt-1 text-[14px] font-bold text-[#333]">{weather.value}</Text>
               <Text className="mt-0.5 text-[12px] text-[#999]">{weather.label}</Text>
             </View>

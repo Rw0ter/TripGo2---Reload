@@ -19,6 +19,7 @@ import { SearchModule } from './modules/search/search.module';
 import { StoriesModule } from './modules/stories/stories.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { TripsModule } from './modules/trips/trips.module';
+import { EcoModule } from './modules/eco/eco.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { TripsModule } from './modules/trips/trips.module';
     StoriesModule,
     TransactionsModule,
     TripsModule,
+    EcoModule,
   ],
   controllers: [AppController],
 })

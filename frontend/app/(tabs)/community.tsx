@@ -163,7 +163,7 @@ export default function CommunityScreen() {
             </Pressable>
           </View>
           <Text className="mt-1 text-[12px] text-white/75">
-            守艺人手记 · 岭南非遗的传承与分享
+            绿色生活日记 · 低碳行动的记录与分享
           </Text>
         </View>
       </LinearGradient>

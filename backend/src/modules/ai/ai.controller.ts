@@ -5,6 +5,7 @@ import { AiService } from './ai.service';
 import { ChatDto } from './dto/chat.dto';
 import { PlanDto } from './dto/plan.dto';
 import { TranslateDto } from './dto/translate.dto';
+import { SpeakDto } from './dto/speak.dto';
 
 @ApiTags('ai')
 @Controller('ai')
@@ -32,6 +33,13 @@ export class AiController {
   })
   async plan(@Body() dto: PlanDto, @Res() res: Response): Promise<void> {
     await this.ai.plan(dto, res);
+  }
+
+  // TTS 语音合成（Piper 本地引擎）
+  @Post('speak')
+  @ApiOperation({ summary: '文本转语音（Piper TTS 本地引擎，返回 WAV 音频 base64）' })
+  async speak(@Body() dto: SpeakDto) {
+    return this.ai.speak(dto.text);
   }
 
   // 普通话→粤语文字翻译（非流式，走统一信封）。粤语课堂用。

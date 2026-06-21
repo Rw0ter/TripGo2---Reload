@@ -1,18 +1,13 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text } from 'react-native';
-import { FadeInDown } from 'react-native-reanimated';
-import { toast } from '@/lib/toast';
+import { Pressable, Text, View } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { AuthInput } from '@/components/auth/auth-input';
 import { AuthScreenLayout } from '@/components/auth/auth-screen-layout';
-import { Animated } from '@/components/ui/animated';
 import { apiRequest } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import { AuthUser, useAuthStore } from '@/stores/auth';
-
-const userIcon = require('../../assets/legacy/img/user-3-line.png');
-const passwordIcon = require('../../assets/legacy/img/password.png');
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -29,10 +24,10 @@ export default function LoginScreen() {
     }
     setLoading(true);
     try {
-      const data = await apiRequest<{ token: string; user: AuthUser }>(
-        '/auth/login',
-        { method: 'POST', body: { username: name, password } },
-      );
+      const data = await apiRequest<{ token: string; user: AuthUser }>('/auth/login', {
+        method: 'POST',
+        body: { username: name, password },
+      });
       setAuth(data.token, data.user);
       router.replace('/home');
     } catch (e) {
@@ -43,24 +38,19 @@ export default function LoginScreen() {
   }
 
   return (
-    <AuthScreenLayout>
-      <Animated.View entering={FadeInDown.delay(200).duration(500)}>
+    <AuthScreenLayout title="欢迎回来" subtitle="登录绿途，继续你的低碳之旅">
+      <AuthInput
+        icon="person-outline"
+        value={username}
+        onChangeText={setUsername}
+        placeholder="手机号 / 用户名 / 邮箱"
+        accessibilityLabel="用户名"
+        autoComplete="username"
+        textContentType="username"
+      />
+      <View className="mt-4">
         <AuthInput
-          icon={userIcon}
-          value={username}
-          onChangeText={setUsername}
-          placeholder="请输入手机号/用户名/邮箱"
-          accessibilityLabel="用户名"
-          autoComplete="username"
-          textContentType="username"
-        />
-      </Animated.View>
-
-      <Animated.View
-        entering={FadeInDown.delay(300).duration(500)}
-        className="mt-[18px]">
-        <AuthInput
-          icon={passwordIcon}
+          icon="lock-closed-outline"
           value={password}
           onChangeText={setPassword}
           placeholder="密码"
@@ -69,32 +59,24 @@ export default function LoginScreen() {
           autoComplete="password"
           textContentType="password"
         />
-      </Animated.View>
+      </View>
 
-      <Animated.View
-        entering={FadeInDown.delay(400).duration(500)}
-        className="mt-4 flex-row justify-between">
-        <Pressable
-          onPress={() => router.push('/register')}
-          accessibilityRole="button">
-          <Text className="text-sm font-semibold text-white">账号注册</Text>
+      <View className="mt-3 flex-row justify-end">
+        <Pressable onPress={() => router.push('/forgot' as never)} accessibilityRole="button">
+          <Text className="text-[13px] font-semibold text-eco">忘记密码？</Text>
         </Pressable>
-        <Pressable
-          onPress={() => toast.info('找回密码功能开发中')}
-          accessibilityRole="button">
-          <Text className="text-sm font-semibold text-white">忘记密码</Text>
-        </Pressable>
-      </Animated.View>
+      </View>
 
-      <Animated.View
-        entering={FadeInDown.delay(500).duration(500)}
-        className="mt-6">
-        <AuthButton
-          label={loading ? '登录中…' : '登录'}
-          loading={loading}
-          onPress={handleLogin}
-        />
-      </Animated.View>
+      <View className="mt-6">
+        <AuthButton label={loading ? '登录中…' : '登录'} loading={loading} onPress={handleLogin} />
+      </View>
+
+      <View className="mt-6 flex-row justify-center">
+        <Text className="text-[14px] text-eco-mid/70">还没有账号？</Text>
+        <Pressable onPress={() => router.push('/register')} accessibilityRole="button">
+          <Text className="text-[14px] font-bold text-eco"> 立即注册</Text>
+        </Pressable>
+      </View>
     </AuthScreenLayout>
   );
 }

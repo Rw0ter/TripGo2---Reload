@@ -67,33 +67,30 @@ describe('extractDeltas（DeepSeek SSE 解析）', () => {
   });
 });
 
-describe('buildPlanPrompt', () => {
-  it('以目的地为行程主语，出发地仅作来回交通（回归点：曾把出发地当成游览城市）', () => {
+describe('buildPlanPrompt（绿色低碳行动计划）', () => {
+  it('把行动周期 / 预算 / 关注领域 / 补充说明拼进绿色低碳计划提示', () => {
     const p = buildPlanPrompt({
       from: '广州',
       to: '潮州',
       budget: 2000,
       days: 3,
-      tags: ['美食之旅', '非遗体验'],
-      notes: '带老人',
+      tags: ['节能减排', '绿色出行'],
+      notes: '家里有小孩',
     });
-    // 目的地是行程主语，全部游览都在目的地
-    expect(p).toContain('【潮州】');
-    expect(p).toContain('都必须安排在 潮州');
-    // 出发地只用于第一天来程 / 最后一天返程，不在出发地安排游览
-    expect(p).toContain('从 广州 到 潮州');
-    expect(p).toContain('除交通外不要在 广州 安排游览');
-    expect(p).toContain('旅行偏好：美食之旅、非遗体验');
-    expect(p).toContain('带老人');
+    expect(p).toContain('绿色低碳行动计划');
+    expect(p).toContain('行动周期：3 天');
+    expect(p).toContain('预算参考：¥2000');
+    expect(p).toContain('关注领域：节能减排、绿色出行');
+    expect(p).toContain('补充说明：家里有小孩');
   });
   it('无 tags / notes 用默认占位', () => {
     const p = buildPlanPrompt({ from: '深圳', to: '珠海', budget: 1000, days: 2 });
-    expect(p).toContain('旅行偏好：综合体验');
+    expect(p).toContain('关注领域：综合方案');
     expect(p).toContain('补充说明：无');
   });
 });
 
-describe('AiService.translate（普通话→粤语）', () => {
+describe('AiService.translate（环保术语翻译）', () => {
   it('无 DEEPSEEK_API_KEY → 抛 ServiceUnavailable', async () => {
     const svc = new AiService(makeConfig({}), makeRag());
     await expect(svc.translate('你好')).rejects.toBeInstanceOf(

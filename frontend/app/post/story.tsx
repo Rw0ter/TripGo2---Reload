@@ -53,7 +53,7 @@ export default function PostStoryScreen() {
         <View className="flex-1 items-center justify-center px-10">
           <Ionicons name="lock-closed-outline" size={36} color="#9C8E7A" />
           <Text className="mt-3 text-center text-[14px] text-[#6b6553]">
-            登录后才能发布你的非遗见闻
+            登录后才能发布你的低碳见闻
           </Text>
           <Pressable
             onPress={() => router.replace('/login')}
@@ -117,7 +117,7 @@ export default function PostStoryScreen() {
           <TextInput
             value={title}
             onChangeText={setTitle}
-            placeholder="给你的非遗见闻起个标题"
+            placeholder="给你的低碳见闻起个标题"
             placeholderTextColor="#B3A98F"
             maxLength={50}
             style={{ boxShadow: '0px 2px 8px rgba(0,0,0,0.05)' }}
@@ -131,7 +131,7 @@ export default function PostStoryScreen() {
           <TextInput
             value={content}
             onChangeText={setContent}
-            placeholder="分享你遇见的手艺、匠人与故事…"
+            placeholder="分享你的绿色出行、环保实践与低碳故事…"
             placeholderTextColor="#B3A98F"
             multiline
             maxLength={2000}

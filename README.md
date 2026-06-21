@@ -1,6 +1,7 @@
-# TripGo（文脉粤游）
+# TripGo（绿途）
 
-以广东 / 岭南文化旅游为主题的移动应用 —— 2026 重写版。
+以**绿色低碳生活**为主题的移动应用 —— 2026 重写版。碳积分、虚拟植树（蚂蚁森林式绿色能量森林）、
+环保答题、生态良品商城、绿色地图、AI 低碳助手（含语音），贴合「绿色发展 + 新质生产力」路线。
 
 ## 技术栈
 
@@ -28,7 +29,7 @@ cd backend
 npm install
 cp .env.example .env          # 填好 JWT_SECRET、DEEPSEEK_API_KEY
 npx prisma migrate dev --name init
-npx prisma db seed            # 灌入演示数据（轮播 / 景点 / 知识课堂 / 文创）
+npx prisma db seed            # 灌入演示数据（轮播 / 生态良品 / 答题题库 / 社区故事）
 npm run start:dev             # API http://localhost:3000  文档 /docs
 npm run verify                # 提交前自检：构建 + 单元测试
 ```

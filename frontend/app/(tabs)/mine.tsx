@@ -22,14 +22,14 @@ const ORDERS = [
 const SERVICES = [
   { icon: require('../../assets/legacy/img/mine/zj.png'), label: '足迹' },
   { icon: require('../../assets/legacy/img/mine/dd.png'), label: '订单' },
-  { icon: require('../../assets/legacy/img/mine/hdsc.png'), label: '活动收藏' },
-  { icon: require('../../assets/legacy/img/mine/dkjd.png'), label: '打卡景点' },
-  { icon: require('../../assets/legacy/img/mine/dzgl.png'), label: '跑团管理' },
-  { icon: require('../../assets/legacy/img/mine/wdyx.png'), label: '我的研学' },
-  { icon: require('../../assets/legacy/img/mine/cgyy.png'), label: '场馆购票' },
+  { icon: require('../../assets/legacy/img/mine/hdsc.png'), label: '绿色收藏' },
+  { icon: require('../../assets/legacy/img/mine/dkjd.png'), label: '环保打卡' },
+  { icon: require('../../assets/legacy/img/mine/dzgl.png'), label: '碳账户' },
+  { icon: require('../../assets/legacy/img/mine/wdyx.png'), label: '绿色行动' },
+  { icon: require('../../assets/legacy/img/mine/cgyy.png'), label: '积分兑换' },
   { icon: require('../../assets/legacy/img/mine/wdjf.png'), label: '我的积分' },
   { icon: require('../../assets/legacy/img/mine/fbqz.png'), label: '发布圈子' },
-  { icon: require('../../assets/legacy/img/mine/wdkc.png'), label: '我的课程' },
+  { icon: require('../../assets/legacy/img/mine/wdkc.png'), label: '环保课程' },
   { icon: require('../../assets/legacy/img/mine/yqhy.png'), label: '邀请好友' },
 ];
 
@@ -171,7 +171,7 @@ export default function MineScreen() {
                 <View className="mt-1.5 flex-row">
                   <View className="rounded-full bg-white/20 px-2 py-0.5">
                     <Text className="text-[11px] font-semibold text-white">
-                      Lv.{level} · 岭南文化体验官
+                      Lv.{level} · 绿色生活倡导者
                     </Text>
                   </View>
                 </View>
@@ -294,7 +294,7 @@ export default function MineScreen() {
             <SectionTitle title="更多服务" />
             <View className="flex-row flex-wrap">
               {SERVICES.map((it) => {
-                const routes: Record<string, string> = { '足迹': '/my/stories', '订单': '/orders', '活动收藏': '/collections', '打卡景点': '/checkin', '我的研学': '/study', '我的积分': '/wallet', '我的课程': '/study' };
+                const routes: Record<string, string> = { '足迹': '/my/stories', '订单': '/orders', '绿色收藏': '/collections', '环保打卡': '/checkin', '绿色行动': '/green', '我的积分': '/wallet', '环保课程': '/green' };
                 const target = routes[it.label];
                 return (
                   <Pressable

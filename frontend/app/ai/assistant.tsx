@@ -63,25 +63,25 @@ interface Message { role: 'user' | 'assistant'; text: string; }
 // ── Constants ──────────────────────────────────────────────
 const WELCOME_MSG: Message = {
   role: 'assistant',
-  text: '你好！我是文脉粤游的智能旅行助手。\n\n我可以帮你规划岭南地区的旅行行程，介绍非遗文化和美食，推荐景点和路线。\n\n💡 试试切换到「行程规划」模式，输入出发地和目的地，我就能为你生成一份完整的旅行计划。',
+  text: '你好！我是绿途的智能低碳生活助手。\n\n我可以帮你了解绿色环保知识、制定节能减排计划、推荐生态良品、计算碳足迹，以及解答关于碳中和、垃圾分类、可再生能源等环保话题。\n\n试试切换到「绿色方案」模式，输入你的环保目标，我将为你生成一份个性化的绿色行动计划。',
 };
 
 const SUGGESTIONS = [
-  { text: '推荐一个广州三日游行程', icon: 'compass-outline' },
-  { text: '广东有什么非遗文化？', icon: 'library-outline' },
-  { text: '潮汕地区有什么好吃的？', icon: 'restaurant-outline' },
-  { text: '开平碉楼在哪里？怎么去？', icon: 'home-outline' },
-  { text: '佛山醒狮表演在哪里看？', icon: 'paw-outline' },
-  { text: '广东有哪些世界文化遗产？', icon: 'globe-outline' },
+  { text: '如何减少日常碳足迹？', icon: 'leaf-outline' },
+  { text: '垃圾分类有什么技巧？', icon: 'trash-outline' },
+  { text: '推荐一些节能家电', icon: 'flash-outline' },
+  { text: '绿色出行有哪些方式？', icon: 'bicycle-outline' },
+  { text: '家庭节水小妙招', icon: 'water-outline' },
+  { text: '碳中和是什么意思？', icon: 'earth-outline' },
 ];
 
 const PREFERENCES = [
-  { key: 'nature', label: '自然风光', icon: 'leaf-outline' },
-  { key: 'culture', label: '历史文化', icon: 'library-outline' },
-  { key: 'food', label: '美食之旅', icon: 'restaurant-outline' },
-  { key: 'heritage', label: '非遗体验', icon: 'color-palette-outline' },
-  { key: 'family', label: '亲子游玩', icon: 'people-outline' },
-  { key: 'photo', label: '摄影打卡', icon: 'camera-outline' },
+  { key: 'energy', label: '节能减排', icon: 'flash-outline' },
+  { key: 'recycle', label: '循环利用', icon: 'refresh-outline' },
+  { key: 'diet', label: '低碳饮食', icon: 'restaurant-outline' },
+  { key: 'travel', label: '绿色出行', icon: 'bicycle-outline' },
+  { key: 'home', label: '绿色家居', icon: 'home-outline' },
+  { key: 'nature', label: '生态保护', icon: 'leaf-outline' },
 ];
 
 // ── Chat Bubble ────────────────────────────────────────────
@@ -96,7 +96,7 @@ function ChatBubble({ msg, index }: { msg: Message; index: number }) {
           <View className="h-7 w-7 items-center justify-center rounded-full bg-[#E8F5E9]">
             <Ionicons name="sparkles" size={13} color="#2D6A4F" />
           </View>
-          <Text className="text-[12px] font-medium text-[#999]">TripGo AI</Text>
+          <Text className="text-[12px] font-medium text-[#999]">绿途 AI</Text>
         </View>
       )}
       <View
@@ -122,7 +122,7 @@ function WelcomeState({ onTap }: { onTap: (q: string) => void }) {
   return (
     <Animated.View entering={FadeIn.delay(200).springify()} className="px-2 pt-4">
       <Text className="mb-4 text-center text-[13px] font-medium text-[#bbb]">
-        你可以问我关于广东旅游的任何问题
+        你可以问我关于绿色低碳生活的任何问题
       </Text>
       <View className="flex-row flex-wrap justify-center gap-2.5">
         {SUGGESTIONS.map((s) => (
@@ -142,40 +142,24 @@ function WelcomeState({ onTap }: { onTap: (q: string) => void }) {
 
 // ── Planner Form ───────────────────────────────────────────
 function PlannerForm({
-  from, setFrom, to, setTo, budget, setBudget, days, setDays,
+  budget, setBudget, days, setDays,
   tags, setTags, notes, setNotes, loading, onSubmit,
 }: {
-  from: string; setFrom: (v: string) => void;
-  to: string; setTo: (v: string) => void;
   budget: number; setBudget: (v: number) => void;
   days: number; setDays: (v: number) => void;
   tags: string[]; setTags: (v: string[] | ((p: string[]) => string[])) => void;
   notes: string; setNotes: (v: string) => void;
   loading: boolean; onSubmit: () => void;
 }) {
-  const canSubmit = from.trim().length > 0 && to.trim().length > 0;
+  const canSubmit = !loading;
 
   return (
     <Animated.View entering={FadeInDown.delay(100).springify()} className="mx-4 mt-4 overflow-hidden rounded-2xl border border-[#EBEBEB] bg-white p-5"
       style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
-      {/* From / To */}
-      <View className="flex-row gap-3">
-        {[['出发地', 'location-outline', '广州', from, setFrom] as const, ['目的地', 'flag-outline', '潮州', to, setTo] as const].map(([label, icon, ph, val, setter]) => (
-          <View key={label} className="flex-1">
-            <Text className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[#aaa]">{label}</Text>
-            <View className="flex-row items-center rounded-xl bg-[#F8F8F8] px-3.5 py-3.5">
-              <Ionicons name={icon} size={17} color="#bbb" />
-              <TextInput value={val} onChangeText={setter} placeholder={ph} placeholderTextColor="#ccc"
-                className="ml-2 flex-1 text-[16px] font-medium text-[#111]" />
-            </View>
-          </View>
-        ))}
-      </View>
-
       {/* Budget */}
       <View className="mt-5">
         <View className="flex-row items-center justify-between">
-          <Text className="text-[11px] font-semibold uppercase tracking-widest text-[#aaa]">预算 / 人</Text>
+          <Text className="text-[11px] font-semibold uppercase tracking-widest text-[#aaa]">预算参考</Text>
           <Text className="text-[20px] font-extrabold text-[#2D6A4F]">¥{budget.toLocaleString()}</Text>
         </View>
         <View className="mt-2.5 flex-row gap-2">
@@ -193,7 +177,7 @@ function PlannerForm({
       {/* Days */}
       <View className="mt-5">
         <View className="flex-row items-center justify-between">
-          <Text className="text-[11px] font-semibold uppercase tracking-widest text-[#aaa]">天数</Text>
+          <Text className="text-[11px] font-semibold uppercase tracking-widest text-[#aaa]">行动周期</Text>
           <Text className="text-[20px] font-extrabold text-[#2D6A4F]">{days} 天</Text>
         </View>
         <View className="mt-2.5 flex-row gap-2">
@@ -227,7 +211,7 @@ function PlannerForm({
       {/* Notes */}
       <View className="mt-4">
         <TextInput value={notes} onChangeText={setNotes}
-          placeholder="补充说明：民宿偏好、特殊需求…"
+          placeholder="补充说明：你的环保目标 / 当前情况…"
           placeholderTextColor="#ccc" multiline
           className="rounded-xl bg-[#F8F8F8] p-3.5 text-[14px] text-[#444]"
           style={{ minHeight: 52, textAlignVertical: 'top' }} />
@@ -242,12 +226,12 @@ function PlannerForm({
           {loading ? (
             <View className="flex-row items-center gap-2">
               <ActivityIndicator color="#fff" size="small" />
-              <Text className="text-[16px] font-bold text-white">正在生成行程…</Text>
+              <Text className="text-[16px] font-bold text-white">正在生成方案…</Text>
             </View>
           ) : (
             <View className="flex-row items-center gap-2">
               <Ionicons name="sparkles-outline" size={20} color="#fff" />
-              <Text className="text-[16px] font-bold text-white">生成行程</Text>
+              <Text className="text-[16px] font-bold text-white">生成绿色方案</Text>
             </View>
           )}
         </LinearGradient>
@@ -262,7 +246,7 @@ function PlanResult({ text }: { text: string }) {
     <Animated.View entering={FadeInDown.delay(200).springify()} className="mx-4 mt-4 rounded-2xl border border-[#EBEBEB] bg-white p-5"
       style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
       <View className="mb-4 flex-row items-center justify-between">
-        <Text className="text-[17px] font-extrabold text-[#111]">你的专属行程</Text>
+        <Text className="text-[17px] font-extrabold text-[#111]">你的绿色低碳方案</Text>
         <View className="rounded-full bg-[#E8F5E9] px-3 py-1">
           <Text className="text-[11px] font-semibold text-[#2D6A4F]">AI 生成</Text>
         </View>
@@ -287,8 +271,6 @@ export default function AIAssistantScreen() {
   const chatCancel = useRef<(() => void) | null>(null);
 
   // Planner
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
   const [budget, setBudget] = useState(2000);
   const [days, setDays] = useState(3);
   const [tags, setTags] = useState<string[]>([]);
@@ -318,7 +300,15 @@ export default function AIAssistantScreen() {
     history.push({ role: 'user', content: text });
 
     // UI：追加用户气泡 + 一个空助手气泡用于流式填充
-    setMsgs((m) => [...m, { role: 'user', text }, { role: 'assistant', text: '' }]);
+    setMsgs((m) => {
+      const next = [
+        ...m,
+        { role: 'user' as const, text },
+        { role: 'assistant' as const, text: '' },
+      ];
+      if (next.length > 60) next.splice(0, next.length - 50); // 保持最近 50 条
+      return next;
+    });
     setInput('');
     setChatLoading(true);
 
@@ -337,7 +327,7 @@ export default function AIAssistantScreen() {
       onError: (msg) => {
         setMsgs((cur) => {
           const copy = cur.slice();
-          copy[copy.length - 1] = { role: 'assistant', text: `⚠️ ${msg}` };
+          copy[copy.length - 1] = { role: 'assistant', text: `出错：${msg}` };
           return copy;
         });
         setChatLoading(false);
@@ -347,15 +337,15 @@ export default function AIAssistantScreen() {
 
   // AI 行程规划：调用后端 SSE 接口，流式累积 Markdown 行程。
   function doPlan() {
-    if (!from.trim() || !to.trim() || planLoading) return;
+    if (planLoading) return;
     setPlanLoading(true);
     setPlanResult('');
     const tagLabels = PREFERENCES.filter((p) => tags.includes(p.key)).map((p) => p.label);
 
     planCancel.current = streamPlan(
       {
-        from: from.trim(),
-        to: to.trim(),
+        from: '',
+        to: '',
         budget,
         days,
         tags: tagLabels,
@@ -365,7 +355,7 @@ export default function AIAssistantScreen() {
         onToken: (delta) => setPlanResult((prev) => prev + delta),
         onDone: () => setPlanLoading(false),
         onError: (msg) => {
-          setPlanResult(`⚠️ ${msg}`);
+          setPlanResult(`出错：${msg}`);
           setPlanLoading(false);
         },
       },
@@ -390,7 +380,7 @@ export default function AIAssistantScreen() {
                 <Ionicons name={isChat ? 'chatbubble-ellipses-outline' : 'compass-outline'} size={17}
                   color={active ? '#1B4332' : 'rgba(255,255,255,0.8)'} />
                 <Text className={`ml-2 text-[14px] font-semibold ${active ? 'text-[#1B4332]' : 'text-white/80'}`}>
-                  {isChat ? 'AI 对话' : '行程规划'}
+                  {isChat ? 'AI 对话' : '绿色方案'}
                 </Text>
               </Pressable>
             );
@@ -438,7 +428,6 @@ export default function AIAssistantScreen() {
         <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={-insets.bottom}>
           <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             <PlannerForm
-              from={from} setFrom={setFrom} to={to} setTo={setTo}
               budget={budget} setBudget={setBudget} days={days} setDays={setDays}
               tags={tags} setTags={setTags} notes={notes} setNotes={setNotes}
               loading={planLoading} onSubmit={doPlan} />
@@ -448,8 +437,8 @@ export default function AIAssistantScreen() {
             {!planResult && !planLoading && (
               <Animated.View entering={FadeInDown.delay(300).springify()} className="mx-4 mt-6 items-center rounded-2xl bg-[#F9F9F9] py-10">
                 <Ionicons name="compass-outline" size={44} color="#e0e0e0" />
-                <Text className="mt-4 text-[15px] font-medium text-[#ccc]">设置出发地和目的地</Text>
-                <Text className="mt-1 text-[13px] text-[#ddd]">点击「生成行程」获取 AI 规划</Text>
+                <Text className="mt-4 text-[15px] font-medium text-[#ccc]">选择关注领域与行动周期</Text>
+                <Text className="mt-1 text-[13px] text-[#ddd]">点击「生成绿色方案」获取 AI 低碳行动计划</Text>
               </Animated.View>
             )}
           </ScrollView>

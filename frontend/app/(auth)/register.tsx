@@ -1,17 +1,11 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text } from 'react-native';
-import { FadeInDown } from 'react-native-reanimated';
+import { Pressable, Text, View } from 'react-native';
 
 import { AuthButton } from '@/components/auth/auth-button';
 import { AuthInput } from '@/components/auth/auth-input';
 import { AuthScreenLayout } from '@/components/auth/auth-screen-layout';
-import { Animated } from '@/components/ui/animated';
 import { apiRequest } from '@/lib/api';
-
-const userIcon = require('../../assets/legacy/img/user-3-line.png');
-const emailIcon = require('../../assets/legacy/img/yanzheng.png');
-const passwordIcon = require('../../assets/legacy/img/password.png');
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
@@ -59,24 +53,19 @@ export default function RegisterScreen() {
   }
 
   return (
-    <AuthScreenLayout>
-      <Animated.View entering={FadeInDown.delay(200).duration(500)}>
+    <AuthScreenLayout title="创建账号" subtitle="加入绿途，开启你的绿色行动">
+      <AuthInput
+        icon="person-outline"
+        value={username}
+        onChangeText={setUsername}
+        placeholder="用户名（2-20 位）"
+        accessibilityLabel="用户名"
+        autoComplete="username"
+        textContentType="username"
+      />
+      <View className="mt-4">
         <AuthInput
-          icon={userIcon}
-          value={username}
-          onChangeText={setUsername}
-          placeholder="用户名"
-          accessibilityLabel="用户名"
-          autoComplete="username"
-          textContentType="username"
-        />
-      </Animated.View>
-
-      <Animated.View
-        entering={FadeInDown.delay(280).duration(500)}
-        className="mt-[18px]">
-        <AuthInput
-          icon={emailIcon}
+          icon="mail-outline"
           value={email}
           onChangeText={setEmail}
           placeholder="邮箱"
@@ -85,13 +74,10 @@ export default function RegisterScreen() {
           autoComplete="email"
           textContentType="emailAddress"
         />
-      </Animated.View>
-
-      <Animated.View
-        entering={FadeInDown.delay(360).duration(500)}
-        className="mt-[18px]">
+      </View>
+      <View className="mt-4">
         <AuthInput
-          icon={passwordIcon}
+          icon="lock-closed-outline"
           value={password}
           onChangeText={setPassword}
           placeholder="密码（6-72 位）"
@@ -100,37 +86,24 @@ export default function RegisterScreen() {
           autoComplete="password"
           textContentType="newPassword"
         />
-      </Animated.View>
+      </View>
 
       {error ? (
-        <Animated.View
-          entering={FadeInDown.duration(300)}
-          className="mt-4 rounded-xl bg-[#C0584B] px-3 py-2">
-          <Text className="text-center text-[13px] text-white">{error}</Text>
-        </Animated.View>
+        <View className="mt-4 rounded-xl bg-[#FCEDE9] px-3 py-2.5">
+          <Text className="text-center text-[13px] text-[#C0584B]">{error}</Text>
+        </View>
       ) : null}
 
-      <Animated.View
-        entering={FadeInDown.delay(460).duration(500)}
-        className="mt-6">
-        <AuthButton
-          label={loading ? '注册中…' : '注册'}
-          loading={loading}
-          onPress={handleRegister}
-        />
-      </Animated.View>
+      <View className="mt-6">
+        <AuthButton label={loading ? '注册中…' : '注册'} loading={loading} onPress={handleRegister} />
+      </View>
 
-      <Animated.View
-        entering={FadeInDown.delay(540).duration(500)}
-        className="mt-5 items-center">
-        <Pressable
-          onPress={() => router.replace('/login')}
-          accessibilityRole="button">
-          <Text className="text-sm font-semibold text-white">
-            已有账号？去登录
-          </Text>
+      <View className="mt-6 flex-row justify-center">
+        <Text className="text-[14px] text-eco-mid/70">已有账号？</Text>
+        <Pressable onPress={() => router.replace('/login')} accessibilityRole="button">
+          <Text className="text-[14px] font-bold text-eco"> 去登录</Text>
         </Pressable>
-      </Animated.View>
+      </View>
     </AuthScreenLayout>
   );
 }

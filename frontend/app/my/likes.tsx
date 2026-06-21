@@ -75,7 +75,7 @@ export default function MyLikesScreen() {
               还没有点赞
             </Text>
             <Text className="mt-2 text-center text-[13px] leading-5 text-[#999]">
-              去社区看看精彩的非遗故事{'\n'}为你喜欢的作品送上爱心
+              去社区看看精彩的低碳故事{'\n'}为你喜欢的作品送上爱心
             </Text>
             <Pressable
               onPress={() => router.push('/(tabs)/community')}

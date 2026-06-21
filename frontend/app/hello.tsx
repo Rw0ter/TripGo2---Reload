@@ -31,11 +31,11 @@ import { Animated } from '@/components/ui/animated';
 import { HELLO_AGREE_GRADIENT } from '@/constants/colors';
 import { useOnboardingStore } from '@/stores/onboarding';
 
-const bg = require('../assets/legacy/img/beijing.png');
+const bg = require('../assets/images/onboarding/auth_bg.jpg');
 
 // 协议正文——需滚动阅读到底部才能点「同意」。
 const POLICY = [
-  '感谢您信任并使用文脉粤游。我们非常重视您的个人信息与隐私保护，并依据相关法律法规更新了《用户服务协议》与《隐私政策》，特向您说明如下。',
+  '感谢您信任并使用绿途。我们非常重视您的个人信息与隐私保护，并依据相关法律法规更新了《用户服务协议》与《隐私政策》，特向您说明如下。',
   '1. 在您使用浏览、搜索等基本功能时，我们仅收集为实现该功能所必需的最少信息。',
   '2. 在您注册账号、发布社区内容或下单时，我们会收集您主动提供的用户名、邮箱、订单与地址等信息，用于提供对应服务。',
   '3. 为实现地图导航、行程规划与 VR 全景浏览，经您授权后我们可能访问设备的位置信息；您可随时在系统设置中关闭该授权。',
@@ -99,7 +99,7 @@ export default function HelloScreen() {
     if (Platform.OS === 'android') {
       BackHandler.exitApp();
     } else {
-      toast.warning('需同意隐私政策才能使用文脉粤游，您可手动关闭 App。');
+      toast.warning('需同意隐私政策才能使用绿途，您可手动关闭 App。');
     }
   }
 

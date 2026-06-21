@@ -1,285 +1,281 @@
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
-  Animated as RNAnimated,
   Image,
-  LayoutAnimation,
   Pressable,
   ScrollView,
   Text,
   View,
+  type ImageSourcePropType,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FadeInDown } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 import { apiRequest } from '@/lib/api';
-import { ScreenHeader } from '@/components/ui/screen-header';
+import { Animated } from '@/components/ui/animated';
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+const BG = '#F4F1E4';
+const GD = '#1B4332';
+const GL = '#40916C';
 
-interface CheckinStatus {
-  checkedIn: boolean;
-  todayPoints: number;
-  totalDays: number;
-}
+interface CheckinStatus { checkedIn: boolean; todayPoints: number; totalDays: number; }
+interface EcoStatus { carbonCredits: number; points: number; totalCarbonSaved: number; treesPlanted: number; treeProgress: number; treeTarget: number; todayActivities: any[]; weeklyTrend: { date: string; carbonSaved: number }[]; }
 
-interface UserProfile {
-  points: number;
-}
+// 任务配图（本地）
+const TASK_IMAGES: Record<string, ImageSourcePropType> = {
+  daily_signin: require('../assets/images/checkin/checkin_tree.jpg'),
+  green_travel: require('../assets/images/checkin/checkin_bike.jpg'),
+  waste_sort: require('../assets/images/checkin/checkin_waste.jpg'),
+  eco_quiz: require('../assets/images/checkin/checkin_quiz.jpg'),
+  share_green: require('../assets/images/checkin/checkin_share.jpg'),
+};
 
-interface TaskDef {
-  id: string;
-  title: string;
-  sub: string;
-  coin: number;
-  action: string;
-  icon: keyof typeof Ionicons.glyphMap;
-}
-
-const DAILY_TASKS: TaskDef[] = [
-  { id: 'daily_signin',  title: '每日签到', sub: '签到得积分，每日签到得', coin: 20,  action: '去签到', icon: 'calendar-outline' },
-  { id: 'browse_spots',  title: '浏览景点', sub: '浏览指定景点15s，得',  coin: 30,  action: '去浏览', icon: 'eye-outline' },
-  { id: 'post_story',    title: '发布动态', sub: '发布一条社区动态，得',  coin: 50,  action: '去发布', icon: 'chatbubble-outline' },
-  { id: 'invite_friend', title: '邀请好友', sub: '邀请好友注册，得',      coin: 100, action: '去邀请', icon: 'person-add-outline' },
-  { id: 'complete_quiz', title: '完成答题', sub: '完成当日答题挑战，得',  coin: 40,  action: '去答题', icon: 'school-outline' },
+const TASKS = [
+  { id: 'daily_signin', type: 'signin', title: '每日签到', sub: '签到获得碳积分与普通积分', coin: 20 },
+  { id: 'green_travel', type: 'green_travel', title: '绿色出行', sub: '步行 / 骑行 / 公交通勤打卡', coin: 30 },
+  { id: 'waste_sort', type: 'waste_sort', title: '垃圾分类', sub: '完成分类知识学习并打卡', coin: 25 },
+  { id: 'eco_quiz', type: 'eco_quiz', title: '环保答题', sub: '完成环保知识答题挑战', coin: 40 },
+  { id: 'share_green', type: 'share_green', title: '绿色分享', sub: '发布一条绿色生活动态', coin: 50 },
 ];
 
-const CHARITY_IMAGE = 'https://images.unsplash.com/photo-1547981609-4b6bfe67ca0b?w=400&h=300&fit=crop';
-
-// ---------------------------------------------------------------------------
-// Collapsible charity panel with animated chevron
-// ---------------------------------------------------------------------------
-
-function CharitySection({
-  expanded, onToggle, donated, userPoints, onDonate,
-}: {
-  expanded: boolean; onToggle: () => void;
-  donated: boolean; userPoints: number; onDonate: () => void;
-}) {
-  const rotateAnim = useRef(new RNAnimated.Value(expanded ? 1 : 0)).current;
-
-  useEffect(() => {
-    RNAnimated.timing(rotateAnim, {
-      toValue: expanded ? 1 : 0,
-      duration: 220,
-      useNativeDriver: true,
-    }).start();
-  }, [expanded, rotateAnim]);
-
-  const rotate = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '90deg'],
-  });
-
-  return (
-    <View className="mx-[3.5vw] mt-[1.8vh] rounded-[9px] bg-white px-[2.8vw] py-[1.4vh]"
-      style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }}>
-      {/* Header */}
-      <Pressable onPress={onToggle} className="flex-row items-center justify-between">
-        <Text className="text-[16px] font-extrabold text-[#3c3a2b]">积分慈爱心</Text>
-        <View className="flex-row items-center gap-1.5">
-          <Text className="text-[12px] text-[#b3ad96]">爱心公益</Text>
-          <RNAnimated.View style={{ transform: [{ rotate }] }}>
-            <Ionicons name="chevron-forward" size={14} color="#b3ad96" />
-          </RNAnimated.View>
-        </View>
-      </Pressable>
-
-      {/* Collapsible body */}
-      {expanded && (
-        <View className="mt-[1.2vh] overflow-hidden rounded-xl bg-[#F9FBF9]">
-          {/* Real image */}
-          <Image
-            source={{ uri: CHARITY_IMAGE }}
-            style={{ width: '100%', height: 140 }}
-            resizeMode="cover"
-          />
-          {/* Info section */}
-          <View className="p-4">
-            <Text className="text-[15px] font-extrabold text-[#2D3748]">助力古籍修复传承</Text>
-            <Text className="mt-1.5 text-[13px] leading-5 text-[#718096]">
-              每一分积分都可变成一份修复材料，累计帮助修复更多古籍文献。广东省立中山图书馆每年修复古籍逾千册，您的支持将直接助力岭南文化保护。
-            </Text>
-            {/* Stats row */}
-            <View className="mt-4 flex-row items-center justify-between rounded-xl bg-[#F3FAF5] px-4 py-3">
-              <View className="flex-row items-center gap-2">
-                <Ionicons name="people-outline" size={18} color="#386641" />
-                <View>
-                  <Text className="text-[16px] font-extrabold text-[#386641]">2,847</Text>
-                  <Text className="text-[10px] text-[#8CAA95]">已参与人数</Text>
-                </View>
-              </View>
-              <View style={{ width: 1, height: 30, backgroundColor: '#C8E6CD' }} />
-              <View className="flex-row items-center gap-2">
-                <Ionicons name="library-outline" size={18} color="#386641" />
-                <View>
-                  <Text className="text-[16px] font-extrabold text-[#386641]">1,023</Text>
-                  <Text className="text-[10px] text-[#8CAA95]">已修复册数</Text>
-                </View>
-              </View>
-              <View style={{ width: 1, height: 30, backgroundColor: '#C8E6CD' }} />
-              <View className="flex-row items-center gap-2">
-                <Ionicons name="star-outline" size={18} color="#386641" />
-                <View>
-                  <Text className="text-[16px] font-extrabold text-[#386641]">142,350</Text>
-                  <Text className="text-[10px] text-[#8CAA95]">已捐积分</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Donate CTA */}
-            <View className="mt-4 flex-row items-center justify-between rounded-xl bg-[#E8F5E9] px-4 py-3.5">
-              <View>
-                <Text className="text-[14px] font-bold text-[#386641]">捐赠 50 积分</Text>
-                <Text className="mt-0.5 text-[11px] text-[#8CAA95]">为古籍修复贡献一份力</Text>
-              </View>
-              <Pressable
-                onPress={onDonate}
-                disabled={donated || userPoints < 50}
-                className={`rounded-full px-6 py-2.5 ${donated ? 'bg-[#8CAA95]' : 'bg-[#386641]'}`}>
-                <Text className="text-[14px] font-bold text-white">
-                  {donated ? '已捐助' : '立即捐赠'}
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      )}
-    </View>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Main screen
-// ---------------------------------------------------------------------------
-
 export default function CheckinScreen() {
-  const [checkinStatus, setCheckinStatus] = useState<CheckinStatus | null>(null);
-  const [userPoints, setUserPoints] = useState(0);
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const [checkin, setCheckin] = useState<CheckinStatus | null>(null);
+  const [eco, setEco] = useState<EcoStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [doneTasks, setDoneTasks] = useState<Set<string>>(new Set());
-  const [donated, setDonated] = useState(false);
-  const [donateExpanded, setDonateExpanded] = useState(true);
 
   const load = useCallback(async () => {
     try {
-      const [status, profile] = await Promise.all([
+      const [status, ecoData] = await Promise.all([
         apiRequest<CheckinStatus>('/checkin/status', { auth: true }),
-        apiRequest<UserProfile>('/auth/me', { auth: true }),
+        apiRequest<EcoStatus>('/eco/progress', { auth: true }),
       ]);
-      setCheckinStatus(status);
-      setUserPoints(profile.points);
-      if (status.checkedIn) setDoneTasks((prev) => new Set(prev).add('daily_signin'));
+      setCheckin(status);
+      setEco(ecoData);
+      setDoneTasks((prev) => {
+        const next = new Set(prev);
+        if (status.checkedIn) next.add('daily_signin');
+        // 从今天已完成活动中恢复任务状态
+        (ecoData?.todayActivities ?? []).forEach((a: any) => {
+          if (a.type === 'green_travel') next.add('green_travel');
+          if (a.type === 'waste_sort') next.add('waste_sort');
+          if (a.type === 'eco_quiz') next.add('eco_quiz');
+          if (a.type === 'share_green') next.add('share_green');
+        });
+        return next;
+      });
     } catch { /* stale */ }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useFocusEffect(useCallback(() => { void load(); }, [load]));
 
   async function doCheckin() {
-    if (loading || checkinStatus?.checkedIn) return;
+    if (loading || checkin?.checkedIn) return;
     setLoading(true);
     try {
-      const result = await apiRequest<{ points: number; totalDays: number }>('/checkin', { method: 'POST', auth: true });
-      setCheckinStatus({ checkedIn: true, todayPoints: result.points, totalDays: result.totalDays });
+      await apiRequest('/checkin', { method: 'POST', auth: true });
+      setCheckin((prev) => prev ? { ...prev, checkedIn: true } : null);
       setDoneTasks((prev) => new Set(prev).add('daily_signin'));
-      const profile = await apiRequest<UserProfile>('/auth/me', { auth: true });
-      setUserPoints(profile.points);
-    } catch { /* already checked in */ }
+      void load();
+    } catch { /* done */ }
     finally { setLoading(false); }
   }
 
-  function doTask(taskId: string) { setDoneTasks((prev) => new Set(prev).add(taskId)); }
-
-  async function doDonate() {
-    if (donated || userPoints < 50) return;
-    setUserPoints((p) => p - 50);
-    setDonated(true);
+  async function handleTask(type: string, taskId: string) {
+    if (doneTasks.has(taskId)) return;
+    try {
+      await apiRequest('/eco/activity', { method: 'POST', auth: true, body: { type } });
+      setDoneTasks((prev) => new Set(prev).add(taskId));
+      void load();
+    } catch { /* done */ }
   }
 
-  const checkedIn = checkinStatus?.checkedIn ?? false;
+  const checkedIn = checkin?.checkedIn ?? false;
+  const s = eco;
+  const treePercent = s ? Math.round((s.treeProgress / s.treeTarget) * 100) : 0;
+  const weeklyMax = s ? Math.max(...s.weeklyTrend.map((d) => d.carbonSaved), 1) : 1;
 
   return (
-    <View className="flex-1 bg-[#FBF7E9]">
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        <ScreenHeader title="福利中心" subtitle="福利商城" tint="light" />
-
-        {/* ── Points banner — green gradient ─────────────────────── */}
-        <View className="mx-[3.5vw] mt-4 overflow-hidden rounded-[12px]">
-          <LinearGradient
-            colors={['#1B4332', '#2D6A4F', '#40916C']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0.7 }}
-            style={{ paddingHorizontal: 15, paddingVertical: 26 }}>
-            <View className="flex-row items-center justify-between">
-              <View>
-                <Text className="text-[13px] text-white/90">积分总览</Text>
-                <View className="mt-0.5 flex-row items-baseline gap-2">
-                  <Text className="text-[40px] font-medium leading-[48px] text-white">{userPoints}</Text>
-                  <Text className="text-[14px] text-white/95">积分</Text>
+    <View style={{ flex: 1, backgroundColor: BG }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
+        {/* Hero —— 森林大图 + 碳积分浮层 */}
+        <Animated.View entering={FadeInDown.duration(450)}>
+          <View style={{ height: 240, overflow: 'hidden' }}>
+            <Image source={require('../assets/images/checkin/checkin_hero.jpg')}
+              style={{ width: '100%', height: 240, position: 'absolute' }} resizeMode="cover" />
+            <LinearGradient colors={['rgba(27,67,50,0.82)', 'rgba(27,67,50,0.55)']}
+              style={{ flex: 1, justifyContent: 'flex-end', paddingBottom: 24 }}>
+              {/* Back button */}
+              <Pressable onPress={() => router.back()}
+                style={{ position: 'absolute', top: insets.top + 8, left: 16, zIndex: 10 }}>
+                <Ionicons name="chevron-back" size={24} color="#fff" />
+              </Pressable>
+              <View className="px-5">
+                <Text className="text-[11px] font-medium text-white/60 tracking-widest uppercase">MY CARBON WALLET</Text>
+                <View className="flex-row items-baseline mt-1.5">
+                  <Text className="text-5xl font-extrabold text-white">{s?.carbonCredits ?? 0}</Text>
+                  <Text className="text-lg text-white/70 ml-2 font-medium">碳积分</Text>
                 </View>
-                <Text className="mt-0.5 text-[13px] text-white/95">积分明细 &gt;</Text>
-              </View>
-
-              <View className="items-center justify-center gap-1">
-                {!checkinStatus ? (
-                  <ActivityIndicator color="#fff" />
-                ) : checkedIn ? (
-                  <View className="items-center rounded-2xl bg-white/20 px-5 py-3">
-                    <Ionicons name="checkmark-circle" size={28} color="#fff" />
-                    <Text className="mt-1 text-[15px] font-bold text-white">已签到</Text>
+                <View className="flex-row items-center mt-4" style={{ gap: 16 }}>
+                  <View className="flex-row items-center">
+                    <View className="w-2 h-2 rounded-full bg-[#95D5B2] mr-1.5" />
+                    <Text className="text-xs text-white/70">{s?.treesPlanted ?? 0} 棵树</Text>
                   </View>
-                ) : (
-                  <Pressable onPress={doCheckin} disabled={loading}
-                    className="items-center rounded-lg bg-white px-5 py-2.5 shadow-sm">
-                    <Text className="text-[15px] font-bold text-[#386641]">{loading ? '签到中...' : '立即签到'}</Text>
-                  </Pressable>
-                )}
+                  <View className="flex-row items-center">
+                    <View className="w-2 h-2 rounded-full bg-[#95D5B2] mr-1.5" />
+                    <Text className="text-xs text-white/70">{s?.totalCarbonSaved?.toFixed(1) ?? 0} kg CO₂</Text>
+                  </View>
+                  <View className="flex-row items-center">
+                    <View className="w-2 h-2 rounded-full bg-[#95D5B2] mr-1.5" />
+                    <Text className="text-xs text-white/70">连续 {checkin?.totalDays ?? 0} 天</Text>
+                  </View>
+                </View>
+              </View>
+            </LinearGradient>
+
+            {/* 签到按钮 —— 悬浮在Hero右下 */}
+            <Pressable onPress={doCheckin} disabled={loading || checkedIn}
+              className="absolute right-5 active:scale-95 rounded-xl"
+              style={{ bottom: 60, paddingHorizontal: 20, paddingVertical: 12, backgroundColor: checkedIn ? 'rgba(255,255,255,0.15)' : '#FFFFFF',
+                alignItems: 'center', justifyContent: 'center',
+                borderWidth: checkedIn ? 1 : 0, borderColor: checkedIn ? 'rgba(255,255,255,0.3)' : 'transparent',
+                shadowColor: '#000', shadowOpacity: checkedIn ? 0 : 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 8 }}>
+              {!checkin ? <ActivityIndicator color={GD} /> :
+               checkedIn ? <View className="flex-row items-center"><Ionicons name="checkmark-circle" size={22} color="#74C69D" /><Text className="text-sm font-extrabold text-white/70 ml-1.5">已签到</Text></View> :
+               <View className="items-center">
+                 <Text className="text-sm font-extrabold" style={{ color: GD }}>{loading ? '...' : '签到打卡'}</Text>
+               </View>}
+            </Pressable>
+          </View>
+        </Animated.View>
+
+        {/* 快速数据条 */}
+        <Animated.View entering={FadeInDown.delay(100).duration(450)} className="mx-4 -mt-4">
+          <View className="flex-row rounded-2xl bg-white overflow-hidden"
+            style={{ shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 4 }}>
+            {[
+              { label: '碳积分', val: s?.carbonCredits ?? 0, color: '#1B4332' },
+              { label: '累计减排', val: `${s?.totalCarbonSaved?.toFixed(1) ?? 0} kg`, color: '#2D6A4F' },
+              { label: '已种树', val: `${s?.treesPlanted ?? 0} 棵`, color: '#40916C' },
+              { label: '积分', val: s?.points ?? 0, color: '#52B788' },
+            ].map((item, i) => (
+              <View key={item.label} className="flex-1 items-center py-3.5"
+                style={{ borderRightWidth: i < 3 ? 1 : 0, borderColor: '#F3F4F6' }}>
+                <Text className="text-lg font-extrabold" style={{ color: item.color }}>{item.val}</Text>
+                <Text className="text-[10px] text-[#9CA3AF] mt-0.5">{item.label}</Text>
+              </View>
+            ))}
+          </View>
+        </Animated.View>
+
+        {/* 植树进度 */}
+        {s && (
+          <Animated.View entering={FadeInDown.delay(140).duration(450)} className="mx-4 mt-4">
+            <View className="rounded-2xl bg-white p-4" style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 1 }, elevation: 2 }}>
+              <View className="flex-row justify-between items-end mb-2">
+                <Text className="text-sm font-bold text-[#1A1A1A]">植树进度</Text>
+                <Text className="text-[11px] text-[#9CA3AF]">{treePercent}%</Text>
+              </View>
+              <View className="h-2.5 bg-[#F3F4F6] rounded-full overflow-hidden">
+                <View className="h-full rounded-full" style={{ width: `${Math.min(treePercent, 100)}%`, backgroundColor: GL }} />
+              </View>
+              <Text className="text-[11px] text-[#6B7280] mt-2">
+                再减排 {(s.treeTarget - s.treeProgress).toFixed(1)} kg 即可种一棵树
+              </Text>
+            </View>
+          </Animated.View>
+        )}
+
+        {/* 每日任务 —— 横滑真实图片卡 */}
+        <Animated.View entering={FadeInDown.delay(180).duration(450)} className="mt-4">
+          <View className="flex-row items-end justify-between px-4 mb-2.5">
+            <View className="flex-row items-center">
+              <View style={{ width: 4, height: 17, borderRadius: 2 }} className="bg-[#386641]" />
+              <Text className="ml-2 text-[16px] font-extrabold text-[#2f3a30]">今日任务</Text>
+              <Text className="ml-2 text-[11px] text-[#9a9382]">完成打卡赚积分</Text>
+            </View>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}>
+            {TASKS.map((task) => {
+              const isSignin = task.id === 'daily_signin';
+              const isDone = isSignin ? checkedIn : doneTasks.has(task.id);
+              const img = TASK_IMAGES[task.id];
+              return (
+                <Pressable key={task.id}
+                  onPress={() => { if (isSignin) doCheckin(); else handleTask(task.type, task.id); }}
+                  disabled={isDone || (isSignin && loading)}
+                  className="rounded-2xl overflow-hidden active:scale-[0.97]"
+                  style={{ width: 180, height: 130, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 4 }}>
+                  <Image source={img} style={{ width: 180, height: 130, position: 'absolute' }} resizeMode="cover" />
+                  <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.65)']}
+                    style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 80 }} />
+                  {isDone && (
+                    <View className="absolute top-2 right-2 rounded-full bg-[#40916C] px-2 py-0.5">
+                      <Text className="text-[10px] font-bold text-white">已完成</Text>
+                    </View>
+                  )}
+                  <View className="absolute bottom-3 left-3 right-3">
+                    <Text className="text-sm font-extrabold text-white">{task.title}</Text>
+                    <View className="flex-row items-center mt-1">
+                      <Text className="text-[11px] text-white/65">{task.sub}</Text>
+                      <Text className="text-[11px] text-[#95D5B2] font-bold ml-1.5">+{task.coin}</Text>
+                    </View>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </Animated.View>
+
+        {/* 7 日趋势 */}
+        {s && (
+          <Animated.View entering={FadeInDown.delay(220).duration(450)} className="mx-4 mt-4">
+            <View className="rounded-2xl bg-white p-4" style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 1 }, elevation: 2 }}>
+              <Text className="text-sm font-bold text-[#1A1A1A] mb-3">近 7 日减排趋势</Text>
+              <View className="flex-row items-end justify-between" style={{ height: 72 }}>
+                {s.weeklyTrend.map((day, i) => {
+                  const h = Math.max(4, (day.carbonSaved / weeklyMax) * 56);
+                  const isToday = i === s.weeklyTrend.length - 1;
+                  return (
+                    <View key={i} className="items-center flex-1">
+                      <Text className="text-[9px] text-[#9CA3AF] mb-1">
+                        {day.carbonSaved > 0 ? day.carbonSaved.toFixed(1) : ''}
+                      </Text>
+                      <View className="w-7 rounded-t-md" style={{ height: h, backgroundColor: isToday ? GL : '#95D5B2' }} />
+                      <Text className="text-[9px] text-[#9CA3AF] mt-1.5">{day.date.slice(5)}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+              <View className="flex-row items-center justify-between mt-3 pt-3 border-t border-[#F3F4F6]">
+                <Text className="text-[11px] text-[#6B7280]">
+                  本周 {s.weeklyTrend.reduce((a, d) => a + d.carbonSaved, 0).toFixed(1)} kg
+                </Text>
+                <Text className="text-[11px] font-medium text-[#40916C]">
+                  ~{Math.round(s.weeklyTrend.reduce((a, d) => a + d.carbonSaved, 0) * 0.06)} 棵树/年吸收量
+                </Text>
               </View>
             </View>
-          </LinearGradient>
-        </View>
+          </Animated.View>
+        )}
 
-        {/* ── Daily tasks card ──────────────────────────────────── */}
-        <View className="mx-[3.5vw] mt-[1.8vh] rounded-[9px] bg-white px-[2.8vw] py-[1.4vh]"
-          style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }}>
-          <Text className="text-[16px] font-extrabold text-[#3c3a2b]">日常活动</Text>
-
-          {DAILY_TASKS.map((task) => {
-            const isDone = task.id === 'daily_signin' ? checkedIn : doneTasks.has(task.id);
-            const isSigninTask = task.id === 'daily_signin';
-            return (
-              <View key={task.id} className="flex-row items-center gap-[2.8vw] border-t border-[#F0EFE8] py-[1.6vh]">
-                <View className="h-[40px] w-[40px] items-center justify-center rounded-full bg-[#E8F5E9]">
-                  <Ionicons name={task.icon} size={20} color="#386641" />
-                </View>
-                <View className="flex-1 gap-0.5">
-                  <Text className="text-[14px] font-bold text-[#3b392b]">{task.title}</Text>
-                  <Text className="text-[12px] text-[#b0ac96]">
-                    {task.sub}<Text className="mx-0.5 font-extrabold text-[#386641]">{task.coin}</Text>积分
-                  </Text>
-                </View>
-                <Pressable
-                  onPress={() => { if (isSigninTask) doCheckin(); else doTask(task.id); }}
-                  disabled={isDone || (isSigninTask && loading)}
-                  className={`rounded-full px-[2.6vw] py-[0.8vh] ${isDone ? 'bg-[#f4f4f4]' : 'bg-[#E8F5E9]'}`}>
-                  <Text className={`text-[13px] font-bold ${isDone ? 'text-[#999]' : 'text-[#386641]'}`}>
-                    {isDone ? '已完成' : task.action}
-                  </Text>
-                </Pressable>
-              </View>
-            );
-          })}
-        </View>
-
-        {/* ── Charity section ──────────────────────────────────── */}
-        <CharitySection
-          expanded={donateExpanded}
-          onToggle={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setDonateExpanded((v) => !v); }}
-          donated={donated}
-          userPoints={userPoints}
-          onDonate={doDonate}
-        />
+        {/* 环保贴士 */}
+        <Animated.View entering={FadeInDown.delay(260).duration(450)} className="mx-4 mt-4 mb-4">
+          <View className="rounded-2xl p-4" style={{ backgroundColor: '#1B4332' }}>
+            <View className="flex-row items-center mb-2">
+              <Ionicons name="bulb" size={18} color="#95D5B2" />
+              <Text className="text-xs font-bold text-white/90 ml-2">今日环保知识</Text>
+            </View>
+            <Text className="text-[12px] text-white/65 leading-relaxed">
+              一棵成年树每年可吸收约 18 kg CO₂。少用一个塑料袋减碳 0.06 kg，多走 1 公里比开车减碳 0.2 kg——坚持绿色行动，你的每一天都在改变地球的未来。
+            </Text>
+          </View>
+        </Animated.View>
       </ScrollView>
     </View>
   );

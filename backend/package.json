@@ -1,7 +1,7 @@
 {
   "name": "tripgo-backend",
   "version": "0.1.0",
-  "description": "TripGo（文脉粤游）2026 重写版后端 — NestJS + Prisma",
+  "description": "TripGo（绿途）2026 重写版后端 — NestJS + Prisma",
   "private": true,
   "engines": {
     "node": ">=20"

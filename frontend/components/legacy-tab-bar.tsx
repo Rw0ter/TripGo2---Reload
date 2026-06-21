@@ -28,7 +28,7 @@ const TABS: Record<
     iconActive: require('../assets/legacy/img/nav/shouye_ac.png'),
   },
   itinerary: {
-    label: '行程',
+    label: '森林',
     icon: require('../assets/legacy/img/nav/xingcheng.png'),
     iconActive: require('../assets/legacy/img/nav/xingcheng_ac.png'),
   },

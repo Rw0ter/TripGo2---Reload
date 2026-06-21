@@ -20,7 +20,7 @@ function makePrisma(tx = makeTx()) {
 }
 
 describe('OrdersService.create — 服务端定价 + 扣款 + 流水（防 0 元下单）', () => {
-  it('文创下单：用 destination.money 定价、扣余额、写出流水', async () => {
+  it('生态良品下单：用 destination.money 定价、扣余额、写出流水', async () => {
     const prisma = makePrisma();
     prisma.destination.findUnique.mockResolvedValue({
       id: 7,
@@ -43,7 +43,7 @@ describe('OrdersService.create — 服务端定价 + 扣款 + 流水（防 0 元
           price: 128,
           finalPrice: 128,
           title: '广绣团扇',
-          type: '文创产品',
+          type: '生态良品',
         }),
       }),
     );

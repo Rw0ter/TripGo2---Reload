@@ -21,56 +21,56 @@ interface CollectionItem {
 
 const ITEMS: CollectionItem[] = [
   {
-    id: 1, title: '粤剧专场', date: '2025-06-18', loc: '国家大剧院', time: '19:30',
-    tag: '传统广东艺术', image: 'fyxx/yuejufm.jpg',
-    desc: '经典粤剧剧目展演，特邀国家一级演员演绎《黛玉葬花》《弃楚归汉》等传世名段。',
-    price: '¥280起',
+    id: 1, title: '城市植树公益日', date: '2025-06-18', loc: '城市生态公园', time: '09:30',
+    tag: '虚拟植树', image: 'fyxx/yuejufm.jpg',
+    desc: '参与城市绿化志愿行动，亲手种下一棵树，认领专属碳汇，为城市增添一片绿意。',
+    price: '免费报名',
   },
   {
-    id: 2, title: '传统服装工作坊', date: '2025-06-22', loc: '广州康乐村', time: '14:00-16:30',
-    tag: '服装体验', image: 'fyxx/syhd.jpg',
-    desc: '全套服装租赁与妆造服务，参与传统礼仪展示、茶道体验和古琴演奏，穿越回古代盛世。',
+    id: 2, title: '旧物改造工作坊', date: '2025-06-22', loc: '社区环保中心', time: '14:00-16:30',
+    tag: '循环利用', image: 'fyxx/syhd.jpg',
+    desc: '把闲置旧物改造成实用好物，学习升级再造与零废弃理念，让资源在生活里循环流转。',
     price: '¥198/人',
   },
   {
-    id: 3, title: '广东十大传统音乐曲', date: '2025-06-25', loc: '沙湾广东音乐馆', time: '19:00',
-    tag: '传统广东音乐', image: 'fyxx/sywhz.png',
-    desc: '知名古琴演奏家现场演绎传统名曲，配合传统茶道展示，营造沉浸式古典音乐体验空间。',
+    id: 3, title: '可再生能源科普展', date: '2025-06-25', loc: '低碳科技馆', time: '19:00',
+    tag: '节能减排', image: 'fyxx/sywhz.png',
+    desc: '走近太阳能、风能与储能技术，沉浸式了解清洁能源如何驱动我们的低碳未来。',
     price: '¥320起',
   },
   {
-    id: 4, title: '广东传统美食节', date: '2025-07-01', loc: '广东美食街', time: '09:00-17:00',
-    tag: '传统小吃', image: 'changlong.png',
-    desc: '美食是生活的调味剂，酸甜苦辣，皆是人生况味，快来品尝，开启奇妙味觉之旅。',
+    id: 4, title: '低碳生活美食节', date: '2025-07-01', loc: '绿色生活广场', time: '09:00-17:00',
+    tag: '低碳饮食', image: 'changlong.png',
+    desc: '本地时令食材、植物基餐饮与零浪费料理，发现低碳饮食也能酸甜可口、健康满足。',
     price: '¥268起',
   },
   {
-    id: 5, title: '书法艺术鉴赏讲座', date: '2025-07-08', loc: '中国美术馆', time: '14:00-16:00',
-    tag: '文化讲座', image: 'fyxx/jianzhifm1.jpg',
-    desc: '著名书法家讲解中国书法艺术的历史演变与鉴赏方法，现场演示笔法技巧并提供互动指导。',
+    id: 5, title: '碳中和主题讲座', date: '2025-07-08', loc: '城市图书馆', time: '14:00-16:00',
+    tag: '环保讲座', image: 'fyxx/jianzhifm1.jpg',
+    desc: '环境领域专家讲解碳达峰、碳中和的来龙去脉与个人行动路径，现场互动答疑。',
     price: '¥120/人',
   },
   {
-    id: 6, title: '端午龙舟文化节', date: '2025-06-10', loc: '杭州西湖', time: '全天',
-    tag: '传统节庆', image: 'jd/dxs.png',
-    desc: '传统龙舟竞赛、包粽子体验、香囊制作、端午民俗展示，一站式体验端午文化的丰富多彩。',
+    id: 6, title: '世界环境日骑行', date: '2025-06-10', loc: '滨江绿道', time: '全天',
+    tag: '绿色出行', image: 'jd/dxs.png',
+    desc: '绿道低碳骑行、垃圾分类挑战、环保市集与公益打卡，一站式体验绿色出行的乐趣。',
     price: '免费入场',
   },
   {
-    id: 7, title: '广绣非遗体验工坊', date: '2025-07-15', loc: '佛山顺德', time: '10:00-12:00',
-    tag: '非遗体验', image: 'fyxx/zhenjiufm.jpg',
-    desc: '广绣传承人现场教学，一针一线感受岭南刺绣的细腻与优雅，完成作品可带走留念。',
+    id: 7, title: '垃圾分类体验工坊', date: '2025-07-15', loc: '社区回收驿站', time: '10:00-12:00',
+    tag: '循环利用', image: 'fyxx/zhenjiufm.jpg',
+    desc: '环保志愿者现场教学，从源头分类到资源回收，亲手实践让每一份垃圾各归其位。',
     price: '¥158/人',
   },
   {
-    id: 8, title: '潮汕工夫茶品鉴会', date: '2025-07-22', loc: '汕头小公园', time: '14:30-16:30',
-    tag: '文化沙龙', image: 'xc/xc_chaozhou.jpeg',
-    desc: '关公巡城、韩信点兵，学习正宗工夫茶二十一式，品味凤凰单丛的千般韵味。',
+    id: 8, title: '净滩护河志愿行', date: '2025-07-22', loc: '城市湿地公园', time: '14:30-16:30',
+    tag: '生态保护', image: 'xc/xc_chaozhou.jpeg',
+    desc: '加入净滩护河队伍，清理岸线垃圾、记录水质数据，守护身边的蓝色生态家园。',
     price: '¥88/人',
   },
 ];
 
-const CATEGORIES = ['所有类别', '传统艺术', '非遗体验', '节庆活动', '文化讲座'];
+const CATEGORIES = ['所有类别', '绿色出行', '循环利用', '节能减排', '环保讲座'];
 const TIME_FILTERS = ['时间排序', '近期活动', '即将开始'];
 
 export default function CollectionsScreen() {
@@ -143,7 +143,7 @@ export default function CollectionsScreen() {
           <Text className="text-primary">我的</Text>收藏活动
         </Text>
         <Text className="mb-4 mt-1 text-center text-[13px] text-[#718096]">
-          探索传统与现代交融的文化盛宴
+          发现身边的绿色低碳环保行动
         </Text>
 
         {/* Search & filter bar — matching Legacy style */}

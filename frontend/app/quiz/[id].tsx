@@ -1,15 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Animated as RNAnimated,
   Pressable,
   ScrollView,
   Text,
   View,
 } from 'react-native';
-import { FadeInDown } from 'react-native-reanimated';
+import { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Animated } from '@/components/ui/animated';
@@ -21,13 +21,13 @@ import { apiRequest } from '@/lib/api';
 interface Question { q: string; options: string[]; answer?: number; }
 interface QuizDetail { id: number; tag: string; title: string; desc: string; questions: Question[]; }
 
-// ── Offline fallback ──────────────────────────────────────
+// ── 离线兜底（断网时本地判分，绿色低碳题）──────────────────
 const OFFLINE_QUESTIONS: Question[] = [
-  { q: '被誉为"岭南音乐活化石"的广东非遗代表是？', options: ['粤剧', '客家山歌', '广东音乐', '汉剧'], answer: 2 },
-  { q: '广州著名的传统手工艺"广州牙雕"主要以什么原料制作？', options: ['竹子', '玉石', '象牙', '木材'], answer: 2 },
-  { q: '被列为国家级非遗的"醒狮"起源于广东哪个地区？', options: ['广州', '佛山', '深圳', '惠州'], answer: 1 },
-  { q: '广东非遗中"英歌舞"常在什么场合中表演？', options: ['婚礼庆典', '清明扫墓', '春节与庙会', '中秋祭月'], answer: 2 },
-  { q: '广东传统饮食文化中被列为非遗的点心是？', options: ['肠粉', '虾饺', '烧麦', '云吞面'], answer: 1 },
+  { q: '以下哪种气体是主要的温室气体？', options: ['氧气', '二氧化碳', '氮气', '氢气'], answer: 1 },
+  { q: '以下哪项不属于可再生能源？', options: ['太阳能', '风能', '煤炭', '水能'], answer: 2 },
+  { q: '全球变暖的主要原因是？', options: ['火山喷发', '太阳活动', '人类活动排放温室气体', '地球公转'], answer: 2 },
+  { q: '以下哪种交通方式碳排放最低？', options: ['私家车', '公交车', '高铁', '自行车'], answer: 3 },
+  { q: '废旧电池应投入哪类垃圾？', options: ['可回收物', '厨余垃圾', '有害垃圾', '其他垃圾'], answer: 2 },
 ];
 
 function pickOfflineQuestions(count = 5): Question[] {
@@ -66,7 +66,7 @@ export default function QuizScreen() {
       setOffline(false);
     } catch {
       setOffline(true);
-      setData({ id: Number(id) || 1, tag: '非遗文化', title: '广东非遗文化', desc: '离线题库', questions: pickOfflineQuestions() });
+      setData({ id: Number(id) || 1, tag: '绿色低碳', title: '绿色低碳知识', desc: '离线题库', questions: pickOfflineQuestions() });
     }
   }, [id]);
 
@@ -75,9 +75,9 @@ export default function QuizScreen() {
   // ── Loading ───────────────────────────────────────────
   if (!data) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#386641" />
-        <Text className="mt-4 text-[14px] text-[#999]">题目加载中…</Text>
+      <View className="flex-1 items-center justify-center bg-eco-cream">
+        <ActivityIndicator size="large" color="#40916C" />
+        <Text className="mt-4 text-[14px] text-eco-mid/70">题目加载中…</Text>
       </View>
     );
   }
@@ -85,7 +85,6 @@ export default function QuizScreen() {
   const q = data.questions[qIdx];
   const isLast = qIdx === data.questions.length - 1;
   const total = data.questions.length;
-  const pct = ((qIdx + 1) / total) * 100;
 
   const handleSelect = (i: number) => { if (!submitted) setSelected(i); };
 
@@ -99,6 +98,9 @@ export default function QuizScreen() {
       const ans = q.answer ?? 0;
       setRevealed((r) => ({ ...r, [qIdx]: ans }));
       if (choice === ans) setScore((s) => s + 10);
+      void Haptics.notificationAsync(
+        choice === ans ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Error,
+      );
       setSubmitted(true);
       return;
     }
@@ -111,6 +113,9 @@ export default function QuizScreen() {
       );
       setRevealed((r) => ({ ...r, [qIdx]: res.answer }));
       if (res.correct) setScore((s) => s + 10);
+      void Haptics.notificationAsync(
+        res.correct ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Error,
+      );
     } catch {
       // 校验失败：仅标记已提交，不显示对错（answer 缺省）
     } finally {
@@ -150,45 +155,49 @@ export default function QuizScreen() {
     if (offline) setData((prev) => prev ? { ...prev, questions: pickOfflineQuestions() } : null);
   };
 
-  // ── Completion screen ──────────────────────────────────
+  // ── 完成页 ─────────────────────────────────────────────
   if (done) {
     const correctCount = correctTotal;
+    const accuracy = total > 0 ? Math.round((correctCount / total) * 100) : 0;
     const passed = correctCount >= total / 2;
 
     return (
-      <View className="flex-1 bg-white">
+      <View className="flex-1 bg-eco-cream">
         <ScreenHeader title="答题结果" tint="light" />
-
         <View className="flex-1 items-center justify-center px-6" style={{ paddingBottom: insets.bottom + 40 }}>
-          <RNAnimated.View>
-            <View className="mb-6 h-24 w-24 items-center justify-center rounded-full bg-[#E8F5E9]">
-              <Ionicons name={passed ? 'trophy' : 'school'} size={48} color="#386641" />
+          {/* 正确率环（裁切渐变近似进度环） */}
+          <Animated.View entering={FadeIn.duration(500)} className="items-center">
+            <View
+              className="h-40 w-40 items-center justify-center rounded-full"
+              style={{ borderWidth: 12, borderColor: passed ? '#52B788' : '#E9D8A6' }}>
+              <Text className="text-[40px] font-extrabold text-eco-dark">{accuracy}%</Text>
+              <Text className="text-[12px] text-eco-mid/70">正确率</Text>
             </View>
-          </RNAnimated.View>
+          </Animated.View>
 
-          <Text className="text-[24px] font-bold text-[#111]">{passed ? '恭喜通过' : '继续加油'}</Text>
-          <Text className="mt-2 text-center text-[15px] leading-6 text-[#666]">
-            {passed ? '你对岭南文化的了解非常扎实！' : '多了解一些非遗知识，下次一定能通过～'}
+          <Text className="mt-6 text-[24px] font-extrabold text-eco-dark">{passed ? '太棒了！' : '再接再厉'}</Text>
+          <Text className="mt-2 text-center text-[15px] leading-6 text-eco-mid/80">
+            {passed ? '你是名副其实的低碳生活达人，继续守护绿色地球！' : '多了解一些绿色低碳知识，下次一定能拿高分～'}
           </Text>
 
-          <View className="mt-8 w-full max-w-sm rounded-2xl bg-[#F9F9F9] p-6 shadow-sm" style={{ shadowColor: '#000', shadowOpacity: 0.41, shadowRadius: 10, shadowOffset: { width: 0, height: 2 } }}>
+          <View className="mt-8 w-full max-w-sm rounded-3xl bg-white p-6" style={{ boxShadow: '0px 6px 20px rgba(45,106,79,0.1)' }}>
             <View className="flex-row items-center justify-between">
-              <Text className="text-[15px] font-semibold text-[#555]">正确题数</Text>
-              <Text className="text-[18px] font-bold text-[#386641]">{correctCount} / {total}</Text>
+              <Text className="text-[15px] font-semibold text-eco-mid">正确题数</Text>
+              <Text className="text-[18px] font-extrabold text-eco">{correctCount} / {total}</Text>
             </View>
-            <View className="mt-3 h-px bg-[#ECECEC]" />
-            <View className="mt-3 flex-row items-center justify-between">
-              <Text className="text-[15px] font-semibold text-[#555]">获得积分</Text>
-              <Text className="text-[18px] font-bold text-[#386641]">+{score}</Text>
+            <View className="my-3 h-px bg-eco-pale" />
+            <View className="flex-row items-center justify-between">
+              <Text className="text-[15px] font-semibold text-eco-mid">获得积分</Text>
+              <Text className="text-[18px] font-extrabold text-eco">+{score}</Text>
             </View>
           </View>
 
           <View className="mt-8 flex-row gap-3">
-            <Pressable onPress={handleRestart} className="rounded-xl bg-[#386641] px-8 py-3.5 active:opacity-80">
-              <Text className="text-[16px] font-semibold text-white">再来一次</Text>
+            <Pressable onPress={handleRestart} className="rounded-2xl bg-eco px-9 py-3.5 active:opacity-80">
+              <Text className="text-[16px] font-bold text-white">再来一次</Text>
             </Pressable>
-            <Pressable onPress={() => router.back()} className="rounded-xl border border-[#ddd] px-8 py-3.5 active:bg-[#F5F5F5]">
-              <Text className="text-[16px] font-semibold text-[#555]">退出</Text>
+            <Pressable onPress={() => router.back()} className="rounded-2xl border border-eco-pale px-9 py-3.5 active:bg-eco-pale/40">
+              <Text className="text-[16px] font-bold text-eco-mid">完成</Text>
             </Pressable>
           </View>
         </View>
@@ -196,40 +205,47 @@ export default function QuizScreen() {
     );
   }
 
-  // ── Quiz screen ────────────────────────────────────────
+  // ── 答题页 ─────────────────────────────────────────────
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-eco-cream">
       <ScreenHeader title={data.title} tint="light" right={
-        <View className="flex-row items-center rounded-full bg-[#F5F5F5] px-3 py-1.5">
-          <Ionicons name="star" size={14} color="#386641" />
-          <Text className="ml-1 text-[14px] font-semibold text-[#386641]">{score}</Text>
+        <View className="flex-row items-center rounded-full bg-eco-pale px-3 py-1.5">
+          <Ionicons name="leaf" size={14} color="#40916C" />
+          <Text className="ml-1 text-[14px] font-bold text-eco">{score}</Text>
         </View>
       } />
 
-      <View className="h-0.5 bg-[#F0F0F0]">
-        <RNAnimated.View style={{ width: `${pct}%`, height: '100%', backgroundColor: '#386641' }} />
+      {/* 分段进度 */}
+      <View className="flex-row gap-1.5 px-5 pt-3">
+        {data.questions.map((_, i) => {
+          const ans = answers[i];
+          const correct = revealed[i] !== undefined && ans === revealed[i];
+          const answered = ans !== undefined && revealed[i] !== undefined;
+          let color = '#E4EFE7';
+          if (i === qIdx) color = '#52B788';
+          else if (answered) color = correct ? '#40916C' : '#E07A5F';
+          return <View key={i} style={{ flex: 1, height: 5, borderRadius: 3, backgroundColor: color }} />;
+        })}
       </View>
 
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 60 }}>
+      <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 40 }}>
         {offline && (
           <View className="mb-3 self-start rounded-md bg-[#FFF3E0] px-2.5 py-0.5">
             <Text className="text-[11px] font-medium text-[#E65100]">离线模式</Text>
           </View>
         )}
 
-        <Text className="text-[13px] font-medium uppercase tracking-widest text-[#999]">
-          第 {qIdx + 1} 题 · 共 {total} 题
+        <Text className="text-[12px] font-semibold uppercase tracking-widest text-eco-mid/60">
+          第 {qIdx + 1} 题 / 共 {total} 题
         </Text>
 
         <Animated.View entering={FadeInDown.delay(50).springify()} key={`q-${qIdx}`}>
-          <Text className="mt-3 text-[20px] font-bold leading-7 text-[#111]">
-            {q.q}
-          </Text>
+          <Text className="mt-3 text-[21px] font-bold leading-8 text-eco-dark">{q.q}</Text>
         </Animated.View>
 
         <View className="mt-6" style={{ gap: 10 }}>
           {q.options.map((opt, i) => (
-            <OptionButton key={`${qIdx}-${i}`} index={qIdx} optIdx={i} label={LABELS[i]} text={opt}
+            <OptionButton key={`${qIdx}-${i}`} index={i} optIdx={i} label={LABELS[i]} text={opt}
               answer={revealed[qIdx] ?? -1} selected={selected} submitted={submitted}
               onPress={() => handleSelect(i)} />
           ))}
@@ -241,22 +257,16 @@ export default function QuizScreen() {
           <Pressable
             onPress={handleSubmit}
             disabled={selected === null || submitting}
-            className={`w-full items-center rounded-2xl py-4 ${selected === null || submitting ? 'bg-[#E5E5E5]' : 'bg-[#386641]'}`}>
+            className={`w-full items-center rounded-2xl py-4 ${selected === null || submitting ? 'bg-[#D7E4DB]' : 'bg-eco'}`}>
             {submitting ? (
               <ActivityIndicator color="#fff" size="small" />
             ) : (
-              <Text className={`text-[16px] font-bold ${selected === null ? 'text-[#bbb]' : 'text-white'}`}>
-                提交答案
-              </Text>
+              <Text className={`text-[16px] font-bold ${selected === null ? 'text-eco-mid/50' : 'text-white'}`}>提交答案</Text>
             )}
           </Pressable>
         ) : (
-          <Pressable
-            onPress={handleNext}
-            className="w-full items-center rounded-2xl bg-[#386641] py-4 active:opacity-80">
-            <Text className="text-[16px] font-bold text-white">
-              {isLast ? '查看结果' : '下一题'}
-            </Text>
+          <Pressable onPress={handleNext} className="w-full items-center rounded-2xl bg-eco py-4 active:opacity-80">
+            <Text className="text-[16px] font-bold text-white">{isLast ? '查看结果' : '下一题'}</Text>
           </Pressable>
         )}
       </View>
@@ -264,7 +274,7 @@ export default function QuizScreen() {
   );
 }
 
-// ── Option button with animated feedback ──────────────────
+// ── 选项按钮（提交后高亮对错）──────────────────────────────
 function OptionButton({
   index, optIdx, label, text, answer, selected, submitted, onPress,
 }: {
@@ -275,17 +285,17 @@ function OptionButton({
   const isWrong = submitted && optIdx === selected && optIdx !== answer;
   const isPicked = !submitted && selected === optIdx;
 
-  let borderColor = '#E8E8E8';
+  let borderColor = '#E4EFE7';
   let bg = '#fff';
-  let labelBg = '#F5F5F5';
-  let labelColor = '#888';
+  let labelBg = '#EDF5EF';
+  let labelColor = '#6E9A85';
 
-  if (isCorrect)  { borderColor = '#386641'; bg = '#F0F7F0'; labelBg = '#386641'; labelColor = '#fff'; }
-  if (isWrong)    { borderColor = '#E53935'; bg = '#FFF5F5'; labelBg = '#E53935'; labelColor = '#fff'; }
-  if (isPicked)   { borderColor = '#386641'; bg = '#F0F7F0'; labelBg = '#386641'; labelColor = '#fff'; }
+  if (isPicked) { borderColor = '#52B788'; bg = '#F0FAF3'; labelBg = '#40916C'; labelColor = '#fff'; }
+  if (isCorrect) { borderColor = '#40916C'; bg = '#EAF7EF'; labelBg = '#40916C'; labelColor = '#fff'; }
+  if (isWrong) { borderColor = '#E07A5F'; bg = '#FCF0EC'; labelBg = '#E07A5F'; labelColor = '#fff'; }
 
   return (
-    <Animated.View entering={FadeInDown.delay(index * 60 + 300).springify()} key={`opt-${index}-${optIdx}`}>
+    <Animated.View entering={FadeInDown.delay(index * 60 + 120).springify()}>
       <Pressable
         onPress={onPress}
         disabled={submitted}
@@ -294,9 +304,9 @@ function OptionButton({
         <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: labelBg }} className="items-center justify-center">
           <Text style={{ color: labelColor }} className="text-[14px] font-bold">{label}</Text>
         </View>
-        <Text className="ml-3 flex-1 text-[15px] font-medium text-[#222]">{text}</Text>
-        {isCorrect && <Ionicons name="checkmark-circle" size={22} color="#386641" />}
-        {isWrong && <Ionicons name="close-circle" size={22} color="#E53935" />}
+        <Text className="ml-3 flex-1 text-[15px] font-medium text-eco-dark">{text}</Text>
+        {isCorrect && <Ionicons name="checkmark-circle" size={22} color="#40916C" />}
+        {isWrong && <Ionicons name="close-circle" size={22} color="#E07A5F" />}
       </Pressable>
     </Animated.View>
   );

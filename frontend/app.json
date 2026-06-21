@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "绿途",
+    "slug": "greentrip",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -39,15 +39,7 @@
           }
         }
       ],
-      "expo-secure-store",
-      [
-        "expo-speech-recognition",
-        {
-          "microphonePermission": "允许「文脉粤游」使用麦克风进行粤语语音输入",
-          "speechRecognitionPermission": "允许「文脉粤游」识别你的语音以翻译成粤语",
-          "androidSpeechServicePackages": ["com.google.android.googlequicksearchbox"]
-        }
-      ]
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

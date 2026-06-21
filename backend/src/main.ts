@@ -24,7 +24,7 @@ async function bootstrap() {
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('TripGo API')
-    .setDescription('文脉粤游 后端接口文档')
+    .setDescription('绿途 后端接口文档')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

@@ -156,7 +156,7 @@ export default function OrdersScreen() {
                       style={{ width: 18, height: 18, marginRight: 6 }}
                       resizeMode="contain"
                     />
-                    <Text className="font-semibold text-[14px] text-[#111]">文脉粤游官方旗舰店</Text>
+                    <Text className="font-semibold text-[14px] text-[#111]">绿途官方旗舰店</Text>
                   </View>
                   <Text style={{ fontSize: 13, color: closed ? '#999' : '#17b86c' }}>
                     {o.status || '交易关闭'}

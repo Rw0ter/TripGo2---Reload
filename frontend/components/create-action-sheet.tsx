@@ -4,6 +4,7 @@ import { Modal, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PRIMARY } from '@/constants/colors';
+import { useVoiceAssistant } from '@/stores/voice-assistant';
 
 interface CreateActionSheetProps {
   visible: boolean;
@@ -12,13 +13,15 @@ interface CreateActionSheetProps {
 
 // 「添加」tab 点击后弹出的创建动作菜单。
 const ACTIONS = [
-  { icon: 'map-outline', label: '新建行程', route: '/trip/create' },
-  { icon: 'create-outline', label: '发布故事', route: '/post/story' },
-] as const;
+  { icon: 'map-outline' as const, label: '新建行程', route: '/trip/create', isAction: false },
+  { icon: 'create-outline' as const, label: '发布故事', route: '/post/story', isAction: false },
+  { icon: 'sparkles-outline' as const, label: 'AI 语音助手', route: null as any, isAction: true },
+];
 
 export function CreateActionSheet({ visible, onClose }: CreateActionSheetProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const showVA = useVoiceAssistant((s) => s.show);
 
   return (
     <Modal
@@ -27,8 +30,6 @@ export function CreateActionSheet({ visible, onClose }: CreateActionSheetProps) 
       animationType="slide"
       onRequestClose={onClose}>
       <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="关闭"
         className="flex-1 justify-end bg-black/40"
         onPress={onClose}>
         {/* 内层吸收触摸，避免点菜单区域误关 */}
@@ -39,15 +40,19 @@ export function CreateActionSheet({ visible, onClose }: CreateActionSheetProps) 
           <View className="mb-1 mt-1 h-1 w-10 self-center rounded-full bg-gray-300" />
           {ACTIONS.map((action) => (
             <Pressable
-              key={action.route}
+              key={action.label}
               accessibilityRole="button"
               className="flex-row items-center px-6 py-4"
               onPress={() => {
-                router.push(action.route);
                 onClose();
+                if (action.isAction) {
+                  setTimeout(() => showVA(), 300);
+                } else {
+                  router.push(action.route);
+                }
               }}>
-              <Ionicons name={action.icon} size={24} color={PRIMARY} />
-              <Text className="ml-4 text-base text-gray-900">
+              <Ionicons name={action.icon} size={24} color={action.isAction ? '#40916C' : PRIMARY} />
+              <Text className={`ml-4 text-base ${action.isAction ? 'text-[#40916C] font-semibold' : 'text-gray-900'}`}>
                 {action.label}
               </Text>
             </Pressable>
