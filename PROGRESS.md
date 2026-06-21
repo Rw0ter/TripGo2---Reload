@@ -79,6 +79,18 @@
 2. **CI 安卓 APK 打包（分支 ci/android-apk-build，PR #91）**：ci.yml 增 android-apk job（expo prebuild + gradlew assembleDebug，
    自包含、无需 EAS/签名密钥），app.json 补 android.package。
 
+**七轮：AI 体验修复（2026-06-21，分支 feat/ai-fixes-r2）**
+1. **灯带改纯内阴影**：VoiceAutomationGlow 去掉 border 描边，仅 inset boxShadow 双层变色 + 范围放大（60/150px）；
+   RGB 每通道仍 [30,185]（已 eval 验证 boxShadow 含 …inset）。
+2. **修 AI 伪造"[系统]已打开…"**：buildHistory 把 App 注入的「[系统]…」回执改写成 user 角色「（系统回执）」，
+   不再让模型把它当自己的话模仿；prompt 加规则 #9/#10（回执以它为准 + 严禁自行编造"已打开/已到达/已下单"、必须真出指令）。
+3. **AI 能打开商品详情（修 ID 漂移）**：商品(destination) ID 因 re-seed 从 79–114 漂到 187–222，硬编码 ID 必失效；
+   改为 AI 只传**商品名**——新增 open_product 指令 + 前端 resolveDestinationId 实时查 /destinations 解析当前 id；buy 同步改名解析。
+   已验证「打开麦秆纤维便携餐盒详情」→ /product/189。
+4. **AI 静默查个人资料**：prompt 规则 #6 扩展（名字/昵称/账号/我是谁/积分… → query_profile，不反问）；
+   query_profile 回执前置「账号名：X」。已验证「我叫什么名字」→ 账号名 forestdemo9464。
+> 待办（本批 #1）：本地 llama.cpp 跑指定 GGUF（Q4_0）作离线兜底——后端已支持 OpenAI 兼容 LOCAL_AI_URL，待补 llama-server 启动脚本 + 实测。
+
 ## 进行中
 - 暂无（六轮收尾：home 待 PR；APK CI PR #91 在跑）。
 
