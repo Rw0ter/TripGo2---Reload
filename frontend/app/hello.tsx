@@ -31,7 +31,7 @@ import { Animated } from '@/components/ui/animated';
 import { HELLO_AGREE_GRADIENT } from '@/constants/colors';
 import { useOnboardingStore } from '@/stores/onboarding';
 
-const bg = require('../assets/legacy/img/beijing.png');
+const bg = require('../assets/images/onboarding/auth_bg.jpg');
 
 // 协议正文——需滚动阅读到底部才能点「同意」。
 const POLICY = [
