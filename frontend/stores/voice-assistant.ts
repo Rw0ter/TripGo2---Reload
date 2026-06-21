@@ -26,11 +26,11 @@ export const useVoiceAssistant = create<VoiceAssistantState>((set) => ({
   messages: [],
   transcript: '',
   // 打开助手：不清除历史，保持连续对话
-  show: () => { console.log('[VA store] show() called'); set({ visible: true, transcript: '' }); },
+  show: () => set({ visible: true, transcript: '' }),
   // 关闭助手：只隐藏 UI，保留 messages 以便下次继续
-  hide: () => { console.log('[VA store] hide() called'); set({ visible: false, listening: false, transcript: '' }); },
+  hide: () => set({ visible: false, listening: false, transcript: '' }),
   // 手动重置：开始全新的对话
-  reset: () => { console.log('[VA store] reset() called'); set({ messages: [], transcript: '' }); },
+  reset: () => set({ messages: [], transcript: '' }),
   setListening: (v) => set({ listening: v }),
   setTranscript: (t) => set({ transcript: t }),
   addMessage: (msg) => set((s) => {

@@ -1,20 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRef, useEffect } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 import { useVoiceAssistant } from '@/stores/voice-assistant';
 
 const MD_STYLES = StyleSheet.create({
   body: { color: '#222', fontSize: 14, lineHeight: 22 },
-  heading3: { fontSize: 14, fontWeight: '700', color: '#6D28D9', marginTop: 6, marginBottom: 2 },
+  heading3: { fontSize: 14, fontWeight: '700', color: '#2D6A4F', marginTop: 6, marginBottom: 2 },
   strong: { fontWeight: '700', color: '#111' },
   bullet_list: { marginVertical: 1 },
   list_item: { marginVertical: 1 },
   blockquote: {
-    backgroundColor: '#F5F3FF', borderLeftColor: '#7C3AED', borderLeftWidth: 3,
+    backgroundColor: '#EAF7EF', borderLeftColor: '#40916C', borderLeftWidth: 3,
     paddingHorizontal: 10, paddingVertical: 4, marginVertical: 4,
   },
-  link: { color: '#7C3AED' },
+  link: { color: '#40916C' },
 });
 
 /** 从 AI 文字中判断是否为纯 JSON 指令（不应渲染 markdown） */
@@ -53,7 +53,7 @@ export function VoiceAssistantSheet() {
               >
                 {msg.role === 'assistant' && (
                   <View style={styles.avatar}>
-                    <Ionicons name="sparkles" size={12} color="#7C3AED" />
+                    <Ionicons name="sparkles" size={12} color="#40916C" />
                   </View>
                 )}
                 <View style={{ flex: 1 }}>
@@ -87,8 +87,8 @@ export function VoiceAssistantSheet() {
           {listening && !transcript && (
             <View style={styles.listening}>
               <View style={styles.dot} />
-              <View style={[styles.dot, { backgroundColor: '#A855F7', opacity: 0.8 }]} />
-              <View style={[styles.dot, { backgroundColor: '#7C3AED', opacity: 1 }]} />
+              <View style={[styles.dot, { backgroundColor: '#52B788', opacity: 0.8 }]} />
+              <View style={[styles.dot, { backgroundColor: '#40916C', opacity: 1 }]} />
             </View>
           )}
         </ScrollView>
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   bubbleUser: {
-    backgroundColor: '#7C3AED', borderTopLeftRadius: 14, borderTopRightRadius: 14,
+    backgroundColor: '#40916C', borderTopLeftRadius: 14, borderTopRightRadius: 14,
     borderBottomLeftRadius: 14, borderBottomRightRadius: 3,
   },
   bubbleAI: {
@@ -120,14 +120,14 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 3, borderBottomRightRadius: 14,
   },
   bubbleCmd: {
-    backgroundColor: '#F5F3FF', borderLeftWidth: 3, borderLeftColor: '#7C3AED',
+    backgroundColor: '#EAF7EF', borderLeftWidth: 3, borderLeftColor: '#40916C',
     borderTopLeftRadius: 3, borderTopRightRadius: 14, borderBottomLeftRadius: 3, borderBottomRightRadius: 14,
   },
   avatar: { marginRight: 6, marginTop: 2 },
   text: { fontSize: 14, lineHeight: 20 },
   textUser: { color: '#FFFFFF' },
   textAI: { color: '#2D2D2D' },
-  textCmd: { color: '#5B21B6', fontWeight: '500' },
+  textCmd: { color: '#2D6A4F', fontWeight: '500' },
   listening: { alignSelf: 'center', flexDirection: 'row', gap: 5, padding: 10 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#C4B5FD', opacity: 0.6 },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#95D5B2', opacity: 0.6 },
 });

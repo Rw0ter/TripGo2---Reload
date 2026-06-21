@@ -13,8 +13,8 @@ const CY = R;
 const INNER_R = 56; // 内部变色球的半径
 const FFT_SIZE = 256;
 
-// 云彩 RGB 三色
-const CLOUD_COLORS = ['#FF6B6B', '#FFD93D', '#6BCBFF'];
+// 绿色能量三色（替代原 RGB Siri 配色，统一绿色低碳主题）
+const CLOUD_COLORS = ['#B7F5C9', '#52B788', '#2D9C6A'];
 
 export function VoiceAssistantBall({ listening, onToggle }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -121,12 +121,10 @@ export function VoiceAssistantBall({ listening, onToggle }: Props) {
     ctx.beginPath();
     ctx.arc(CX, CY, R + 12, 0, Math.PI * 2);
     const outerGrad = ctx.createRadialGradient(CX, CY, R - 12, CX, CY, R + 14);
-    const h1 = ((t * 60) % 360);
-    const h2 = ((t * 60 + 120) % 360);
-    const h3 = ((t * 60 + 240) % 360);
-    outerGrad.addColorStop(0, `hsla(${h1}, 80%, 60%, 0.15)`);
-    outerGrad.addColorStop(0.5, `hsla(${h2}, 80%, 60%, 0.1)`);
-    outerGrad.addColorStop(1, `hsla(${h3}, 80%, 60%, 0)`);
+    const gh = 120 + Math.sin(t) * 30; // 绿色区间(90–150)缓慢呼吸
+    outerGrad.addColorStop(0, `hsla(${gh}, 65%, 55%, 0.18)`);
+    outerGrad.addColorStop(0.5, `hsla(${gh + 15}, 60%, 50%, 0.1)`);
+    outerGrad.addColorStop(1, `hsla(${gh - 15}, 60%, 45%, 0)`);
     ctx.fillStyle = outerGrad;
     ctx.fill();
     ctx.restore();
@@ -135,11 +133,12 @@ export function VoiceAssistantBall({ listening, onToggle }: Props) {
     ctx.beginPath();
     ctx.arc(CX, CY, INNER_R, 0, Math.PI * 2);
     const grad = ctx.createRadialGradient(CX - 8, CY - 8, INNER_R * 0.1, CX, CY, INNER_R);
-    grad.addColorStop(0, `hsla(${(t * 90) % 360}, 85%, 70%, 0.95)`);
-    grad.addColorStop(0.4, `hsla(${(t * 90 + 120) % 360}, 80%, 55%, 0.85)`);
-    grad.addColorStop(1, `hsla(${(t * 90 + 240) % 360}, 75%, 40%, 0.7)`);
+    const ih = 125 + Math.sin(t * 1.2) * 28; // 绿色区间渐变
+    grad.addColorStop(0, `hsla(${ih + 15}, 70%, 75%, 0.95)`);
+    grad.addColorStop(0.4, `hsla(${ih}, 68%, 52%, 0.88)`);
+    grad.addColorStop(1, `hsla(${ih - 12}, 60%, 35%, 0.72)`);
     ctx.fillStyle = grad;
-    ctx.shadowColor = `hsla(${(t * 90) % 360}, 80%, 60%, 0.4)`;
+    ctx.shadowColor = `hsla(${ih}, 70%, 50%, 0.45)`;
     ctx.shadowBlur = 16;
     ctx.fill();
     ctx.shadowBlur = 0;
@@ -222,7 +221,7 @@ const styles = StyleSheet.create({
     height: SIZE,
     borderRadius: SIZE / 2,
     backgroundColor: '#FFFFFF',
-    shadowColor: '#A855F7',
+    shadowColor: '#40916C',
     shadowOpacity: 0.4,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 6 },

@@ -1,6 +1,7 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as Speech from 'expo-speech';
 import { useCallback, useRef } from 'react';
 import { Platform, TextInput, View } from 'react-native';
 import 'react-native-reanimated';
@@ -11,14 +12,20 @@ import { ToastContainer } from '@/components/ui/toast';
 import { VoiceAssistantBall } from '@/components/ai/voice-assistant-ball';
 import { VoiceAssistantSheet } from '@/components/ai/voice-assistant-sheet';
 import { useVoiceAssistant } from '@/stores/voice-assistant';
+import { apiRequest } from '@/lib/api';
 import { streamChat } from '@/lib/ai';
-import { isVoiceAvailable, startListening } from '@/lib/voice-recognition';
+import { startListening } from '@/lib/voice-recognition';
 
 /** 当前正在播放的 Audio 元素，用于停止 */
 let currentAudio: HTMLAudioElement | null = null;
 
 /** TTS: 优先用后端 Piper 引擎，失败时回退浏览器 speechSynthesis */
 async function speakText(text: string) {
+  // 原生端（iOS/Android）：用 expo-speech 朗读
+  if (Platform.OS !== 'web') {
+    try { Speech.stop(); Speech.speak(text, { language: 'zh-CN' }); } catch { /* 静默 */ }
+    return;
+  }
   try {
     // 停止正在播放的音频
     if (currentAudio) { currentAudio.pause(); currentAudio = null; }
@@ -94,7 +101,6 @@ async function sendToAI(
 ) {
   addMessage({ role: 'user', text });
   const chatMessages = [...buildHistory(history), { role: 'user' as const, content: text }];
-  console.log('[sendToAI] history.length=', history.length, 'chatMessages.length=', chatMessages.length, 'chatMessages=', JSON.stringify(chatMessages));
   try {
     let fullResponse = '';
     await new Promise<void>((resolve) => {
@@ -119,6 +125,25 @@ async function sendToAI(
         const pid = params.productId.replace(/^\/+/, '');
         setTimeout(() => router.push(`/product/${pid}?autoBuy=1` as any), 600);
         addMessage({ role: 'assistant', text: `[系统] 已执行：跳转商品页并自动下单，productId=${pid}，订单已支付`, isCommand: true });
+      } else if (cmd === 'collect_energy' && params.activity) {
+        const names: Record<string, string> = {
+          green_travel: '绿色出行', waste_sort: '垃圾分类', eco_quiz: '环保答题',
+          share_green: '分享绿色', trade_in: '以旧换新',
+        };
+        const name = names[params.activity] ?? '绿色任务';
+        try {
+          await apiRequest('/eco/activity', { method: 'POST', body: { type: params.activity }, auth: true });
+          addMessage({ role: 'assistant', text: `[系统] 已完成「${name}」，绿色能量与碳积分已到账`, isCommand: true });
+        } catch (err) {
+          addMessage({ role: 'assistant', text: `[系统] 收集失败：${err instanceof Error ? err.message : '请稍后再试'}`, isCommand: true });
+        }
+      } else if (cmd === 'plant_tree') {
+        try {
+          const r = await apiRequest<{ message?: string }>('/eco/plant', { method: 'POST', auth: true });
+          addMessage({ role: 'assistant', text: `[系统] ${r?.message ?? '浇灌成功，碳积分已到账'}`, isCommand: true });
+        } catch (err) {
+          addMessage({ role: 'assistant', text: `[系统] 浇灌失败：${err instanceof Error ? err.message : '请稍后再试'}`, isCommand: true });
+        }
       } else if (cmd === 'end') {
         // 用 getState() 绕开闭包读最新消息
         const currentState = useVoiceAssistant.getState();
@@ -126,7 +151,7 @@ async function sendToAI(
         const lastUserMsg = userMsgs[userMsgs.length - 1]?.text || '';
         const goodbyeWords = /再见|拜拜|结束|退出|关闭|没了|没有[了事]/;
         if (userMsgs.length >= 3 && goodbyeWords.test(lastUserMsg)) {
-          addMessage({ role: 'assistant', text: '👋 再见！低碳生活，从每一天开始。', isCommand: true });
+          addMessage({ role: 'assistant', text: '再见！低碳生活，从每一天开始。', isCommand: true });
           setTimeout(() => hide(), 900);
         }
       }
@@ -147,7 +172,6 @@ function VoiceAssistantOverlay() {
 
   // 核心：请求麦克风 → 语音识别 → 发送 AI
   const startVoice = useCallback(async () => {
-    const s = useVoiceAssistant.getState(); // 绕过闭包，直接读最新 Zustand state
     if (Platform.OS === 'web') { speechSynthesis.cancel(); }
     setListening(true);
     clearTranscript();
@@ -160,7 +184,7 @@ function VoiceAssistantOverlay() {
       micGranted = true;
     } catch {
       setListening(false);
-      addMessage({ role: 'assistant', text: '🎤 麦克风权限未授予。请在浏览器设置中允许麦克风访问，或使用下方的文字输入与我对话。' });
+      addMessage({ role: 'assistant', text: '麦克风权限未授予，请在系统/浏览器设置中允许麦克风访问，或在下方输入文字与我对话。' });
       return;
     }
 
@@ -177,7 +201,6 @@ function VoiceAssistantOverlay() {
         // 使用 getState() 读最新消息，避免 useCallback 闭包陷阱
         const currentState = useVoiceAssistant.getState();
         const history = [...currentState.messages];
-        console.log('[VA] startVoice: messages.length=', currentState.messages.length, 'history.length=', history.length);
         await sendToAI(text.trim(), history, addMessage, router, hide);
       } else {
         setListening(false);
