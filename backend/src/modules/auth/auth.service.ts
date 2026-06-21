@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -10,6 +11,7 @@ import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 // 对外返回用户信息统一用这个白名单：以后 User 加了敏感字段也不会被默认泄露
 const userSelect = {
@@ -61,6 +63,23 @@ export class AuthService {
       username: user.username,
     });
     return { token, user: await this.getProfile(user.id) };
+  }
+
+  // 找回密码：无邮件服务，用「用户名 + 注册邮箱」核验身份后直接设置新密码。
+  // 不区分「用户名不存在」与「邮箱不匹配」，避免账号枚举。
+  async resetPassword(dto: ResetPasswordDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { username: dto.username },
+    });
+    if (!user || user.email !== dto.email) {
+      throw new BadRequestException('用户名与注册邮箱不匹配');
+    }
+    const password = await bcrypt.hash(dto.newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { password },
+    });
+    return { ok: true };
   }
 
   async getProfile(userId: string) {
