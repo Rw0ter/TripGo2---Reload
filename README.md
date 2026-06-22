@@ -1,86 +1,77 @@
 # TripGo（绿途）
 
-以**绿色低碳生活**为主题的移动应用 —— 2026 重写版。碳积分、虚拟植树（蚂蚁森林式绿色能量森林）、
-环保答题、生态良品商城、绿色地图、AI 低碳助手（含语音），贴合「绿色发展 + 新质生产力」路线。
-
-## 技术栈
+以**绿色低碳生活**为主题的移动应用（2026 重写版）：碳积分、虚拟植树（绿色能量森林）、环保答题、
+生态良品商城、绿色地图、AI 低碳助手（含语音）。贴合「绿色发展 + 新质生产力」路线。
 
 - **前端**：Expo (React Native) + Expo Router + NativeWind + Zustand
-- **后端**：NestJS + Prisma + SQLite
-- **API 文档**：Swagger（运行后访问 `/docs`）
-- **AI**：DeepSeek（后端代理 + SSE 流式），RAG 用 sqlite-vec
+- **后端**：NestJS + Prisma + SQLite；AI 走 DeepSeek（后端代理，SSE 流式），RAG 用 sqlite-vec
 
-## 仓库结构
+---
 
-```
-TripGo2 - Reload/
-├── CLAUDE.md                  开发约定（所有人 + AI 必读）
-├── PROGRESS.md                当前进度与关键决策记录
-├── README.md                  本文件
-├── docs/page-registry.md      67 页清单与状态
-├── backend/                   NestJS 后端
-└── frontend/                  Expo 前端（Expo Router）
-```
+## 在新电脑上跑起来
 
-## 后端：安装与运行
+> 只需 **Node 20+** 和 npm。后端、前端各开一个终端。演示走 **web 最快**（开箱即用）。
 
-```
+### 1. 后端（终端 A）
+
+```bash
 cd backend
 npm install
-cp .env.example .env          # 填好 JWT_SECRET、DEEPSEEK_API_KEY
-npx prisma migrate dev --name init
-npx prisma db seed            # 灌入演示数据（轮播 / 生态良品 / 答题题库 / 社区故事）
-npm run start:dev             # API http://localhost:3000  文档 /docs
-npm run verify                # 提交前自检：构建 + 单元测试
+cp .env.example .env       # 至少把 JWT_SECRET 改成随机长串；AI 的 key 可先留空
+npx prisma migrate dev     # 一步搞定：建库 + 生成 Client + 自动灌入演示数据（轮播/商城/答题/社区）
+npm run start:dev          # 跑在 http://localhost:3000 ，接口文档在 /docs
 ```
 
-## 前端：安装与运行
+### 2. 前端（终端 B）
 
-```
+```bash
 cd frontend
 npm install
-npx expo start                # 按 w 开 web，或在 Android 模拟器运行
+npx expo start             # 按 w 开网页版（推荐演示）；按 a 开 Android
 ```
 
-> 后端地址走配置（不硬编码 IP），默认指向本机 `:3000`，需先启动后端。
-> 开发 / 演示以 web 与 Android 模拟器为准。
+**先起后端再起前端**：前端默认连本机后端 `http://localhost:3000`。
+真机 / 模拟器访问时，设环境变量 `EXPO_PUBLIC_API_URL` 指向后端地址（如本机局域网 IP）即可。
 
-## AI 助手
+搞定 —— 浏览器里就能看到「绿途」。
 
-AI 对话 / 行程规划由后端 `ai` 模块代理 DeepSeek（SSE 流式），**密钥仅后端持有**：
+---
 
-- 在 `backend/.env` 填 `DEEPSEEK_API_KEY`（`DEEPSEEK_BASE_URL` / `DEEPSEEK_MODEL` 可选，默认 `https://api.deepseek.com` / `deepseek-chat`）。
-- 接口：`POST /ai/chat`（对话）、`POST /ai/plan`（行程规划），响应均为 `text/event-stream`（逐段 `data: {"delta":"…"}`，以 `data: [DONE]` 结束）。
-- 未配置 key 时接口返回 503，前端 AI 助手会提示"AI 服务未配置"。
-- **知识库检索增强（RAG）**：后端 `rag` 模块用本地 embedding（transformers.js `bge-small-zh`）+ sqlite-vec；新环境跑 `cd backend && npm run rag:index` 灌入文创/旅游/非遗知识（约 32 条），对话/规划会优先采用检索到的知识。
+## AI 助手（可选）
 
-## 测试与提交门禁
+AI 对话 / 行程规划由后端 `ai` 模块代理，**密钥只在后端**。在 `backend/.env` 里二选一：
+
+- **联网**：填 `DEEPSEEK_API_KEY`（默认模型 `deepseek-chat`）。
+- **离线兜底**：key 留空，按 `.env.example` 注释起本地模型（`backend/scripts/run-local-ai.ps1`，首次自动下载约 7.5GB），再填 `LOCAL_AI_URL`。
+
+两者都没配时，AI 接口降级提示「未配置」，**不影响 App 其余功能**。
+知识库检索（RAG）首次需在 `backend/` 跑 `npm run rag:index` 灌入知识。
+
+---
+
+## 提交前门禁
+
+```bash
+git config core.hooksPath .githooks   # 每台机器克隆后执行一次，启用本地提交门禁
+```
+
+启用后每次 `git commit` 会按改动的子项目自动跑检查，失败即拒绝提交：
+
+- 后端：`cd backend && npm run verify`（= `build` + `test`）
+- 前端：`cd frontend && npx tsc --noEmit && npx expo lint`
+
+CI（GitHub Actions）再卡一道，PR 必须全绿才能合并。
+
+---
+
+## 项目结构
 
 ```
-# 后端
-cd backend
-npm test            # Jest 单元测试
-npm run verify      # = build + test（提交前必跑）
-
-# 前端
-cd frontend
-npx tsc --noEmit    # 类型检查
-npx expo lint       # Lint
+backend/      NestJS 后端（src/modules/* 每功能一个模块；prisma/ 是表结构与种子数据）
+frontend/     Expo 前端（app/ 是文件式路由）
+docs/         页面清单等文档
+CLAUDE.md     开发约定（人 + AI 必读）
+PROGRESS.md   当前进度与决策记录（新会话先读这个）
 ```
 
-- **启用本地提交门禁（每个 clone 执行一次）**：`git config core.hooksPath .githooks`。提交时会按改动的子项目自动跑构建 / 测试 / 类型检查，失败即拒绝提交。
-- CI（GitHub Actions）双门禁：后端 `build`+`test`、前端 `tsc`+`lint`，PR 必须全绿才能合并；master push 后另产出可部署产物（后端 dist + 前端 Web 静态站）。详见 CLAUDE.md 第 13 / 14 节。
-
-## 文档体系
-
-本项目 AI 24 小时协作、多会话并行，靠以下文档维持上下文连续性：
-
-- `CLAUDE.md` — 开发约定与规则，每个 AI 会话自动加载。
-- `PROGRESS.md` — 当前进度、进行中任务、下一步、已知坑、决策记录；每会话更新。
-- `docs/page-registry.md` — 67 个页面的清单与完成状态。
-
-新会话开始前请先读 `PROGRESS.md`。
-
-## 旧项目
-
-`Legacy TripGo ReadOnly!!!/` 是旧版（DCloud MUI + 脚本式 Express），**只读参考**，不纳入本仓库。
+旧版在 `Legacy TripGo ReadOnly!!!/`，**只读参考**，不要修改、不要在新代码里引用。
