@@ -285,7 +285,8 @@ export default function HomeScreen() {
   const [error, setError] = useState(false);
 
   const quizCardW = Math.round(width * 0.66);
-  const gridItemW = (width - 48) / 5; // 卡片 mx-4(32) + px-2(16)，5 列
+  const gridItemW = (width - 48) / 4; // 4 列（第一排 4 个）
+  const gridItemW2 = (width - 48) / 5; // 5 列（第二排 5 个）
   const load = useCallback(async () => {
     setError(false);
     try {
@@ -367,17 +368,29 @@ export default function HomeScreen() {
 
         {/* 主体 */}
         <View className="-mt-4 rounded-t-[22px] bg-[#F4F1E4] pt-5">
-          {/* 入口宫格 —— 浅色磁贴 + 矢量图标，5 列两排（列对齐） */}
+          {/* 入口宫格 —— 第一排 4 个、第二排 5 个，两排均垂直居中 */}
           <Animated.View
             entering={FadeInDown.delay(160).duration(450)}
             style={{ boxShadow: '0px 6px 18px rgba(0,0,0,0.07)' }}
             className="mx-4 rounded-3xl bg-white px-2 pb-3 pt-3">
-            <View className="flex-row flex-wrap">
-              {ENTRIES.map((e) => (
+            {/* 第一排 4 个，垂直居中 */}
+            <View className="flex-row justify-center items-center">
+              {ENTRIES.slice(0, 4).map((e) => (
                 <EntryItem
                   key={e.label}
                   entry={e}
                   width={gridItemW}
+                  onPress={() => (e.route ? router.push(e.route as any) : comingSoon(e.label))}
+                />
+              ))}
+            </View>
+            {/* 第二排 5 个，垂直居中 */}
+            <View className="flex-row justify-center items-center">
+              {ENTRIES.slice(4, 9).map((e) => (
+                <EntryItem
+                  key={e.label}
+                  entry={e}
+                  width={gridItemW2}
                   onPress={() => (e.route ? router.push(e.route as any) : comingSoon(e.label))}
                 />
               ))}
