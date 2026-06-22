@@ -48,3 +48,8 @@ npm-debug.log*
 # Expo（前端，后续）
 .expo/
 web-build/
+
+# 演讲 / 演示材料（PPT、Word 讲稿、导出的图片资源）——体积大（含 >100MB 超 GitHub 上限），按需本地保存，不入库
+docs/*.pptx
+docs/*.docx
+docs/_ppt_assets/
